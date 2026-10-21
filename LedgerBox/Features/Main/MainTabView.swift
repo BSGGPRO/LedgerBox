@@ -33,11 +33,13 @@ enum MainTab: Hashable, CaseIterable {
 struct MainTabView: View {
     @Environment(\.ledgerTheme) private var theme
     @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject private var themeManager: ThemeManager
 
     @StateObject private var router = LedgerRouter()
     @StateObject private var toastCenter = ImportToastCenter()
     @State private var selection: MainTab = .home
     @State private var isActionMenuExpanded = false
+    @State private var showingSettings = false
     @State private var errorMessage: String?
 
     var body: some View {
@@ -56,8 +58,8 @@ struct MainTabView: View {
         .toolbarBackground(theme.surface, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
         .toolbarColorScheme(theme.scheme, for: .tabBar)
-        .overlay(alignment: .bottomTrailing) {
-            VStack(alignment: .trailing, spacing: 10) {
+        .overlay(alignment: .bottom) {
+            VStack(spacing: 10) {
                 if let toast = toastCenter.toast {
                     ImportToastView(toast: toast) {
                         undo(toast)
@@ -66,16 +68,18 @@ struct MainTabView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
 
-                FloatingActionMenu(
-                    isExpanded: $isActionMenuExpanded,
-                    onQuickEntry: { router.open(.image) },
-                    onManualEntry: { router.open(.manual) }
-                )
+                bottomDock
             }
-            .padding(.trailing, theme.pagePadding)
-            // Keep the FAB clear of the tab bar on both notch and SE layouts.
-            .padding(.bottom, 96)
+            .padding(.horizontal, theme.pagePadding)
+            // Keep the dock clear of the system tab bar; this is a floating
+            // row, not a replacement for the five-tab navigation.
+            .padding(.bottom, 70)
             .animation(.easeInOut(duration: 0.2), value: toastCenter.toast)
+        }
+        .sheet(isPresented: $showingSettings) {
+            SettingsView()
+                .environment(\.managedObjectContext, viewContext)
+                .environmentObject(themeManager)
         }
         .sheet(item: $router.sheet) { sheet in
             switch sheet {
@@ -109,6 +113,57 @@ struct MainTabView: View {
         } message: {
             Text(errorMessage ?? "")
         }
+    }
+
+    private var bottomDock: some View {
+        HStack(spacing: 0) {
+            // Bottom-left identity: local avatar only, no third-party login.
+            ProfileBadge()
+
+            Spacer(minLength: 0)
+
+            FloatingActionMenu(
+                isExpanded: $isActionMenuExpanded,
+                onQuickEntry: { router.open(.image) },
+                onManualEntry: { router.open(.manual) }
+            )
+
+            Spacer(minLength: 0)
+
+            Button {
+                showingSettings = true
+            } label: {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(Color.white.opacity(0.88))
+                    .frame(width: 40, height: 40)
+                    .background(Color.white.opacity(0.10), in: Circle())
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("设置")
+            .accessibilityHint("打开主题、分类、导出与关于")
+        }
+        .padding(.horizontal, 16)
+        .frame(maxWidth: 340, minHeight: 74)
+        .background {
+            Capsule(style: .continuous)
+                .fill(
+                    Color(
+                        .sRGB,
+                        red: 20.0 / 255.0,
+                        green: 20.0 / 255.0,
+                        blue: 22.0 / 255.0,
+                        opacity: 0.72
+                    )
+                )
+                .background(.ultraThinMaterial, in: Capsule(style: .continuous))
+        }
+        .overlay {
+            Capsule(style: .continuous)
+                .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
+        }
+        .shadow(color: Color.black.opacity(0.28), radius: 12, x: 0, y: 6)
     }
 
     private func undo(_ toast: ImportToast) {

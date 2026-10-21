@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// The single top-right identity entry. It opens the local profile menu rather
-/// than Settings directly, so account data and Settings have one clear home.
+/// The single local-identity entry in the bottom dock. It opens the local profile
+/// menu; there is no third-party sign-in.
 struct ProfileBadge: View {
     @ObservedObject private var store = LocalProfileStore.shared
     @State private var showingMenu = false
@@ -15,8 +15,8 @@ struct ProfileBadge: View {
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("个人资料、设置与数据")
-        .accessibilityHint("打开本地头像、昵称和设置")
+        .accessibilityLabel("本地个人资料")
+        .accessibilityHint("打开本地头像与昵称；不上传，不登录第三方")
         .sheet(isPresented: $showingMenu) {
             ProfileMenuView()
                 .presentationDetents([.large])

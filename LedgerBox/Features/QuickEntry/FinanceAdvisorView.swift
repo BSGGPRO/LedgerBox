@@ -1,4 +1,4 @@
-﻿import SwiftUI
+import SwiftUI
 
 struct FinanceExchange: Identifiable {
     let id = UUID()
@@ -135,7 +135,7 @@ struct FinanceAdvisorView: View {
                         .font(theme.sectionTitleFont)
                         .foregroundStyle(theme.primaryText)
 
-                    Text("20,971,560 参数 · 本地 · 40 类记账意图")
+                    Text("41,943,080 参数 · 本地 · 40 类记账意图")
                         .font(theme.badgeFont)
                         .foregroundStyle(theme.secondaryText)
                 }
@@ -224,7 +224,7 @@ struct FinanceAdvisorView: View {
                     .font(theme.bodyFont.weight(.semibold))
                     .foregroundStyle(theme.primaryText)
 
-                Text("它会把问题分到 40 个记账/财务意图，再用本机账本和固定规则回答；切到“大脑”能看到 2097 万参数的本地激活图。不会编数字，不会自动写账。")
+                Text("它先把问题分到 40 个记账/财务意图，再由本地 Decimal 精算引擎算出金额、占比、预算和现金流；模型只选公式，不生成数字。切到“大脑”能看到 4194 万参数的本地激活图。不会编数字，不会自动写账。")
                     .font(theme.captionFont)
                     .foregroundStyle(theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
@@ -283,6 +283,34 @@ struct FinanceAdvisorView: View {
                         .font(theme.captionFont)
                         .foregroundStyle(theme.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
+
+                    if let calculation = exchange.advice.calculation {
+                        Rectangle()
+                            .fill(theme.separator)
+                            .frame(height: 1)
+
+                        HStack(spacing: 6) {
+                            Image(systemName: calculation.kind.symbolName)
+                                .font(theme.badgeFont)
+                                .foregroundStyle(theme.accentText)
+
+                            Text(calculation.kind.displayName)
+                                .font(theme.badgeFont.weight(.semibold))
+                                .foregroundStyle(theme.accentText)
+
+                            Spacer(minLength: 4)
+
+                            Text(calculation.routedByModel ? "模型路由" : "规则兜底")
+                                .font(theme.badgeFont)
+                                .foregroundStyle(theme.secondaryText)
+                        }
+
+                        Text(calculation.formula)
+                            .font(.system(.caption2, design: .monospaced, weight: .medium))
+                            .foregroundStyle(theme.primaryText)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .textSelection(.enabled)
+                    }
 
                     Text("只作记账参考，不构成投资/税务建议")
                         .font(theme.badgeFont)

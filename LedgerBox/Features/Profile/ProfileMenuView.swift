@@ -7,15 +7,12 @@ import UIKit
 struct ProfileMenuView: View {
     @Environment(\.ledgerTheme) private var theme
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @EnvironmentObject private var themeManager: ThemeManager
 
     @ObservedObject private var profileStore = LocalProfileStore.shared
 
     @State private var showingNicknameEditor = false
     @State private var nicknameDraft = ""
-    @State private var showingSettings = false
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var isLoadingAvatar = false
     @State private var photoError: String?
@@ -35,7 +32,6 @@ struct ProfileMenuView: View {
             VStack(alignment: .leading, spacing: theme.sectionSpacing) {
                 profileCard
                 localActionsCard
-                providerCard
                 privacyCard
                 aboutCard
             }
@@ -66,14 +62,7 @@ struct ProfileMenuView: View {
                 profileStore.updateNickname(nicknameDraft)
             }
         } message: {
-            Text("昵称只保存在本机，不会同步到微信或支付宝。")
-        }
-        .sheet(isPresented: $showingSettings) {
-            // SettingsView owns its own NavigationStack. Presenting it in a
-            // sheet avoids nesting navigation stacks or pushing a root view.
-            SettingsView()
-                .environment(\.managedObjectContext, viewContext)
-                .environmentObject(themeManager)
+            Text("昵称只保存在本机，不会上传。")
         }
     }
 
@@ -121,16 +110,14 @@ struct ProfileMenuView: View {
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
 
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: theme.smallSpacing) {
-                    providerSource
-                    LedgerTag("仅本机", tint: theme.income)
-                }
+            HStack(spacing: theme.smallSpacing) {
+                Label("本地资料", systemImage: "internaldrive")
+                    .font(theme.captionFont)
+                    .foregroundStyle(theme.secondaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
 
-                VStack(alignment: .leading, spacing: 4) {
-                    providerSource
-                    LedgerTag("仅本机", tint: theme.income)
-                }
+                LedgerTag("仅本机", tint: theme.income)
             }
 
             if let error = profileStore.persistenceError {
@@ -140,14 +127,6 @@ struct ProfileMenuView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-    }
-
-    private var providerSource: some View {
-        Label("来源 · \(profile.provider.displayName)", systemImage: profile.provider.symbolName)
-            .font(theme.captionFont)
-            .foregroundStyle(theme.secondaryText)
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
     }
 
     // MARK: - Local actions
@@ -198,21 +177,6 @@ struct ProfileMenuView: View {
                         .padding(.horizontal, theme.cardPadding)
                         .padding(.bottom, theme.smallSpacing)
                 }
-
-                hairline
-
-                Button {
-                    showingSettings = true
-                } label: {
-                    actionRow(
-                        icon: "gearshape",
-                        tint: theme.accentText,
-                        title: "设置",
-                        subtitle: "主题、强调色、模板、导出与关于"
-                    )
-                }
-                .buttonStyle(.plain)
-                .accessibilityHint("打开 LedgerBox 设置")
             }
         }
     }
@@ -259,75 +223,6 @@ struct ProfileMenuView: View {
         .contentShape(Rectangle())
     }
 
-    // MARK: - Providers
-
-    private var providerCard: some View {
-        LedgerCard(surface: .elevated) {
-            VStack(alignment: .leading, spacing: theme.cardSpacing) {
-                HStack(alignment: .firstTextBaseline, spacing: theme.smallSpacing) {
-                    Text("账号来源")
-                        .font(theme.sectionTitleFont)
-                        .foregroundStyle(theme.primaryText)
-                        .accessibilityAddTraits(.isHeader)
-
-                    Spacer(minLength: theme.smallSpacing)
-
-                    LedgerTag("未接入", tint: theme.warning)
-                }
-
-                Text("当前仅支持本地资料。微信 / 支付宝登录需要官方授权，未配置时不会读取任何第三方账号信息。")
-                    .font(theme.captionFont)
-                    .foregroundStyle(theme.secondaryText)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                HStack(spacing: theme.smallSpacing) {
-                    providerButton(.wechat)
-                    providerButton(.alipay)
-                }
-
-                Label(
-                    "需要 AppID/SDK/服务端，当前仅本地资料",
-                    systemImage: "info.circle"
-                )
-                .font(theme.captionFont)
-                .foregroundStyle(theme.tertiaryText)
-                .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
-
-    private func providerButton(_ provider: ProfileProvider) -> some View {
-        Button {
-            // Intentionally empty. There is no configured provider implementation;
-            // enabling this would fake an authorization flow.
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: provider.symbolName)
-                    .font(theme.controlIconFont)
-
-                Text(provider.displayName)
-                    .font(theme.captionFont)
-                    .lineLimit(1)
-
-                Image(systemName: "lock.fill")
-                    .font(.system(size: 9, weight: .bold))
-            }
-            .foregroundStyle(theme.secondaryText)
-            .frame(maxWidth: .infinity, minHeight: theme.minTapTarget)
-            .background(theme.surface, in: Capsule())
-            .overlay {
-                Capsule()
-                    .strokeBorder(theme.separator, lineWidth: theme.hairline)
-            }
-            .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .disabled(true)
-        .opacity(0.55)
-        .accessibilityLabel("\(provider.displayName)登录")
-        .accessibilityHint("未配置，需要 AppID/SDK/服务端，当前仅本地资料")
-    }
-
     // MARK: - Privacy
 
     private var privacyCard: some View {
@@ -344,7 +239,7 @@ struct ProfileMenuView: View {
                     LedgerTag("本地", tint: theme.income)
                 }
 
-                Text("昵称、头像与来源只保存在本机 Application Support/LedgerBox/local-profile.json。它们不会上传，也不会用于广告或第三方分析。")
+                Text("昵称与头像只保存在本机 Application Support/LedgerBox/local-profile.json。它们不会上传，也不会用于广告或第三方分析。")
                     .font(theme.captionFont)
                     .foregroundStyle(theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)

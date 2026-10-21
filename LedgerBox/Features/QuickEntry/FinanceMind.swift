@@ -103,10 +103,10 @@ struct FinanceIntentPrediction {
 
 /// A finance-only, hashed character n-gram intent classifier.
 ///
-/// 40 intents x 524,288 buckets + 40 biases = 20,971,560 parameters. The
-/// weights are Int8 in FinanceMindWeights.bin (about 20 MB), loaded locally.
-/// It routes text to deterministic advice templates; it is not a compressed
-/// Qwen checkpoint and it does not generate free-form answers.
+/// 40 intents x 1,048,576 buckets + 40 biases = 41,943,080 parameters. The
+/// weights are Int8 in FinanceMindWeights.bin (about 40 MB), loaded locally.
+/// It routes text to deterministic Decimal calculations and advice templates;
+/// it is not a compressed Qwen checkpoint and it never generates numbers.
 final class FinanceMind {
     static let shared = FinanceMind()
 
@@ -315,6 +315,19 @@ struct FinanceAdvice {
     let title: String
     let body: String
     let tag: String
+    let calculation: FinanceCalculation?
+
+    init(
+        title: String,
+        body: String,
+        tag: String,
+        calculation: FinanceCalculation? = nil
+    ) {
+        self.title = title
+        self.body = body
+        self.tag = tag
+        self.calculation = calculation
+    }
 }
 
 enum FinanceAdvisor {
@@ -322,6 +335,17 @@ enum FinanceAdvisor {
         let prediction = FinanceMind.shared.predict(text)
         let intent = prediction?.intent ?? .other
         let tag = prediction.map { "\($0.intent.displayName) · \($0.percent)%" } ?? "财务"
+
+        // FinanceMind selects the calculation; Decimal performs it. The model
+        // never emits an amount, percentage or formula.
+        if let calculation = FinanceComputeRouter.route(text, snapshot: snapshot) {
+            return FinanceAdvice(
+                title: calculation.title,
+                body: calculation.detail,
+                tag: calculation.tag,
+                calculation: calculation
+            )
+        }
 
         switch intent {
         case .recordExpense:
@@ -704,5 +728,416 @@ enum FinanceAdvisor {
         let value = NSDecimalNumber(decimal: part).doubleValue
             / NSDecimalNumber(decimal: total).doubleValue
         return Int((value * 100).rounded())
+    }
+}
+
+// MARK: - AI-routed Decimal calculations
+
+/// The operations FinanceMind may select. They are deliberately a closed set:
+/// the model routes to a formula, while `Decimal` owns every number.
+enum FinanceCalculationKind: String, CaseIterable, Identifiable {
+    case spendingTotal
+    case categoryShare
+    case budgetRemaining
+    case monthlyNet
+    case savingsRate
+    case emergencyFund
+    case goalProgress
+    case cashflowForecast
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .spendingTotal: return "支出合计"
+        case .categoryShare: return "分类占比"
+        case .budgetRemaining: return "预算剩余"
+        case .monthlyNet: return "本月结余"
+        case .savingsRate: return "结余率"
+        case .emergencyFund: return "应急金"
+        case .goalProgress: return "目标进度"
+        case .cashflowForecast: return "现金流预估"
+        }
+    }
+
+    var symbolName: String {
+        switch self {
+        case .spendingTotal: return "sum"
+        case .categoryShare: return "chart.pie.fill"
+        case .budgetRemaining: return "gauge.with.dots.needle.50percent"
+        case .monthlyNet: return "equal.circle.fill"
+        case .savingsRate: return "percent"
+        case .emergencyFund: return "shield.lefthalf.filled"
+        case .goalProgress: return "target"
+        case .cashflowForecast: return "waveform.path.ecg"
+        }
+    }
+}
+
+struct FinanceCalculation: Equatable {
+    let kind: FinanceCalculationKind
+    let title: String
+    let value: Decimal
+    let secondaryValue: Decimal?
+    let detail: String
+    let formula: String
+    let modelIntent: FinanceIntent
+    let modelConfidence: Float?
+    let routedByModel: Bool
+
+    var tag: String {
+        if routedByModel, let modelConfidence {
+            return "\(modelIntent.displayName) · \(Int((modelConfidence * 100).rounded()))% · 精算"
+        }
+        return "规则兜底 · 精算"
+    }
+}
+
+/// Selects a calculation with the local intent model, then delegates arithmetic
+/// to a deterministic Decimal engine. This is the entire safety boundary:
+/// FinanceMind is good at routing text, not at doing reliable arithmetic.
+enum FinanceComputeRouter {
+    static func route(_ text: String, snapshot: FinanceSnapshot) -> FinanceCalculation? {
+        let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard normalized.count >= 2 else {
+            return nil
+        }
+
+        let probe = FinanceMind.shared.probe(normalized, limit: 3)
+        let best = probe?.predictions.first
+        let intent = best?.intent ?? .other
+        guard let kind = resolveKind(
+            intent: intent,
+            text: normalized,
+            snapshot: snapshot
+        ) else {
+            return nil
+        }
+
+        return FinanceComputeEngine(snapshot: snapshot).compute(
+            kind,
+            text: normalized,
+            intent: intent,
+            confidence: best?.confidence,
+            routedByModel: best != nil
+        )
+    }
+
+    private static func resolveKind(
+        intent: FinanceIntent,
+        text: String,
+        snapshot: FinanceSnapshot
+    ) -> FinanceCalculationKind? {
+        switch intent {
+        case .spendingQuery:
+            return FinanceComputeEngine.matchingCategory(in: text, snapshot: snapshot) == nil
+                ? .spendingTotal
+                : .categoryShare
+        case .categoryQuestion:
+            return FinanceComputeEngine.matchingCategory(in: text, snapshot: snapshot) == nil
+                ? nil
+                : .categoryShare
+        case .balanceQuery:
+            return .monthlyNet
+        case .budgetStatus:
+            return snapshot.budgetLimit == nil ? nil : .budgetRemaining
+        case .cashflow:
+            return .cashflowForecast
+        case .savingAdvice:
+            return snapshot.monthIncome > 0 ? .savingsRate : nil
+        case .emergencyFund:
+            return .emergencyFund
+        case .financialGoal:
+            return snapshot.goalTarget == nil ? nil : .goalProgress
+        default:
+            return fallbackKind(for: text)
+        }
+    }
+
+    private static func fallbackKind(for text: String) -> FinanceCalculationKind? {
+        // Deterministic backstop for ambiguous/unknown model output. It never
+        // invents a number; it only chooses one of the same closed formulas.
+        if text.contains("预算") { return .budgetRemaining }
+        if text.contains("应急") || text.contains("备用金") || text.contains("紧急") {
+            return .emergencyFund
+        }
+        if text.contains("目标") || text.contains("攒钱") || text.contains("存钱") {
+            return .savingsRate
+        }
+        if text.contains("现金流") { return .cashflowForecast }
+        if text.contains("余额") || text.contains("结余") || text.contains("剩多少") {
+            return .monthlyNet
+        }
+        if text.contains("花") || text.contains("支出") || text.contains("消费") {
+            return .spendingTotal
+        }
+        return nil
+    }
+}
+
+struct FinanceComputeEngine {
+    let snapshot: FinanceSnapshot
+
+    func compute(
+        _ kind: FinanceCalculationKind,
+        text: String,
+        intent: FinanceIntent,
+        confidence: Float?,
+        routedByModel: Bool
+    ) -> FinanceCalculation? {
+        switch kind {
+        case .spendingTotal:
+            return spendingTotal(intent: intent, confidence: confidence, routedByModel: routedByModel)
+        case .categoryShare:
+            return categoryShare(
+                text: text,
+                intent: intent,
+                confidence: confidence,
+                routedByModel: routedByModel
+            )
+        case .budgetRemaining:
+            return budgetRemaining(intent: intent, confidence: confidence, routedByModel: routedByModel)
+        case .monthlyNet:
+            return monthlyNet(intent: intent, confidence: confidence, routedByModel: routedByModel)
+        case .savingsRate:
+            return savingsRate(intent: intent, confidence: confidence, routedByModel: routedByModel)
+        case .emergencyFund:
+            return emergencyFund(intent: intent, confidence: confidence, routedByModel: routedByModel)
+        case .goalProgress:
+            return goalProgress(intent: intent, confidence: confidence, routedByModel: routedByModel)
+        case .cashflowForecast:
+            return cashflowForecast(intent: intent, confidence: confidence, routedByModel: routedByModel)
+        }
+    }
+
+    static func matchingCategory(
+        in text: String,
+        snapshot: FinanceSnapshot
+    ) -> (name: String, amount: Decimal)? {
+        if let direct = snapshot.categories.first(where: {
+            $0.name != "其他" && text.contains($0.name)
+        }) {
+            return (direct.name, direct.amount)
+        }
+
+        guard let domain = MoneyBrain.shared.predict(text)?.domain,
+              domain != .other else {
+            return nil
+        }
+        let aliases = domain.categoryAliases
+        guard let matched = snapshot.categories.first(where: { item in
+            aliases.contains { alias in
+                item.name.contains(alias) || alias.contains(item.name)
+            }
+        }) else {
+            return nil
+        }
+        return (matched.name, matched.amount)
+    }
+
+    private func spendingTotal(
+        intent: FinanceIntent,
+        confidence: Float?,
+        routedByModel: Bool
+    ) -> FinanceCalculation {
+        let total = snapshot.monthExpense
+        let top = snapshot.topCategory
+        let detail: String
+        if total <= 0 {
+            detail = "本月支出为 \(money(total))。先记几笔，或检查当前月份筛选；没有数据时我不会编一个数字。数据来自本机账本，不联网。"
+        } else if let top {
+            let share = percentText(percentValue(top.amount, total))
+            detail = "本月支出 \(money(total))；最大类是 \(top.name)，约 \(money(top.amount))，占 \(share)。完整明细在统计页。数据来自本机账本，不联网。"
+        } else {
+            detail = "本月支出 \(money(total))。还没有可归类的支出明细。数据来自本机账本，不联网。"
+        }
+        return FinanceCalculation(
+            kind: .spendingTotal,
+            title: total > 0 ? "本月支出 \(money(total))" : "本月还没有支出",
+            value: total,
+            secondaryValue: top?.amount,
+            detail: detail,
+            formula: top.map { "最大类占比 = \(money($0.amount)) ÷ \(money(total)) × 100% = \(percentText(percentValue($0.amount, total)))" }
+                ?? "本月支出 = Σ支出 − Σ退款 = \(money(total))",
+            modelIntent: intent,
+            modelConfidence: confidence,
+            routedByModel: routedByModel
+        )
+    }
+
+    private func categoryShare(
+        text: String,
+        intent: FinanceIntent,
+        confidence: Float?,
+        routedByModel: Bool
+    ) -> FinanceCalculation? {
+        guard let matched = Self.matchingCategory(in: text, snapshot: snapshot),
+              snapshot.monthExpense > 0 else {
+            return nil
+        }
+        let share = percentValue(matched.amount, snapshot.monthExpense)
+        return FinanceCalculation(
+            kind: .categoryShare,
+            title: "\(matched.name)支出 \(money(matched.amount))",
+            value: matched.amount,
+            secondaryValue: share,
+            detail: "本月 \(matched.name) 约 \(money(matched.amount))，占本月支出的 \(percentText(share))。分类金额来自本机账本，不联网。",
+            formula: "分类占比 = \(money(matched.amount)) ÷ \(money(snapshot.monthExpense)) × 100% = \(percentText(share))",
+            modelIntent: intent,
+            modelConfidence: confidence,
+            routedByModel: routedByModel
+        )
+    }
+
+    private func budgetRemaining(
+        intent: FinanceIntent,
+        confidence: Float?,
+        routedByModel: Bool
+    ) -> FinanceCalculation? {
+        guard let limit = snapshot.budgetLimit, limit > 0 else {
+            return nil
+        }
+        let spent = snapshot.budgetSpent ?? snapshot.monthExpense
+        let remaining = limit - spent
+        let used = percentValue(spent, limit)
+        return FinanceCalculation(
+            kind: .budgetRemaining,
+            title: remaining >= 0
+                ? "预算还剩 \(money(remaining))"
+                : "已超预算 \(money(-remaining))",
+            value: remaining,
+            secondaryValue: used,
+            detail: "本月预算 \(money(limit))，已用 \(money(spent))（\(percentText(used))）。\(remaining >= 0 ? "后面每笔支出都会继续扣减。" : "先暂停非必要支出，或调整预算。")",
+            formula: "剩余预算 = \(money(limit)) − \(money(spent)) = \(money(remaining))；使用率 = \(percentText(used))",
+            modelIntent: intent,
+            modelConfidence: confidence,
+            routedByModel: routedByModel
+        )
+    }
+
+    private func monthlyNet(
+        intent: FinanceIntent,
+        confidence: Float?,
+        routedByModel: Bool
+    ) -> FinanceCalculation {
+        let net = snapshot.monthIncome - snapshot.monthExpense
+        return FinanceCalculation(
+            kind: .monthlyNet,
+            title: "本月结余 \(money(net))",
+            value: net,
+            secondaryValue: snapshot.totalBalance,
+            detail: "本月收入 \(money(snapshot.monthIncome))，支出 \(money(snapshot.monthExpense))，结余 \(money(net))。账户总余额约 \(money(snapshot.totalBalance))。数据来自本机账本，不联网。",
+            formula: "结余 = \(money(snapshot.monthIncome)) − \(money(snapshot.monthExpense)) = \(money(net))",
+            modelIntent: intent,
+            modelConfidence: confidence,
+            routedByModel: routedByModel
+        )
+    }
+
+    private func savingsRate(
+        intent: FinanceIntent,
+        confidence: Float?,
+        routedByModel: Bool
+    ) -> FinanceCalculation? {
+        guard snapshot.monthIncome > 0 else {
+            return nil
+        }
+        let net = snapshot.monthIncome - snapshot.monthExpense
+        let rate = percentValue(net, snapshot.monthIncome)
+        return FinanceCalculation(
+            kind: .savingsRate,
+            title: "本月结余率 \(percentText(rate))",
+            value: rate,
+            secondaryValue: net,
+            detail: "收入 \(money(snapshot.monthIncome))，支出 \(money(snapshot.monthExpense))，结余 \(money(net))。先设一个自动转存比例，再优化最大支出类；不要靠月底“剩下多少存多少”。",
+            formula: "结余率 = \(money(net)) ÷ \(money(snapshot.monthIncome)) × 100% = \(percentText(rate))",
+            modelIntent: intent,
+            modelConfidence: confidence,
+            routedByModel: routedByModel
+        )
+    }
+
+    private func emergencyFund(
+        intent: FinanceIntent,
+        confidence: Float?,
+        routedByModel: Bool
+    ) -> FinanceCalculation {
+        let low = snapshot.monthExpense * 3
+        let high = snapshot.monthExpense * 6
+        return FinanceCalculation(
+            kind: .emergencyFund,
+            title: "应急金参考 \(money(low))–\(money(high))",
+            value: low,
+            secondaryValue: high,
+            detail: "常见目标是 3–6 个月必要开支。按你本月支出估算，约 \(money(low))–\(money(high))；先放在随取、低风险的地方。",
+            formula: "3 个月 = \(money(snapshot.monthExpense)) × 3 = \(money(low))；6 个月 = \(money(snapshot.monthExpense)) × 6 = \(money(high))",
+            modelIntent: intent,
+            modelConfidence: confidence,
+            routedByModel: routedByModel
+        )
+    }
+
+    private func goalProgress(
+        intent: FinanceIntent,
+        confidence: Float?,
+        routedByModel: Bool
+    ) -> FinanceCalculation? {
+        guard let name = snapshot.goalName,
+              let target = snapshot.goalTarget,
+              target > 0 else {
+            return nil
+        }
+        let current = snapshot.goalCurrent ?? 0
+        let progress = percentValue(current, target)
+        let remaining = max(target - current, Decimal.zero)
+        return FinanceCalculation(
+            kind: .goalProgress,
+            title: "\(name) · \(percentText(progress))",
+            value: progress,
+            secondaryValue: remaining,
+            detail: "已存 \(money(current)) / \(money(target))，还差 \(money(remaining))。按剩余月份拆成每月固定转存，比月底临时补更稳。",
+            formula: "目标进度 = \(money(current)) ÷ \(money(target)) × 100% = \(percentText(progress))；剩余 = \(money(remaining))",
+            modelIntent: intent,
+            modelConfidence: confidence,
+            routedByModel: routedByModel
+        )
+    }
+
+    private func cashflowForecast(
+        intent: FinanceIntent,
+        confidence: Float?,
+        routedByModel: Bool
+    ) -> FinanceCalculation {
+        let net = snapshot.monthIncome - snapshot.monthExpense
+        let forecast = snapshot.totalBalance + net
+        return FinanceCalculation(
+            kind: .cashflowForecast,
+            title: "现金流预估 \(money(forecast))",
+            value: forecast,
+            secondaryValue: net,
+            detail: "按本月收支节奏静态推演：账户总余额 \(money(snapshot.totalBalance))，本月结余 \(money(net))，预计余额 \(money(forecast))。不是预测未来收入，也不联网。",
+            formula: "预计余额 = \(money(snapshot.totalBalance)) + \(money(net)) = \(money(forecast))",
+            modelIntent: intent,
+            modelConfidence: confidence,
+            routedByModel: routedByModel
+        )
+    }
+
+    private func percentValue(_ part: Decimal, _ total: Decimal) -> Decimal {
+        guard total > 0 else {
+            return 0
+        }
+        var value = part / total * 100
+        var rounded = Decimal()
+        NSDecimalRound(&rounded, &value, 1, .plain)
+        return rounded
+    }
+
+    private func percentText(_ value: Decimal) -> String {
+        String(format: "%.1f%%", value.doubleValue)
+    }
+
+    private func money(_ value: Decimal) -> String {
+        MoneyFormat.currency(value)
     }
 }

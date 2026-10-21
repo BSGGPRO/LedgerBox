@@ -500,7 +500,7 @@ struct SettingsView: View {
                         icon: "brain.head.profile",
                         tint: theme.accentText,
                         title: "财务大脑",
-                        subtitle: "40 个记账意图 · 20,971,560 参数 · 离线",
+                        subtitle: "40 个记账意图 · 41,943,080 参数 · 模型路由 + Decimal 精算",
                         trailingText: "本地",
                         trailingTint: theme.income
                     )

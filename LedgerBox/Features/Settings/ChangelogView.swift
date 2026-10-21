@@ -14,6 +14,18 @@ struct ChangelogEntry: Identifiable {
 enum ChangelogCatalog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "0.9.0",
+            dateText: "2026.10.21",
+            title: "算力翻倍，数字交给精算引擎",
+            changes: [
+                "FinanceMind 从 20,971,560 参数扩到 41,943,080 参数：40 类意图 × 1,048,576 个哈希桶 + 40 个 bias；Int8 权重约 40 MB，仍完全本地。",
+                "新增 AI 计算路由：模型只选择支出、分类占比、预算、结余、结余率、应急金、目标进度、现金流八类公式；所有数字由 Decimal 精确计算，模型不生成金额。",
+                "财务大脑回答会显示“模型路由/规则兜底”、计算类型和可复制的算式，便于核对；没有数据时明确说没有，不编数字。",
+                "移除顶部头像栏和微信/支付宝第三方入口；头像改为底部左侧，本地资料，不上传。",
+                "底部悬浮操作行：左侧本地头像、中间加号（极速记账/记一笔）、右侧设置，位置更符合单手操作。"
+            ]
+        ),
+        ChangelogEntry(
             version: "0.8.0",
             dateText: "2026.10.21",
             title: "拍账单，先核对再入账",

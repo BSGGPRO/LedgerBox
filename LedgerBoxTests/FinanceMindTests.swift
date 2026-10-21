@@ -1,13 +1,13 @@
-﻿import XCTest
+import XCTest
 @testable import LedgerBox
 
 final class FinanceMindTests: XCTestCase {
     func testModelLoadsAtFullCapacity() {
         XCTAssertTrue(FinanceMind.shared.isReady)
-        XCTAssertEqual(FinanceMind.parameterCount, 20_971_560)
-        XCTAssertEqual(FinanceMind.modelByteCount, 20_971_680)
+        XCTAssertEqual(FinanceMind.parameterCount, 41_943_080)
+        XCTAssertEqual(FinanceMind.modelByteCount, 41_943_200)
         XCTAssertEqual(FinanceMindWeights.labels.count, 40)
-        XCTAssertEqual(FinanceMindWeights.bucketCount, 524_288)
+        XCTAssertEqual(FinanceMindWeights.bucketCount, 1_048_576)
     }
 
     func testCashflowProbe() {
@@ -49,5 +49,62 @@ final class FinanceMindTests: XCTestCase {
     func testEmptyInputDoesNotCrash() {
         XCTAssertNil(FinanceMind.shared.probe(""))
         XCTAssertNil(FinanceMind.shared.probe("   "))
+    }
+
+    private var computeSnapshot: FinanceSnapshot {
+        FinanceSnapshot(
+            monthIncome: 8_000,
+            monthExpense: 3_200,
+            totalBalance: 12_000,
+            categories: [
+                (name: "餐饮", amount: 1_000),
+                (name: "交通", amount: 500)
+            ],
+            budgetLimit: 5_000,
+            budgetSpent: 3_200,
+            goalName: "旅行",
+            goalTarget: 10_000,
+            goalCurrent: 2_500
+        )
+    }
+
+    func testAIModelRoutesSpendingToDecimalEngine() {
+        let calculation = FinanceComputeRouter.route(
+            "这个月花了多少",
+            snapshot: computeSnapshot
+        )
+        XCTAssertEqual(calculation?.kind, .spendingTotal)
+        XCTAssertEqual(calculation?.value, Decimal(string: "3200"))
+        XCTAssertTrue(calculation?.routedByModel ?? false)
+        XCTAssertTrue(calculation?.formula.contains("3,200.00") ?? false)
+    }
+
+    func testAIModelRoutesBudgetAndKeepsExactRemainder() {
+        let calculation = FinanceComputeRouter.route(
+            "预算还剩多少",
+            snapshot: computeSnapshot
+        )
+        XCTAssertEqual(calculation?.kind, .budgetRemaining)
+        XCTAssertEqual(calculation?.value, Decimal(string: "1800"))
+        XCTAssertEqual(calculation?.secondaryValue, Decimal(string: "64"))
+    }
+
+    func testCategoryShareIsComputedWithDecimal() {
+        let calculation = FinanceComputeRouter.route(
+            "餐饮花了多少",
+            snapshot: computeSnapshot
+        )
+        XCTAssertEqual(calculation?.kind, .categoryShare)
+        XCTAssertEqual(calculation?.value, Decimal(string: "1000"))
+        XCTAssertEqual(calculation?.secondaryValue, Decimal(string: "31.3"))
+        XCTAssertTrue(calculation?.formula.contains("31.3%") ?? false)
+    }
+
+    func testNonCalculationTextDoesNotInventANumber() {
+        let calculation = FinanceComputeRouter.route(
+            "今天天气怎么样",
+            snapshot: computeSnapshot
+        )
+        XCTAssertNil(calculation)
     }
 }

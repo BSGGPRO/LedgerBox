@@ -1,10 +1,10 @@
-﻿"""Train LedgerBox's local finance-intent model.
+"""Train LedgerBox's local finance-intent model.
 
 This is a hashed character n-gram linear classifier, not a compressed LLM.
 It routes a phrase to one of 40 accounting intents; advice text is deterministic.
 
-Parameters: 40 x 524,288 weights + 40 biases = 20,971,560.
-The exported weights are Int8 (about 20 MB), loaded from the app bundle.
+Parameters: 40 x 1,048,576 weights + 40 biases = 41,943,080.
+The exported weights are Int8 (about 40 MB), loaded from the app bundle.
 
 Training data is synthetic. The validation number is synthetic-only and must not
 be presented as real-world accuracy.
@@ -60,7 +60,7 @@ LABELS = [
     "other",
 ]
 
-BUCKETS = 524_288
+BUCKETS = 1_048_576
 SCALE = 48.0
 SEED = 20261021
 EPOCHS = 10

@@ -52,8 +52,7 @@ struct HomeView: View {
         NavigationStack {
             GlassHeaderHost(
                 title: "LedgerBox",
-                subtitle: Date.now.formatted(.dateTime.year().month(.wide)),
-                trailing: { ProfileBadge() }
+                subtitle: Date.now.formatted(.dateTime.year().month(.wide))
             ) {
                 VStack(alignment: .leading, spacing: 0) {
                     VStack(alignment: .leading, spacing: theme.sectionSpacing) {
@@ -66,7 +65,7 @@ struct HomeView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, theme.pagePadding)
-                .padding(.bottom, 110)
+                .padding(.bottom, 170)
             }
         }
         .sheet(item: $activeSheet) { sheet in
