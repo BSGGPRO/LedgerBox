@@ -14,6 +14,17 @@ struct ChangelogEntry: Identifiable {
 enum ChangelogCatalog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "0.3.0",
+            dateText: "2026.10.21",
+            title: "财务专用小模型",
+            changes: [
+                "新增 15,380 参数财务意图模型：20 个财务意图 × 768 个字符 n-gram 桶。",
+                "新增财务大脑页：本月收入/支出/结余/余额、预算、目标、分类、储蓄、负债、保险、税务等问答。",
+                "回答由本地账本快照和固定规则生成，不编数字，不自动写账，不联网。",
+                "它不是 Qwen 裁层，也不是生成式大模型；训练数据是合成财务短语，真实准确率仍需测试。"
+            ]
+        ),
+        ChangelogEntry(
             version: "0.2.2",
             dateText: "2026.10.21",
             title: "联网 AI 可选，Siri 退场",

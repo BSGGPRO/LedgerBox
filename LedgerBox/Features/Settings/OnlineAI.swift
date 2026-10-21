@@ -171,7 +171,7 @@ final class OnlineAIClient {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.setValue("LedgerBox/0.2.2", forHTTPHeaderField: "User-Agent")
+        request.setValue("LedgerBox/0.3.0", forHTTPHeaderField: "User-Agent")
 
         let key = OnlineAIConfig.apiKey
         if !key.isEmpty {

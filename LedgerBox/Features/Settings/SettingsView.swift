@@ -283,6 +283,46 @@ struct SettingsView: View {
             LedgerSectionHeader(title: "AI")
 
             NavigationLink {
+                FinanceAdvisorView()
+            } label: {
+                LedgerCard {
+                    HStack(spacing: 12) {
+                        ZStack {
+                            Circle()
+                                .fill(theme.accent.opacity(0.12))
+                                .frame(width: theme.iconCircleSize, height: theme.iconCircleSize)
+
+                            Image(systemName: "brain.head.profile")
+                                .font(theme.rowIconFont)
+                                .foregroundStyle(theme.accent)
+                        }
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("财务大脑")
+                                .font(theme.bodyFont)
+                                .foregroundStyle(theme.primaryText)
+
+                            Text("20 个财务意图 · 15,380 参数 · 离线")
+                                .font(theme.captionFont)
+                                .foregroundStyle(theme.secondaryText)
+                        }
+
+                        Spacer(minLength: theme.smallSpacing)
+
+                        Text("本地")
+                            .font(theme.captionFont)
+                            .foregroundStyle(theme.income)
+
+                        Image(systemName: "chevron.right")
+                            .font(theme.controlIconFont)
+                            .foregroundStyle(theme.secondaryText)
+                    }
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("打开离线的财务专用小模型")
+
+            NavigationLink {
                 OnlineAISettingsView()
             } label: {
                 LedgerCard {

@@ -1,0 +1,345 @@
+import SwiftUI
+
+struct FinanceExchange: Identifiable {
+    let id = UUID()
+    let question: String
+    let advice: FinanceAdvice
+}
+
+struct FinanceAdvisorView: View {
+    @Environment(\.ledgerTheme) private var theme
+
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \LedgerTransaction.date, ascending: false)]
+    ) private var transactions: FetchedResults<LedgerTransaction>
+
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \Account.sortOrder, ascending: true)]
+    ) private var accounts: FetchedResults<Account>
+
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \Category.sortOrder, ascending: true)]
+    ) private var categories: FetchedResults<Category>
+
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \Budget.startDate, ascending: false)]
+    ) private var budgets: FetchedResults<Budget>
+
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \SavingsGoal.createdAt, ascending: false)]
+    ) private var goals: FetchedResults<SavingsGoal>
+
+    @State private var input = ""
+    @State private var exchanges: [FinanceExchange] = []
+    @State private var errorMessage: String?
+    @FocusState private var inputFocused: Bool
+
+    private let prompts = [
+        "这个月花在哪了？",
+        "预算还剩多少？",
+        "怎么存钱？",
+        "奶茶算哪类？",
+        "要不要分期？"
+    ]
+
+    var body: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(spacing: theme.spacing) {
+                    heroCard
+                    snapshotGrid
+
+                    if exchanges.isEmpty {
+                        introCard
+                        promptChips
+                    } else {
+                        ForEach(exchanges) { exchange in
+                            exchangeCard(exchange)
+                                .id(exchange.id)
+                        }
+                    }
+                }
+                .padding(.horizontal, theme.pagePadding)
+                .padding(.vertical, theme.spacing)
+            }
+            .scrollDismissesKeyboard(.interactively)
+            .onChange(of: exchanges.count) { _, _ in
+                if let last = exchanges.last {
+                    withAnimation(.snappy) {
+                        proxy.scrollTo(last.id, anchor: .bottom)
+                    }
+                }
+            }
+        }
+        .background(theme.background.ignoresSafeArea())
+        .navigationTitle("财务大脑")
+        .navigationBarTitleDisplayMode(.inline)
+        .safeAreaInset(edge: .bottom) {
+            composer
+        }
+        .alert(
+            "财务大脑",
+            isPresented: Binding(
+                get: { errorMessage != nil },
+                set: { if !$0 { errorMessage = nil } }
+            )
+        ) {
+            Button("好", role: .cancel) {}
+        } message: {
+            Text(errorMessage ?? "")
+        }
+    }
+
+    private var heroCard: some View {
+        LedgerCard {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [theme.accent.opacity(0.22), theme.accent.opacity(0.05)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: "brain.head.profile")
+                        .font(theme.rowIconFont)
+                        .foregroundStyle(theme.accent)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("财务专用小模型")
+                        .font(theme.sectionTitleFont)
+                        .foregroundStyle(theme.primaryText)
+
+                    Text("15,380 参数 · 本地 · 只理解财务")
+                        .font(theme.badgeFont)
+                        .foregroundStyle(theme.secondaryText)
+                }
+
+                Spacer(minLength: 4)
+
+                Text("离线")
+                    .font(theme.badgeFont)
+                    .foregroundStyle(theme.income)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(theme.income.opacity(0.12), in: Capsule())
+            }
+        }
+    }
+
+    private var snapshotGrid: some View {
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+            metricCard(title: "本月收入", value: MoneyFormat.currency(snapshot.monthIncome), icon: "arrow.down.left", color: theme.income)
+            metricCard(title: "本月支出", value: MoneyFormat.currency(snapshot.monthExpense), icon: "arrow.up.right", color: theme.expense)
+            metricCard(title: "本月结余", value: MoneyFormat.currency(snapshot.monthNet), icon: "equal", color: theme.accent)
+            metricCard(title: "账户总余额", value: MoneyFormat.currency(snapshot.totalBalance), icon: "banknote", color: theme.primaryText)
+        }
+    }
+
+    private func metricCard(title: String, value: String, icon: String, color: Color) -> some View {
+        LedgerCard {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    Image(systemName: icon)
+                        .font(theme.badgeFont)
+                        .foregroundStyle(color)
+                    Text(title)
+                        .font(theme.badgeFont)
+                        .foregroundStyle(theme.secondaryText)
+                }
+
+                Text(value)
+                    .font(theme.moneyFont)
+                    .foregroundStyle(theme.primaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+        }
+    }
+
+    private var introCard: some View {
+        LedgerCard {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("问它财务问题")
+                    .font(theme.bodyFont.weight(.semibold))
+                    .foregroundStyle(theme.primaryText)
+
+                Text("它会把问题分成 20 个财务意图，再用本机账本和固定规则回答。不会编数字，不会自动写账。")
+                    .font(theme.captionFont)
+                    .foregroundStyle(theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private var promptChips: some View {
+        ScrollView(.horizontal) {
+            HStack(spacing: 8) {
+                ForEach(prompts, id: \.self) { prompt in
+                    Button {
+                        ask(prompt)
+                    } label: {
+                        Text(prompt)
+                            .font(theme.captionFont)
+                            .foregroundStyle(theme.secondaryText)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 7)
+                            .background(theme.surface, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .scrollIndicators(.hidden)
+    }
+
+    private func exchangeCard(_ exchange: FinanceExchange) -> some View {
+        VStack(alignment: .trailing, spacing: 8) {
+            Text(exchange.question)
+                .font(theme.bodyFont)
+                .foregroundStyle(theme.onAccent)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 9)
+                .background(theme.accent, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+
+            LedgerCard {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text(exchange.advice.title)
+                            .font(theme.bodyFont.weight(.semibold))
+                            .foregroundStyle(theme.primaryText)
+
+                        Spacer(minLength: 4)
+
+                        Text(exchange.advice.tag)
+                            .font(theme.badgeFont)
+                            .foregroundStyle(theme.accent)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3)
+                            .background(theme.accent.opacity(0.1), in: Capsule())
+                    }
+
+                    Text(exchange.advice.body)
+                        .font(theme.captionFont)
+                        .foregroundStyle(theme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Text("只作记账参考，不构成投资/税务建议")
+                        .font(theme.badgeFont)
+                        .foregroundStyle(theme.secondaryText.opacity(0.8))
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
+    }
+
+    private var composer: some View {
+        HStack(alignment: .bottom, spacing: 8) {
+            TextField("问支出、预算、储蓄、负债…", text: $input, axis: .vertical)
+                .focused($inputFocused)
+                .font(theme.bodyFont)
+                .lineLimit(1...4)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(
+                    theme.surface,
+                    in: RoundedRectangle(cornerRadius: theme.controlRadius, style: .continuous)
+                )
+
+            Button {
+                ask(input)
+            } label: {
+                Image(systemName: "arrow.up")
+                    .font(theme.headerActionFont)
+                    .foregroundStyle(theme.onAccent)
+                    .frame(width: 42, height: 42)
+                    .background(theme.accent, in: Circle())
+            }
+            .buttonStyle(.plain)
+            .disabled(input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .accessibilityLabel("提问")
+        }
+        .padding(.horizontal, theme.pagePadding)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial)
+    }
+
+    private func ask(_ text: String) {
+        let question = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !question.isEmpty else {
+            return
+        }
+
+        input = ""
+        inputFocused = false
+        let advice = FinanceAdvisor.answer(to: question, snapshot: snapshot)
+        exchanges.append(FinanceExchange(question: question, advice: advice))
+    }
+
+    private var snapshot: FinanceSnapshot {
+        let interval = FinanceEngine.interval(for: .monthly, containing: Date())
+        let summary = FinanceEngine.summary(transactions: Array(transactions), in: interval)
+
+        let categoryNames = Dictionary(uniqueKeysWithValues: categories.map { ($0.id, $0.name) })
+        var spending: [String: Decimal] = [:]
+        for transaction in transactions where interval.contains(transaction.date) {
+            guard let categoryID = transaction.categoryId,
+                  let name = categoryNames[categoryID] else {
+                continue
+            }
+            switch transaction.transactionType {
+            case .expense:
+                spending[name, default: 0] += transaction.amountValue
+            case .refund:
+                spending[name, default: 0] -= transaction.amountValue
+            case .income, .transfer:
+                break
+            }
+        }
+
+        let categories = spending
+            .filter { $0.value > 0 }
+            .map { (name: $0.key, amount: $0.value) }
+            .sorted { $0.amount > $1.amount }
+
+        let totalBalance = accounts.reduce(Decimal.zero) { $0 + $1.balanceValue }
+
+        let monthlyBudgets = budgets.filter { $0.enabled && $0.budgetPeriod == .monthly }
+        let totalBudget = monthlyBudgets.first { $0.categoryId == nil }
+        let budgetLimit: Decimal?
+        let budgetSpent: Decimal?
+        if let totalBudget {
+            budgetLimit = totalBudget.limitValue
+            budgetSpent = summary.expense
+        } else if !monthlyBudgets.isEmpty {
+            budgetLimit = monthlyBudgets.reduce(Decimal.zero) { $0 + $1.limitValue }
+            budgetSpent = monthlyBudgets.reduce(Decimal.zero) { partial, budget in
+                guard let categoryID = budget.categoryId,
+                      let name = categoryNames[categoryID] else {
+                    return partial
+                }
+                return partial + (spending[name] ?? 0)
+            }
+        } else {
+            budgetLimit = nil
+            budgetSpent = nil
+        }
+
+        let goal = goals.first { $0.goalStatus == .active }
+        return FinanceSnapshot(
+            monthIncome: summary.income,
+            monthExpense: summary.expense,
+            totalBalance: totalBalance,
+            categories: categories,
+            budgetLimit: budgetLimit,
+            budgetSpent: budgetSpent,
+            goalName: goal?.name,
+            goalTarget: goal?.targetValue,
+            goalCurrent: goal?.currentValue
+        )
+    }
+}

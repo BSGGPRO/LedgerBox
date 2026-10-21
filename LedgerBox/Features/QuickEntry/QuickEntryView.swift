@@ -42,6 +42,7 @@ struct QuickEntryView: View {
     @State private var lastAutoRemark = ""
     @State private var alert: QuickEntryAlert?
     @State private var showingOnlineAI = false
+    @State private var showingFinanceAdvisor = false
     @FocusState private var inputFocused: Bool
 
     private let parser = QuickEntryParser()
@@ -102,6 +103,11 @@ struct QuickEntryView: View {
         .sheet(isPresented: $showingOnlineAI) {
             NavigationStack {
                 OnlineAIView()
+            }
+        }
+        .sheet(isPresented: $showingFinanceAdvisor) {
+            NavigationStack {
+                FinanceAdvisorView()
             }
         }
     }
@@ -217,6 +223,18 @@ struct QuickEntryView: View {
                     }
 
                     Spacer(minLength: 4)
+
+                    Button {
+                        showingFinanceAdvisor = true
+                    } label: {
+                        Image(systemName: "brain.head.profile")
+                            .font(theme.badgeFont)
+                            .foregroundStyle(theme.accent)
+                            .padding(7)
+                            .background(theme.accent.opacity(0.12), in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("财务大脑")
 
                     Button {
                         showingOnlineAI = true
