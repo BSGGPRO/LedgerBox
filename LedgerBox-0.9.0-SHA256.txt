@@ -2,19 +2,20 @@ LedgerBox 0.9.0 — SHA-256
 Generated: 2026-10-21
 
 LedgerBox-unsigned-0.9.0-AICompute.ipa
-Size: 1,796,485 bytes
-SHA-256: 7DFC4A7047C9B18D8C719EAE268018B72E32C9594EEAD5943200E131891D98C0
+Size: 1,796,934 bytes
+SHA-256: 3EE0ECA0DF536CFAB9216664CD2AE62D830A513AC7D2ADF556A4A05888B05D82
 
 LedgerBox-source-0.9.0-AICompute.zip
-Size: 913,771 bytes
-SHA-256: 3591FE58524BB407CAA678584B29A39649FC045B965DDA017FF8E93D52B71714
+Size: 914,034 bytes
+SHA-256: B07623AA3C1C32284DA509161A2F347E809477D0EBD06B7E98135E4B25DC1EE7
 
 Embedded FinanceMindWeights.bin
 Size: 41,943,200 bytes
 SHA-256: 6F5E92B17EC300D7A0C69AB79324903AE4407FB992393140BB2F783B7355F380
 
 Verification notes:
-- IPA built by GitHub Actions run 39615160303, commit 5030810.
-- Tests: GitHub Actions run 39615172460, 56 passed / 0 failed / 0 skipped.
+- IPA built by GitHub Actions run 39618059285, commit 3d5000e.
+- Tests: GitHub Actions run 39618077988, 57 passed / 0 failed / 0 skipped.
 - IPA is unsigned, has no PlugIns directory, and requires your own certificate to install.
 - No physical-device install, screenshot-level visual acceptance, or real receipt accuracy test was performed.
+- The repository is currently private; release links require a GitHub account with access.

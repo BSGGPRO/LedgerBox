@@ -76,7 +76,7 @@ other                其他
 
 ```text
 输入文本
-→ FinanceMind 40 类意图分类 + 8 类计算路由
+→ FinanceMind 40 类意图分类 + 9 类计算路由
 → FinanceSnapshot（本月收入/支出/结余/余额/分类/预算/目标）
 → FinanceComputeEngine：Decimal 精确执行闭集公式
 → 回答卡（模型只选公式，不生成数字）
