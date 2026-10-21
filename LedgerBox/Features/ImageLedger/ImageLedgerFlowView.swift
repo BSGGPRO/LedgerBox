@@ -34,6 +34,7 @@ struct ImageLedgerFlowView: View {
     @State private var isProcessing = false
     @State private var draft: ImportDraft?
     @State private var duplicateSession: ImportSession?
+    @State private var allowFallbackDuplicate = false
     @State private var errorMessage: String?
 
     // Editable copy. `ImportDraft` remains immutable so the original OCR result
@@ -215,13 +216,34 @@ struct ImageLedgerFlowView: View {
             summaryCard(draft)
 
             if let duplicateSession {
-                Label(
-                    "这笔账单已在 \(duplicateSession.createdAt.formatted(date: .abbreviated, time: .shortened)) 导入过，已阻止重复入账。",
-                    systemImage: "exclamationmark.triangle.fill"
-                )
-                .font(theme.captionFont)
-                .foregroundStyle(theme.warning)
-                .fixedSize(horizontal: false, vertical: true)
+                VStack(alignment: .leading, spacing: theme.smallSpacing) {
+                    Label(
+                        "这笔账单已在 \(duplicateSession.createdAt.formatted(date: .abbreviated, time: .shortened)) 导入过，已阻止重复入账。",
+                        systemImage: "exclamationmark.triangle.fill"
+                    )
+                    .font(theme.captionFont)
+                    .foregroundStyle(theme.warning)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                    // An order ID is a strong identity: never offer an override.
+                    // For a receipt without one, two identical purchases can be
+                    // legitimate, so make the user explicitly opt in.
+                    if draft.orderIDHash == nil {
+                        if allowFallbackDuplicate {
+                            Text("已允许再记一笔；这会绕过同商户同金额同日的去重提示。")
+                                .font(theme.captionFont)
+                                .foregroundStyle(theme.secondaryText)
+                                .fixedSize(horizontal: false, vertical: true)
+                        } else {
+                            Button("仍要入账一笔") {
+                                allowFallbackDuplicate = true
+                            }
+                            .font(theme.captionFont.weight(.semibold))
+                            .foregroundStyle(theme.accentText)
+                            .frame(minHeight: 44)
+                        }
+                    }
+                }
                 .padding(.horizontal, theme.smallSpacing)
             }
 
@@ -240,12 +262,16 @@ struct ImageLedgerFlowView: View {
             Button {
                 confirm(draft)
             } label: {
-                Text(duplicateSession == nil ? "确认入账" : "已存在，无法重复入账")
+                Text(confirmButtonTitle)
                     .frame(maxWidth: .infinity, minHeight: 50)
             }
             .buttonStyle(LedgerPrimaryButtonStyle(theme: theme, fullWidth: true))
-            .disabled(duplicateSession != nil || parsedAmount == nil || selectedAccount == nil)
-            .opacity(duplicateSession == nil ? 1 : 0.55)
+            .disabled(
+                (duplicateSession != nil && !allowFallbackDuplicate)
+                    || parsedAmount == nil
+                    || selectedAccount == nil
+            )
+            .opacity(duplicateSession == nil || allowFallbackDuplicate ? 1 : 0.55)
 
             Button("重新选择图片") {
                 reset()
@@ -254,6 +280,11 @@ struct ImageLedgerFlowView: View {
             .foregroundStyle(theme.secondaryText)
             .frame(maxWidth: .infinity, minHeight: 44)
         }
+    }
+
+    private var confirmButtonTitle: String {
+        guard duplicateSession != nil else { return "确认入账" }
+        return allowFallbackDuplicate ? "仍要入账一笔" : "已存在，无法重复入账"
     }
 
     private func summaryCard(_ draft: ImportDraft) -> some View {
@@ -589,6 +620,7 @@ struct ImageLedgerFlowView: View {
     private func apply(_ newDraft: ImportDraft, duplicate: ImportSession?) {
         draft = newDraft
         duplicateSession = duplicate
+        allowFallbackDuplicate = false
         merchant = newDraft.merchant
         amountText = MoneyFormat.editable(newDraft.amount)
         feeText = newDraft.fee.map { MoneyFormat.editable($0) } ?? ""
@@ -629,7 +661,24 @@ struct ImageLedgerFlowView: View {
             errorMessage = "手续费格式无效，请填写数字或留空。"
             return
         }
+        if type == .transfer,
+           feeMode == .feeDeductedFromPrincipal,
+           let fee,
+           fee > amount {
+            errorMessage = "手续费不能大于转账本金。"
+            return
+        }
         let split = original.transferSplit?.switching(to: feeMode)
+        let dedupeKey: String
+        if duplicateSession != nil, allowFallbackDuplicate {
+            // The fallback key is deliberately salted only after the user
+            // explicitly overrides a same-merchant/amount/day warning.
+            dedupeKey = original.dedupeKey + "#override-" + UUID().uuidString
+        } else {
+            // The identity key must stay OCR-derived. Recomputing it from edits
+            // let a corrected first import slip past a later re-import.
+            dedupeKey = original.dedupeKey
+        }
         let updated = ImportDraft(
             id: original.id,
             source: original.source,
@@ -644,13 +693,7 @@ struct ImageLedgerFlowView: View {
             accountID: account.id,
             note: note.trimmingCharacters(in: .whitespacesAndNewlines),
             orderIDHash: original.orderIDHash,
-            dedupeKey: ReceiptParser.dedupeKey(
-                source: original.source,
-                merchant: merchant,
-                amount: amount,
-                date: date,
-                orderIDHash: original.orderIDHash
-            ),
+            dedupeKey: dedupeKey,
             warnings: original.warnings,
             modelConfidence: original.modelConfidence,
             needsReview: original.needsReview,
@@ -677,6 +720,7 @@ struct ImageLedgerFlowView: View {
         selectedImage = nil
         draft = nil
         duplicateSession = nil
+        allowFallbackDuplicate = false
         errorMessage = nil
         isProcessing = false
     }

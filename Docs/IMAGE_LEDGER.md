@@ -99,7 +99,12 @@ ImportToastView “撤销” 6 秒
   `SHA256(source + 归一化商户 + 金额 + 分钟级日期)`。
 - `commit` 在**任何余额变更前**检查 `ImportHistoryStore.duplicate(for:)`；重复抛
   `ImportError.duplicate`，不写第二笔。
-- 用户修改金额/日期/商户后，确认时重新计算 `dedupeKey`，避免用旧 OCR 值误判。
+- `dedupeKey` 是 **OCR 身份**，不随用户修改金额/日期/商户而变化。否则修正第一笔后
+  重新导入同一张图，会因 key 不同而漏过去重。
+- 对没有订单号的截图，同商户同金额同日可能是两笔真实消费：UI 只给“仍要入账一笔”
+  显式覆盖，覆盖时生成带 `#override-` 盐的 key；有订单号时绝不提供覆盖。
+- 历史 JSON 解码失败时移到 `ImportHistory.corrupt-<timestamp>.json`，不静默覆盖；
+  下一次写入从空历史开始，但旧证据仍在。
 - 撤销后历史标记 `undone`，同一 dedupeKey 允许重新导入。
 
 ### 2.4 转账/提现手续费
@@ -192,7 +197,9 @@ CSS 的 `backdrop-filter: blur(16px)` 在 iOS 上没有等价的固定半径 API
 
 - [x] 模型生成金额/日期/订单号 → 规则层独占，模型无写权限。
 - [x] OCR 结果自动写账 → 必须草稿预览 + 用户确认。
-- [x] 重复订单重复入账 → 写前 dedupe + JSON 历史 + 编辑后重算 key。
+- [x] 重复订单重复入账 → 写前 dedupe + JSON 历史 + OCR 身份 key 不可编辑。
+- [x] 历史损坏后静默清空并覆盖 → 隔离为 `ImportHistory.corrupt-*.json`。
+- [x] 同商户同金额同日误判 → 无订单号时给“仍要入账一笔”显式覆盖。
 - [x] 订单号明文落盘 → 只存 SHA-256。
 - [x] 撤销不恢复余额 → 逐条 `LedgerService.delete`，两笔手续费一起回滚。
 - [x] 转账手续费口径猜死 → 两种模式，用户选择。

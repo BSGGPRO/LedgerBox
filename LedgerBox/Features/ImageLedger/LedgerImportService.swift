@@ -214,7 +214,25 @@ final class ImportHistoryStore {
         }
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
-        return (try? decoder.decode([ImportSession].self, from: data)) ?? []
+        do {
+            return try decoder.decode([ImportSession].self, from: data)
+        } catch {
+            // Never let the next successful commit overwrite a corrupt history:
+            // that would silently drop every prior session ID and disable both
+            // duplicate protection and undo. Keep a forensic copy instead.
+            let stamp = ISO8601DateFormatter()
+                .string(from: Date())
+                .replacingOccurrences(of: ":", with: "-")
+            let backup = url.deletingLastPathComponent()
+                .appendingPathComponent("ImportHistory.corrupt-\(stamp).json")
+            do {
+                try FileManager.default.moveItem(at: url, to: backup)
+            } catch {
+                try? data.write(to: backup, options: [.atomic])
+                try? FileManager.default.removeItem(at: url)
+            }
+            return []
+        }
     }
 
     private func persist(_ value: [ImportSession]) throws {
