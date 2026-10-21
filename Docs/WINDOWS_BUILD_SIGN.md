@@ -2,7 +2,7 @@
 
 本文说明为什么 Windows 不能直接构建 LedgerBox，以及如何在**不接触证书**的前提下，用 macOS 或 GitHub Actions 产出未签名 IPA，最后由你自己完成签名。
 
-> GitHub Actions 已成功完成未签名 archive（run `39569024041`），但本仓库没有做真机安装或签名验证。不要把“archive 成功”说成“已签名”“可安装”。
+> GitHub Actions 已成功完成未签名 archive（run `39570507810`），但本仓库没有做真机安装或签名验证。不要把“archive 成功”说成“已签名”“可安装”。
 
 ---
 
@@ -112,7 +112,7 @@ xcodebuild \
 - 工作流不注入证书、描述文件、Team ID 或 App Store Connect 密钥。
 - `CODE_SIGNING_ALLOWED=NO` 只表示不签名，不代表已通过 App Store 校验。
 - `macos-15` 的可用镜像与 Xcode 版本会变化；如果 runner 没有 iOS 17 SDK，需要调整 runner 或安装指定 Xcode。
-- 该工作流已实际运行成功（run `39569024041`）；仍不能据此宣称“已签名”或“可安装”。
+- 该工作流已实际运行成功（run `39570507810`）；仍不能据此宣称“已签名”或“可安装”。
 - 具体 YAML 以仓库文件为准，本文不复制易过期的完整内容。
 
 ---
@@ -190,7 +190,7 @@ Widget：      com.example.ledgerbox.widget
 
 ### 6.1 默认不嵌入 Widget
 
-0.2.0 当前 IPA 内**没有**：
+0.2.1 当前 IPA 内**没有**：
 
 ```text
 Payload/LedgerBox.app/PlugIns/LedgerBoxWidget.appex

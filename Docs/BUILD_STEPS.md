@@ -294,12 +294,12 @@ The model configuration used to open the store is incompatible with the one that
 
 ### 7.11 语音权限已移除
 
-0.2.0 起不再使用 `Speech` / `AVAudioEngine`，也不再注入：
+0.2.0 起不再使用 `Speech` / `AVAudioEngine`，0.2.1 继续保留该收敛，也不再注入：
 
 - `NSMicrophoneUsageDescription`
 - `NSSpeechRecognitionUsageDescription`
 
-只保留 `NSSiriUsageDescription` 给快捷指令 / Siri。如果真机仍然弹出麦克风权限，说明装的是旧 IPA，不是当前 `0.2.0` 构建。小 AI 只处理键盘文本，不访问麦克风。
+只保留 `NSSiriUsageDescription` 给快捷指令 / Siri。如果真机仍然弹出麦克风权限，说明装的是旧 IPA，不是当前 `0.2.1` 构建。小 AI 只处理键盘文本，不访问麦克风。
 
 ### 7.12 快捷指令里看不到 LedgerBox
 
@@ -314,8 +314,8 @@ The model configuration used to open the store is incompatible with the one that
 
 - `Assets.xcassets` 与 AppIcon 已随 archive 编译；仍未做真机/视觉检查。
 - `LedgerBoxTests` 已加入，但尚未实际运行。
-- `.github/workflows/ios-unsigned.yml` 已实际运行：run `39569024041`，结论 success。
-- 新版未签名 IPA 已生成：`LedgerBox-unsigned-0.2.0-AI.ipa`（728,303 字节，含小 AI、更新日志，无语音权限，无 `PlugIns`）。
+- `.github/workflows/ios-unsigned.yml` 已实际运行：run `39570507810`，结论 success。
+- 新版未签名 IPA 已生成：`LedgerBox-unsigned-0.2.1-MoneyBrain.ipa`（750,259 字节，含小 AI、5,643 参数金钱模型、更新日志，无语音权限，无 `PlugIns`）。
 - Widget Extension 源码保留，但当前**不嵌入** `Payload/LedgerBox.app/PlugIns/`；这是为了兼容只签主 App 的 `lcsign`。需要小组件时再恢复 Embed 阶段并签 appex。
 - Widget 未配置 App Group，因此即使重新嵌入也不读取真实账本。
 - 没有证书、描述文件、Team ID。
