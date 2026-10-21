@@ -7,6 +7,20 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BB00000000000000000000A1 /* GlassHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD00000000000000000000D1 /* GlassHeader.swift */; };
+		BB00000000000000000000A2 /* LocalProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD00000000000000000000D2 /* LocalProfile.swift */; };
+		BB00000000000000000000A3 /* ProfileMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD00000000000000000000D3 /* ProfileMenuView.swift */; };
+		BB00000000000000000000A4 /* ProfileBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD00000000000000000000D4 /* ProfileBadge.swift */; };
+		BB00000000000000000000A5 /* FloatingActionMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD00000000000000000000D5 /* FloatingActionMenu.swift */; };
+		BB00000000000000000000A6 /* LedgerRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD00000000000000000000D6 /* LedgerRouter.swift */; };
+		BB00000000000000000000A7 /* ImportToast.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD00000000000000000000D7 /* ImportToast.swift */; };
+		BB00000000000000000000A8 /* ReceiptParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD00000000000000000000D8 /* ReceiptParser.swift */; };
+		BB00000000000000000000A9 /* MerchantLexicon.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD00000000000000000000D9 /* MerchantLexicon.swift */; };
+		BB00000000000000000000AA /* LedgerCategoryClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD00000000000000000000DA /* LedgerCategoryClassifier.swift */; };
+		BB00000000000000000000AB /* LedgerImportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD00000000000000000000DB /* LedgerImportService.swift */; };
+		BB00000000000000000000AC /* VisionOCRService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD00000000000000000000DC /* VisionOCRService.swift */; };
+		BB00000000000000000000AD /* ImageLedgerFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD00000000000000000000DD /* ImageLedgerFlowView.swift */; };
+		BB00000000000000000000B0 /* ReceiptImportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD00000000000000000000DE /* ReceiptImportTests.swift */; };
 		BB0000000000000000000001 /* LedgerBoxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000001 /* LedgerBoxApp.swift */; };
 		BB0000000000000000000002 /* PersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000002 /* PersistenceController.swift */; };
 		BB0000000000000000000003 /* ManagedObjects.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000003 /* ManagedObjects.swift */; };
@@ -49,6 +63,20 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		DD00000000000000000000D1 /* GlassHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassHeader.swift; sourceTree = "<group>"; };
+		DD00000000000000000000D2 /* LocalProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalProfile.swift; sourceTree = "<group>"; };
+		DD00000000000000000000D3 /* ProfileMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileMenuView.swift; sourceTree = "<group>"; };
+		DD00000000000000000000D4 /* ProfileBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileBadge.swift; sourceTree = "<group>"; };
+		DD00000000000000000000D5 /* FloatingActionMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingActionMenu.swift; sourceTree = "<group>"; };
+		DD00000000000000000000D6 /* LedgerRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LedgerRouter.swift; sourceTree = "<group>"; };
+		DD00000000000000000000D7 /* ImportToast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportToast.swift; sourceTree = "<group>"; };
+		DD00000000000000000000D8 /* ReceiptParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptParser.swift; sourceTree = "<group>"; };
+		DD00000000000000000000D9 /* MerchantLexicon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MerchantLexicon.swift; sourceTree = "<group>"; };
+		DD00000000000000000000DA /* LedgerCategoryClassifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LedgerCategoryClassifier.swift; sourceTree = "<group>"; };
+		DD00000000000000000000DB /* LedgerImportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LedgerImportService.swift; sourceTree = "<group>"; };
+		DD00000000000000000000DC /* VisionOCRService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisionOCRService.swift; sourceTree = "<group>"; };
+		DD00000000000000000000DD /* ImageLedgerFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageLedgerFlowView.swift; sourceTree = "<group>"; };
+		DD00000000000000000000DE /* ReceiptImportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptImportTests.swift; sourceTree = "<group>"; };
 		AA0000000000000000000018 /* LedgerBox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LedgerBox.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CC0000000000000000000001 /* LedgerBoxApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LedgerBoxApp.swift; sourceTree = "<group>"; };
 		CC0000000000000000000002 /* PersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceController.swift; sourceTree = "<group>"; };
@@ -200,6 +228,7 @@
 			children = (
 				CC0000000000000000000004 /* Theme.swift */,
 				CC0000000000000000000050 /* KeyboardDismiss.swift */,
+				DD00000000000000000000D1 /* GlassHeader.swift */,
 			);
 			path = Design;
 			sourceTree = "<group>";
@@ -227,6 +256,8 @@
 				AA000000000000000000001B /* Budget */,
 				AA000000000000000000001C /* Goals */,
 				AA000000000000000000001D /* Settings */,
+				DD00000000000000000000E0 /* ImageLedger */,
+				DD00000000000000000000E1 /* Profile */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -268,6 +299,9 @@
 			isa = PBXGroup;
 			children = (
 				CC000000000000000000000A /* MainTabView.swift */,
+				DD00000000000000000000D5 /* FloatingActionMenu.swift */,
+				DD00000000000000000000D6 /* LedgerRouter.swift */,
+				DD00000000000000000000D7 /* ImportToast.swift */,
 			);
 			path = Main;
 			sourceTree = "<group>";
@@ -322,6 +356,7 @@
 				CC0000000000000000000015 /* FinanceEngineTests.swift */,
 				CC0000000000000000000017 /* QuickEntryParserTests.swift */,
 				CC000000000000000000002D /* FinanceMindTests.swift */,
+				DD00000000000000000000DE /* ReceiptImportTests.swift */,
 			);
 			path = LedgerBoxTests;
 			sourceTree = "<group>";
@@ -348,6 +383,29 @@
 				CC0000000000000000000022 /* Info.plist */,
 			);
 			path = LedgerBoxWidget;
+			sourceTree = "<group>";
+		};
+		DD00000000000000000000E0 /* ImageLedger */ = {
+			isa = PBXGroup;
+			children = (
+				DD00000000000000000000D8 /* ReceiptParser.swift */,
+				DD00000000000000000000D9 /* MerchantLexicon.swift */,
+				DD00000000000000000000DA /* LedgerCategoryClassifier.swift */,
+				DD00000000000000000000DB /* LedgerImportService.swift */,
+				DD00000000000000000000DC /* VisionOCRService.swift */,
+				DD00000000000000000000DD /* ImageLedgerFlowView.swift */,
+			);
+			path = ImageLedger;
+			sourceTree = "<group>";
+		};
+		DD00000000000000000000E1 /* Profile */ = {
+			isa = PBXGroup;
+			children = (
+				DD00000000000000000000D2 /* LocalProfile.swift */,
+				DD00000000000000000000D3 /* ProfileMenuView.swift */,
+				DD00000000000000000000D4 /* ProfileBadge.swift */,
+			);
+			path = Profile;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -509,6 +567,19 @@
 				BB000000000000000000002B /* FinanceMindWeights.swift in Sources */,
 				BB000000000000000000002C /* FinanceAdvisorView.swift in Sources */,
 				BB000000000000000000002E /* FinanceBrainMapView.swift in Sources */,
+				BB00000000000000000000A1 /* GlassHeader.swift in Sources */,
+				BB00000000000000000000A2 /* LocalProfile.swift in Sources */,
+				BB00000000000000000000A3 /* ProfileMenuView.swift in Sources */,
+				BB00000000000000000000A4 /* ProfileBadge.swift in Sources */,
+				BB00000000000000000000A5 /* FloatingActionMenu.swift in Sources */,
+				BB00000000000000000000A6 /* LedgerRouter.swift in Sources */,
+				BB00000000000000000000A7 /* ImportToast.swift in Sources */,
+				BB00000000000000000000A8 /* ReceiptParser.swift in Sources */,
+				BB00000000000000000000A9 /* MerchantLexicon.swift in Sources */,
+				BB00000000000000000000AA /* LedgerCategoryClassifier.swift in Sources */,
+				BB00000000000000000000AB /* LedgerImportService.swift in Sources */,
+				BB00000000000000000000AC /* VisionOCRService.swift in Sources */,
+				BB00000000000000000000AD /* ImageLedgerFlowView.swift in Sources */,
 				BB0000000000000000000009 /* LedgerBox.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -520,6 +591,7 @@
 				BB0000000000000000000015 /* FinanceEngineTests.swift in Sources */,
 				BB0000000000000000000017 /* QuickEntryParserTests.swift in Sources */,
 				BB000000000000000000002F /* FinanceMindTests.swift in Sources */,
+				BB00000000000000000000B0 /* ReceiptImportTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -661,6 +733,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = LedgerBox;
+				INFOPLIST_KEY_NSCameraUsageDescription = "拍摄账单截图，仅用于本机文字识别。";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "选择账单截图，仅用于本机文字识别。";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -692,6 +766,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = LedgerBox;
+				INFOPLIST_KEY_NSCameraUsageDescription = "拍摄账单截图，仅用于本机文字识别。";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "选择账单截图，仅用于本机文字识别。";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

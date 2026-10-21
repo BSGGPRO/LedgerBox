@@ -50,11 +50,12 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
+            GlassHeaderHost(
+                title: "LedgerBox",
+                subtitle: Date.now.formatted(.dateTime.year().month(.wide)),
+                trailing: { ProfileBadge() }
+            ) {
                 VStack(alignment: .leading, spacing: 0) {
-                    header
-                        .padding(.top, theme.smallSpacing)
-
                     VStack(alignment: .leading, spacing: theme.sectionSpacing) {
                         balanceCard
                         monthStatsSection
@@ -65,13 +66,7 @@ struct HomeView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, theme.pagePadding)
-                .padding(.bottom, theme.sectionSpacing)
-            }
-            .scrollIndicators(.hidden)
-            .background(theme.background.ignoresSafeArea())
-            .toolbar(.hidden, for: .navigationBar)
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                actionBar
+                .padding(.bottom, 110)
             }
         }
         .sheet(item: $activeSheet) { sheet in
