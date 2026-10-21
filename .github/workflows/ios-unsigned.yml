@@ -85,8 +85,8 @@ jobs:
           HASH=$(shasum -a 256 "$IPA" | awk '{print $1}')
           unzip -l "$IPA" > build/ipa-listing.txt
           cat > build/artifact-info.txt <<EOF
-          version=0.10.0
-          build=15
+          version=0.11.0
+          build=16
           size=$SIZE
           sha256=$HASH
           run=${{ github.run_id }}
@@ -98,12 +98,12 @@ jobs:
       - name: Upload artifact metadata
         uses: actions/upload-artifact@v4
         with:
-          name: LedgerBox-0.10.0-metadata
+          name: LedgerBox-0.11.0-metadata
           path: build/artifact-info.txt
           if-no-files-found: error
           retention-days: 30
 
-      - name: Publish 0.10.0 release
+      - name: Publish 0.11.0 release
         if: github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -113,41 +113,44 @@ jobs:
           SIZE=$(stat -f%z "$IPA")
           HASH=$(shasum -a 256 "$IPA" | awk '{print $1}')
           BODY=$(cat <<EOF
-          ## LedgerBox 0.10.0
+          ## LedgerBox 0.11.0
+
+          ### Added
+          - 一张图多账单：按 OCR 行距切分，逐笔核对、排除重复、整批确认。
+          - 批量入账全有或全无；成功后一次撤销整批，余额随之恢复。
+          - JSON 全量备份/恢复：账户、分类、流水、预算、目标、模板与设置。
+          - 财务大脑动作路由：记一笔、查账、导出 CSV、导出 JSON、图片记账；写账和导出前必须确认。
+          - 本地诊断日志：只记录事件与计数，不记录金额、商户、问题原文、截图或订单号。
 
           ### Bundled
           - Qwen2.5-0.5B-Instruct Q4_K_M, 491,400,032 bytes
           - llama.cpp b11796 iOS framework, ios-arm64
           - Model SHA-256: 74A4DA8C9FDBCD15BD1F6D01D621410D31C6FC00986F5EB687824E7B93D7A9DB
 
-          ### Behavior
-          - 财务大脑的“0.5B 本地解释”只改写已经由 Decimal 算好的结果。
-          - 解释中的数字必须出现在原结果中，否则丢弃并回退。
-          - 模型加载失败、模拟器、内存不足时，旧功能继续可用。
-
           ### Verification
           - Unsigned archive: run ${{ github.run_id }}, commit ${{ github.sha }}.
           - IPA: $SIZE bytes.
           - IPA SHA-256: $HASH.
           - Embedded model and llama.framework verified by unzip listing.
-          - Not verified: physical-device install, runtime generation quality, memory peak, or screenshots.
+          - 68 simulator XCTest cases pass in the iOS Tests workflow.
+          - Not verified: physical-device install, on-device 0.5B generation, memory peak, thermal behavior, Metal, or screenshots.
 
           ### Limits
           - The app is unsigned and needs your own certificate/profile.
           - The 0.5B model is a language rewriter, not a calculator.
-          - Repository is private; links require GitHub access.
+          - The app is not a medical, tax, or investment advisor.
           EOF
           )
-          if gh release view v0.10.0 >/dev/null 2>&1; then
-            gh release edit v0.10.0 --notes "$BODY"
-            gh release upload v0.10.0 "$IPA" --clobber
+          if gh release view v0.11.0 >/dev/null 2>&1; then
+            gh release edit v0.11.0 --notes "$BODY"
+            gh release upload v0.11.0 "$IPA" --clobber
           else
-            gh release create v0.10.0 "$IPA" \
-              --title "LedgerBox 0.10.0 — 内置 Qwen 0.5B" \
+            gh release create v0.11.0 "$IPA" \
+              --title "LedgerBox 0.11.0 — 多账单与 JSON 备份" \
               --notes "$BODY" \
               --prerelease
           fi
-          gh release view v0.10.0 --json url,assets
+          gh release view v0.11.0 --json url,assets
 
       - name: Upload unsigned IPA
         if: github.event_name == 'workflow_dispatch'

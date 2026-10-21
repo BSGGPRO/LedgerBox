@@ -14,6 +14,19 @@ struct ChangelogEntry: Identifiable {
 enum ChangelogCatalog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "0.11.0",
+            dateText: "2026.10.22",
+            title: "多账单、JSON 备份与 AI 动作",
+            changes: [
+                "一张图可拆成多笔账单：按 OCR 行距切分，无法识别的块合并到邻近账单，最多 20 笔。",
+                "多账单先逐笔核对金额、日期、分类和账户，可排除重复项；确认后整批写入，撤销会删除整批并恢复余额。",
+                "设置新增 JSON 全量备份与恢复，覆盖账户、分类、流水、预算、目标、模板和设置；导入前完整校验，失败回滚。",
+                "财务大脑新增动作路由：记一笔、查账、导出 CSV、导出 JSON、图片记账；写账和导出都要先点确认，成功后可撤销。",
+                "新增本地诊断日志，只记录事件和计数，不记录金额、商户、问题原文、截图或订单号。",
+                "0.5B 解释层增加生成中保护和手动卸载路径，解释长度上限 96 token。"
+            ]
+        ),
+        ChangelogEntry(
             version: "0.10.0",
             dateText: "2026.10.21",
             title: "内置 Qwen2.5-0.5B 本地解释层",
