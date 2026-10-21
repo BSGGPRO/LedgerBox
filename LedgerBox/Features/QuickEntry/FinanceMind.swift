@@ -360,6 +360,7 @@ enum FinanceAdvisor {
     private static func spendingAnswer(text: String, snapshot: FinanceSnapshot, tag: String) -> FinanceAdvice {
         if let domain = MoneyBrain.shared.predict(text)?.domain,
            domain != .other,
+           domain.categoryAliases.contains(where: { text.contains($0) }),
            let matched = snapshot.categories.first(where: { item in
                domain.categoryAliases.contains { alias in
                    item.name.contains(alias) || alias.contains(item.name)
