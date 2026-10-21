@@ -8,7 +8,7 @@ on:
       - master
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: ios-unsigned-${{ github.ref }}
@@ -77,7 +77,80 @@ jobs:
           fi
           ls -lh build/LedgerBox-unsigned.ipa
 
+      - name: Record artifact metadata
+        run: |
+          set -euo pipefail
+          IPA=build/LedgerBox-unsigned.ipa
+          SIZE=$(stat -f%z "$IPA")
+          HASH=$(shasum -a 256 "$IPA" | awk '{print $1}')
+          unzip -l "$IPA" > build/ipa-listing.txt
+          cat > build/artifact-info.txt <<EOF
+          version=0.10.0
+          build=15
+          size=$SIZE
+          sha256=$HASH
+          run=${{ github.run_id }}
+          commit=${{ github.sha }}
+          EOF
+          cat build/artifact-info.txt
+          grep -E 'Qwen2.5-0.5B-Instruct-Q4_K_M.gguf$|Frameworks/llama.framework/llama$' build/ipa-listing.txt
+
+      - name: Upload artifact metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: LedgerBox-0.10.0-metadata
+          path: build/artifact-info.txt
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish 0.10.0 release
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          IPA=build/LedgerBox-unsigned.ipa
+          SIZE=$(stat -f%z "$IPA")
+          HASH=$(shasum -a 256 "$IPA" | awk '{print $1}')
+          BODY=$(cat <<EOF
+          ## LedgerBox 0.10.0
+
+          ### Bundled
+          - Qwen2.5-0.5B-Instruct Q4_K_M, 491,400,032 bytes
+          - llama.cpp b11796 iOS framework, ios-arm64
+          - Model SHA-256: 74A4DA8C9FDBCD15BD1F6D01D621410D31C6FC00986F5EB687824E7B93D7A9DB
+
+          ### Behavior
+          - 财务大脑的“0.5B 本地解释”只改写已经由 Decimal 算好的结果。
+          - 解释中的数字必须出现在原结果中，否则丢弃并回退。
+          - 模型加载失败、模拟器、内存不足时，旧功能继续可用。
+
+          ### Verification
+          - Unsigned archive: run ${{ github.run_id }}, commit ${{ github.sha }}.
+          - IPA: $SIZE bytes.
+          - IPA SHA-256: $HASH.
+          - Embedded model and llama.framework verified by unzip listing.
+          - Not verified: physical-device install, runtime generation quality, memory peak, or screenshots.
+
+          ### Limits
+          - The app is unsigned and needs your own certificate/profile.
+          - The 0.5B model is a language rewriter, not a calculator.
+          - Repository is private; links require GitHub access.
+          EOF
+          )
+          if gh release view v0.10.0 >/dev/null 2>&1; then
+            gh release edit v0.10.0 --notes "$BODY"
+            gh release upload v0.10.0 "$IPA" --clobber
+          else
+            gh release create v0.10.0 "$IPA" \
+              --title "LedgerBox 0.10.0 — 内置 Qwen 0.5B" \
+              --notes "$BODY" \
+              --prerelease
+          fi
+          gh release view v0.10.0 --json url,assets
+
       - name: Upload unsigned IPA
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: LedgerBox-unsigned-ipa
