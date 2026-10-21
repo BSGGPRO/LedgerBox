@@ -1,9 +1,9 @@
 import SwiftUI
 import UIKit
 
-/// Two-action floating entry point. This is a standalone component: place it in
-/// a bottom-trailing overlay yourself and leave room for the tab bar. It does not
-/// reserve tab-bar space or modify `MainTabView`.
+/// Two-action entry point. The 62pt main button is designed to sit in the
+/// center of the custom bottom bar; expanded actions grow upward and to the
+/// left so they stay on screen. It does not reserve bar space by itself.
 struct FloatingActionMenu: View {
     @Binding var isExpanded: Bool
 
@@ -23,32 +23,36 @@ struct FloatingActionMenu: View {
     }
 
     var body: some View {
-        VStack(alignment: .trailing, spacing: 10) {
-            if isExpanded {
-                actionButton(
-                    title: "极速记账",
-                    subtitle: "相机 / 相册识别",
-                    systemImage: "bolt.fill",
-                    accessibilityLabel: "极速记账，相机或相册识别",
-                    accessibilityHint: "打开相机或相册识别记账",
-                    action: onQuickEntry
-                )
-                .transition(actionTransition)
-
-                actionButton(
-                    title: "记一笔",
-                    subtitle: "手动填写金额与分类",
-                    systemImage: "square.and.pencil",
-                    accessibilityLabel: "记一笔，手动记账",
-                    accessibilityHint: "打开手动记账表单",
-                    action: onManualEntry
-                )
-                .transition(actionTransition)
-            }
-
+        ZStack(alignment: .bottom) {
             mainButton
                 .zIndex(1)
+
+            if isExpanded {
+                VStack(alignment: .trailing, spacing: 10) {
+                    actionButton(
+                        title: "极速记账",
+                        subtitle: "相机 / 相册识别",
+                        systemImage: "bolt.fill",
+                        accessibilityLabel: "极速记账，相机或相册识别",
+                        accessibilityHint: "打开相机或相册识别记账",
+                        action: onQuickEntry
+                    )
+
+                    actionButton(
+                        title: "记一笔",
+                        subtitle: "手动填写金额与分类",
+                        systemImage: "square.and.pencil",
+                        accessibilityLabel: "记一笔，手动记账",
+                        accessibilityHint: "打开手动记账表单",
+                        action: onManualEntry
+                    )
+                }
+                .fixedSize()
+                .offset(y: -72)
+                .transition(actionTransition)
+            }
         }
+        .frame(width: 62, height: 62)
         .animation(menuAnimation, value: isExpanded)
     }
 

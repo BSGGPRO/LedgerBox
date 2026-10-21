@@ -46,35 +46,29 @@ struct MainTabView: View {
         TabView(selection: $selection) {
             ForEach(MainTab.allCases, id: \.self) { tab in
                 tabContent(for: tab)
-                    .tabItem {
-                        Label(tab.title, systemImage: tab.symbolName)
-                    }
+                    .toolbar(.hidden, for: .tabBar)
                     .tag(tab)
             }
         }
-        // `accentText` is contrast-corrected for the tab bar surface, so a pale
-        // custom accent still produces a readable selected state.
+        // The custom bar contains the five destinations, the local avatar,
+        // Settings and the centered entry button in one row. The native bar is
+        // hidden so the "+" sits inside that row rather than in a second row.
+        .toolbar(.hidden, for: .tabBar)
         .tint(theme.accentText)
-        .toolbarBackground(theme.surface, for: .tabBar)
-        .toolbarBackground(.visible, for: .tabBar)
-        .toolbarColorScheme(theme.scheme, for: .tabBar)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            bottomBar
+        }
         .overlay(alignment: .bottom) {
-            VStack(spacing: 10) {
-                if let toast = toastCenter.toast {
-                    ImportToastView(toast: toast) {
-                        undo(toast)
-                    }
-                    .frame(maxWidth: 310)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            if let toast = toastCenter.toast {
+                ImportToastView(toast: toast) {
+                    undo(toast)
                 }
-
-                bottomDock
+                .frame(maxWidth: 310)
+                .padding(.horizontal, theme.pagePadding)
+                .padding(.bottom, 94)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .animation(.easeInOut(duration: 0.2), value: toastCenter.toast)
             }
-            .padding(.horizontal, theme.pagePadding)
-            // Keep the dock clear of the system tab bar; this is a floating
-            // row, not a replacement for the five-tab navigation.
-            .padding(.bottom, 70)
-            .animation(.easeInOut(duration: 0.2), value: toastCenter.toast)
         }
         .sheet(isPresented: $showingSettings) {
             SettingsView()
@@ -115,55 +109,104 @@ struct MainTabView: View {
         }
     }
 
-    private var bottomDock: some View {
+    // MARK: - Bottom bar
+
+    private var bottomBar: some View {
         HStack(spacing: 0) {
             // Bottom-left identity: local avatar only, no third-party login.
             ProfileBadge()
+                .frame(width: 38)
 
-            Spacer(minLength: 0)
+            tabButton(.home)
+            tabButton(.transactions)
 
-            FloatingActionMenu(
-                isExpanded: $isActionMenuExpanded,
-                onQuickEntry: { router.open(.image) },
-                onManualEntry: { router.open(.manual) }
-            )
+            // The centered entry button overlays this gap, so no tab sits
+            // underneath its 62pt touch target.
+            Spacer(minLength: 58)
 
-            Spacer(minLength: 0)
+            tabButton(.statistics)
+            tabButton(.budget)
+            tabButton(.goals)
 
             Button {
+                isActionMenuExpanded = false
                 showingSettings = true
             } label: {
                 Image(systemName: "gearshape")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(Color.white.opacity(0.88))
-                    .frame(width: 40, height: 40)
-                    .background(Color.white.opacity(0.10), in: Circle())
-                    .contentShape(Circle())
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(Color.white.opacity(0.72))
+                    .frame(width: 32, height: 48)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("设置")
             .accessibilityHint("打开主题、分类、导出与关于")
         }
-        .padding(.horizontal, 16)
-        .frame(maxWidth: 340, minHeight: 74)
+        .padding(.horizontal, 6)
+        .padding(.top, 5)
+        .padding(.bottom, 3)
+        .frame(maxWidth: .infinity)
         .background {
-            Capsule(style: .continuous)
-                .fill(
-                    Color(
-                        .sRGB,
-                        red: 20.0 / 255.0,
-                        green: 20.0 / 255.0,
-                        blue: 22.0 / 255.0,
-                        opacity: 0.72
+            ZStack {
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+
+                Rectangle()
+                    .fill(
+                        Color(
+                            .sRGB,
+                            red: 20.0 / 255.0,
+                            green: 20.0 / 255.0,
+                            blue: 22.0 / 255.0,
+                            opacity: 0.88
+                        )
                     )
-                )
-                .background(.ultraThinMaterial, in: Capsule(style: .continuous))
+            }
+            .ignoresSafeArea(edges: .bottom)
+        }
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Color.white.opacity(0.10))
+                .frame(height: 0.5)
         }
         .overlay {
-            Capsule(style: .continuous)
-                .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
+            FloatingActionMenu(
+                isExpanded: $isActionMenuExpanded,
+                onQuickEntry: { router.open(.image) },
+                onManualEntry: { router.open(.manual) }
+            )
+            .offset(y: -2)
         }
-        .shadow(color: Color.black.opacity(0.28), radius: 12, x: 0, y: 6)
+    }
+
+    private func tabButton(_ tab: MainTab) -> some View {
+        let isSelected = selection == tab
+
+        return Button {
+            isActionMenuExpanded = false
+            withAnimation(.easeOut(duration: 0.18)) {
+                selection = tab
+            }
+        } label: {
+            VStack(spacing: 2) {
+                Image(systemName: tab.symbolName)
+                    .font(.system(size: 16, weight: isSelected ? .semibold : .regular))
+                    .frame(height: 20)
+
+                Text(tab.title)
+                    .font(.system(size: 9, weight: isSelected ? .semibold : .medium))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+            .foregroundStyle(
+                isSelected ? Color.white : Color.white.opacity(0.56)
+            )
+            .frame(width: tab == .budget || tab == .goals ? 38 : 42, height: 48)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(tab.title)
+        .accessibilityValue(isSelected ? "已选中" : "")
     }
 
     private func undo(_ toast: ImportToast) {

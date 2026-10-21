@@ -14,6 +14,17 @@ struct ChangelogEntry: Identifiable {
 enum ChangelogCatalog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "0.9.1",
+            dateText: "2026.10.21",
+            title: "加号回到 TabBar 中间",
+            changes: [
+                "把 + 从独立悬浮行移进底部 TabBar，与“首页 / 流水 / 统计”在同一行，固定在屏幕正中。",
+                "同一行为本地头像（左角）、首页、流水、+、统计、预算、目标、设置（右角）；不再使用悬浮胶囊操作行。",
+                "原生 TabBar 隐藏，改为本地自绘栏；选中态用白色高亮，未选中态降为 56% 白色，深色背景下仍可读。",
+                "展开菜单的两个动作向上展开并向左对齐，避免在小屏上越过右边界。"
+            ]
+        ),
+        ChangelogEntry(
             version: "0.9.0",
             dateText: "2026.10.21",
             title: "算力翻倍，数字交给精算引擎",

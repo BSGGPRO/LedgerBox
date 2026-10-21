@@ -65,7 +65,7 @@ struct HomeView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, theme.pagePadding)
-                .padding(.bottom, 170)
+                .padding(.bottom, 24)
             }
         }
         .sheet(item: $activeSheet) { sheet in
