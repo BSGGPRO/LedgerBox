@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 All user-visible changes to LedgerBox are recorded here and in the in-app
 **设置 → 更新日志** page.

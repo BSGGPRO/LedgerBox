@@ -1,11 +1,11 @@
-# LedgerBox
+﻿# LedgerBox
 
 LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftUI + Core Data 构建。项目把“通用记账引擎”和“场景模板规则”分开：前者只负责收支、转账、退款、预算、统计和目标进度；后者只提供日常、学生、买车三套可选配置。
 
 作者：**Beausoleil** · [Bilibili 个人空间](https://space.bilibili.com/1477283849)
 
 > **当前状态**  
-> 0.4.0 源码已完成。GitHub Actions `macos-15` 已成功归档未签名 IPA（run `39590280640`，commit `a8872c3`），产物约 **1.24 MB**，内含 **10,485,800 参数**本地财务大脑和 `FinanceMindWeights.bin`（原始权重 10,485,920 字节）。29 个 XCTest 已在 iPhone 16 / iOS 26.2 模拟器通过（run `39590486710`：29 passed / 0 failed / 0 skipped）。尚未做真机安装、截图级视觉验收或真实账本准确率测试；IPA 未签名，需要你用自己的证书自签。
+> 0.4.0 源码已完成。GitHub Actions `macos-15` 已成功归档未签名 IPA（run `39591530559`，commit `b33319e`），产物约 **1.24 MB**，内含 **10,485,800 参数**本地财务大脑和 `FinanceMindWeights.bin`（原始权重 10,485,920 字节）。29 个 XCTest 已在 iPhone 16 / iOS 26.2 模拟器通过（run `39591706814`：29 passed / 0 failed / 0 skipped）。尚未做真机安装、截图级视觉验收或真实账本准确率测试；IPA 未签名，需要你用自己的证书自签。
 
 ---
 
@@ -79,7 +79,7 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 
 首次启动没有交易，首页会显示空状态。点击“记一笔”记录第一笔收入或支出；点击“极速”进入小 AI 文本记账，输入一句话即可解析，不需要麦克风或语音权限。
 
-工程包含 `LedgerBoxTests` Target，可在 Mac 上通过 `Cmd+U` 或 `xcodebuild test` 运行。当前 29 个测试已在 GitHub Actions 的 iPhone 16 / iOS 26.2 模拟器通过（run `39590486710`）；真机仍需你本地验证。
+工程包含 `LedgerBoxTests` Target，可在 Mac 上通过 `Cmd+U` 或 `xcodebuild test` 运行。当前 29 个测试已在 GitHub Actions 的 iPhone 16 / iOS 26.2 模拟器通过（run `39591706814`）；真机仍需你本地验证。
 
 ---
 
@@ -203,7 +203,7 @@ CONTRIBUTING.md
 - 当前 29 个测试覆盖财务汇总、退款、预算进度、副业分账、结余优先级、金额分位存储、14 个极速记账解析用例和 6 个财务大脑模型用例；已在 iPhone 16 / iOS 26.2 模拟器全部通过。
 - 已取消 Siri、快捷指令和 App Intents，不能监听银行/微信通知，也没有系统自动化写账入口。
 - 小 AI 是本地规则 + `NaturalLanguage` + 5,643 参数金钱分类器 + 10,485,800 参数财务意图模型，不是生成式大模型；合成验证集 99.1% 不代表真实世界准确率，真实短句、方言和错别字仍需你自己考。
-- 新版未签名 IPA：`LedgerBox-unsigned-0.4.0-FinanceBrain.ipa`，1,240,946 字节，SHA-256 `797944418CEAA05A9EC3C244DCF41BB4428DC78C383A792EE68DC73029C85537`；无 `PlugIns`、无麦克风/语音/Siri 权限，需自签后安装。
+- 新版未签名 IPA：`LedgerBox-unsigned-0.4.0-FinanceBrain.ipa`，1,240,946 字节，SHA-256 `9E00BC3F78141FF2DFB321D8B404C835BF9064B677C9F8A12EA4F3F3136E6010`；无 `PlugIns`、无麦克风/语音/Siri 权限，需自签后安装。
 - 权重文件 SHA-256：`FBAE921A209BAF880481E10B91ACADEEE3B324182063CDDDDA7CFE9FB4C7CF74`，10,485,920 字节。
 - 当前默认是单 target：不嵌入 `PlugIns/LedgerBoxWidget.appex`，所以 `lcsign` 只需签主 App。Widget 源码仍在仓库中，但不会进入 IPA。
 - 如果要重新启用小组件，必须在 Xcode 中恢复 Embed 阶段，并同时签主 App 与 appex；否则会出现图标有、点不开的安装失败。
