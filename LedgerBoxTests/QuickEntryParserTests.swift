@@ -247,28 +247,28 @@ final class QuickEntryParserTests: XCTestCase {
 final class AIActionRouterTests: XCTestCase {
 
     func testExplicitRecordCommandKeepsAmountTextForParser() {
-        let action = AIActionRouter.route("\u5e2e\u6211\u8bb0\u4e00\u7b14 \u5fae\u4fe1\u4e70\u5976\u833615")
+        let action = AIActionRouter.route("帮我记一笔 微信买奶茶15")
         XCTAssertEqual(action.intent, .record)
-        XCTAssertEqual(action.recordText, "\u5fae\u4fe1\u4e70\u5976\u833615")
+        XCTAssertEqual(action.recordText, "微信买奶茶15")
     }
 
     func testQuestionAboutSpendingRoutesToQuery() {
-        XCTAssertEqual(AIActionRouter.route("\u8fd9\u4e2a\u6708\u82b1\u4e86\u591a\u5c11").intent, .query)
-        XCTAssertEqual(AIActionRouter.route("\u9884\u7b97\u8fd8\u5269\u591a\u5c11").intent, .query)
+        XCTAssertEqual(AIActionRouter.route("这个月花了多少").intent, .query)
+        XCTAssertEqual(AIActionRouter.route("预算还剩多少").intent, .query)
     }
 
     func testExportFormatsRouteToDistinctActions() {
-        XCTAssertEqual(AIActionRouter.route("\u5bfc\u51fa JSON").intent, .backupJSON)
-        XCTAssertEqual(AIActionRouter.route("\u5bfc\u51fa CSV").intent, .exportCSV)
+        XCTAssertEqual(AIActionRouter.route("导出 JSON").intent, .backupJSON)
+        XCTAssertEqual(AIActionRouter.route("导出 CSV").intent, .exportCSV)
     }
 
     func testImageCommandDoesNotBecomeRecord() {
-        let action = AIActionRouter.route("\u622a\u56fe\u8bb0\u4e00\u7b14")
+        let action = AIActionRouter.route("截图记一笔")
         XCTAssertEqual(action.intent, .imageImport)
     }
 
     func testIncomeSentenceRoutesToRecord() {
-        let action = AIActionRouter.route("\u5de5\u8d44\u5230\u8d26 8000")
+        let action = AIActionRouter.route("工资到账 8000")
         XCTAssertEqual(action.intent, .record)
         XCTAssertNotNil(action.recordText)
     }
