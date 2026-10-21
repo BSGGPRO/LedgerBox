@@ -208,7 +208,7 @@ CONTRIBUTING.md
 - 小 AI 是本地规则 + `NaturalLanguage` + 5,643 参数金钱分类器 + 10,485,800 参数财务意图模型，不是生成式大模型；合成验证集 98.3% 不代表真实世界准确率，真实短句、方言和错别字仍需你自己考。
 - 新版未签名 IPA：`LedgerBox-unsigned-0.5.0-BrainLive.ipa`，1,306,923 字节，SHA-256 `5B28A0DC8356BCA46468F7FDAF94F652D5F1B3D9E44809B926714764B5241B21`；无 `PlugIns`、无麦克风/语音/Siri 权限，需自签后安装。
 - 权重文件 SHA-256：`97A20728A3245A90AF5AB542DF6EB07254D26882579F6216F750415CC66A9934`，10,485,920 字节。
-- 源码包：`LedgerBox-source-0.4.0-FinanceBrain.zip`；大小与 SHA-256 见同目录 `LedgerBox-0.4.0-SHA256.txt`，源码包不包含自身哈希。
+- 源码包：`LedgerBox-source-0.5.0-BrainLive.zip`；大小与 SHA-256 见同目录 `LedgerBox-0.5.0-SHA256.txt`，源码包不包含自身哈希。
 - 当前默认是单 target：不嵌入 `PlugIns/LedgerBoxWidget.appex`，所以 `lcsign` 只需签主 App。Widget 源码仍在仓库中，但不会进入 IPA。
 - 如果要重新启用小组件，必须在 Xcode 中恢复 Embed 阶段，并同时签主 App 与 appex；否则会出现图标有、点不开的安装失败。
 
