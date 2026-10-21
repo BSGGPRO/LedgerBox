@@ -41,6 +41,7 @@ struct QuickEntryView: View {
     @State private var note = ""
     @State private var lastAutoRemark = ""
     @State private var alert: QuickEntryAlert?
+    @State private var showingOnlineAI = false
     @FocusState private var inputFocused: Bool
 
     private let parser = QuickEntryParser()
@@ -97,6 +98,11 @@ struct QuickEntryView: View {
                 message: Text(item.message),
                 dismissButton: .default(Text("好"))
             )
+        }
+        .sheet(isPresented: $showingOnlineAI) {
+            NavigationStack {
+                OnlineAIView()
+            }
         }
     }
 
@@ -183,20 +189,47 @@ struct QuickEntryView: View {
 
         return LedgerCard {
             VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 8) {
-                    Image(systemName: "sparkles")
-                        .font(theme.rowIconFont)
-                        .foregroundStyle(aiColor(insight.state))
+                HStack(spacing: 10) {
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [theme.accent.opacity(0.22), theme.accent.opacity(0.06)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 38, height: 38)
 
-                    Text(insight.title)
-                        .font(theme.bodyFont.weight(.semibold))
-                        .foregroundStyle(theme.primaryText)
+                        Image(systemName: "sparkles")
+                            .font(theme.rowIconFont)
+                            .foregroundStyle(aiColor(insight.state))
+                    }
+
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(insight.title)
+                            .font(theme.bodyFont.weight(.semibold))
+                            .foregroundStyle(theme.primaryText)
+
+                        Text("本地解析 · 可选联网")
+                            .font(theme.badgeFont)
+                            .foregroundStyle(theme.secondaryText)
+                    }
 
                     Spacer(minLength: 4)
 
-                    Text("\(insight.recognizedFields)/\(insight.totalFields)")
-                        .font(theme.badgeFont)
-                        .foregroundStyle(theme.secondaryText)
+                    Button {
+                        showingOnlineAI = true
+                    } label: {
+                        Label("联网", systemImage: "network")
+                            .font(theme.badgeFont)
+                            .foregroundStyle(theme.accent)
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 5)
+                            .background(theme.accent.opacity(0.12), in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("打开联网 AI 问答")
                 }
 
                 Text(insight.detail)
@@ -224,6 +257,9 @@ struct QuickEntryView: View {
                     }
                     .font(theme.badgeFont)
                     .foregroundStyle(theme.secondaryText)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 6)
+                    .background(theme.surfaceElevated, in: Capsule())
                 }
             }
         }

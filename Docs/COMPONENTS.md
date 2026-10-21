@@ -140,10 +140,10 @@ protocol TransactionProviding {
 | `Features/Statistics` | `StatisticsView` | 6 个月柱状图、分类环图、累计趋势 |
 | `Features/Budget` | `BudgetView`、`BudgetEditorView` | 总/分类预算、月/周、启停用、空状态 |
 | `Features/Goals` | `GoalsView`、`GoalEditorView`、`BuyCarPlanView` | 目标进度/倒计时；买车场景 |
-| `Features/Settings` | `SettingsView`、`ChangelogView` | 主题、模板、CSV、隐私、更新日志、作者入口 |
+| `Features/Settings` | `SettingsView`、`ChangelogView`、`OnlineAI`、`OnlineAIView` | 主题、模板、CSV、可选联网 AI、更新日志、作者入口 |
 | `LedgerBoxWidget` | `LedgerBoxWidget`、`LedgerBoxWidgetBundle` | WidgetKit 源码保留；默认不嵌入 App，避免自签失败 |
 | `Features/Main` | `MainTabView` | 五 Tab 容器 |
-| `Features/QuickEntry` | `QuickEntryParser`、`QuickEntryAI`、`MoneyBrain`、`QuickEntryView`、`LedgerIntents` | 一句话解析、本地文本小 AI、5,643 参数金钱分类器、App Intents |
+| `Features/QuickEntry` | `QuickEntryParser`、`QuickEntryAI`、`MoneyBrain`、`QuickEntryView` | 一句话解析、本地文本小 AI、5,643 参数金钱分类器 |
 
 ### 2.7 QuickEntry 层
 
@@ -153,16 +153,17 @@ protocol TransactionProviding {
 | `QuickEntryAI.swift` | 本地解释层；输出状态、字段完整度、缺失字段和示例；不调用模型/网络 |
 | `MoneyBrain.swift` | 5,643 参数多项逻辑回归；字符 n-gram 哈希；输出语义类别与置信度 |
 | `MoneyBrainWeights.swift` | 由 `Tools/train_money_brain.py` 生成的 Int16 量化权重 |
-| `QuickEntryView.swift` | AI 记账面板；示例胶囊、小 AI 状态卡、金钱小模型提示、分类/账户建议；不请求麦克风 |
-| `LedgerIntents.swift` | `AddTransactionIntent` 结构化写入；`QuickAddIntent` 文本解析写入；`AppShortcutsProvider` 暴露到快捷指令/Siri |
+| `QuickEntryView.swift` | AI 记账面板；示例胶囊、小 AI 状态卡、金钱小模型提示、联网入口、分类/账户建议；不请求麦克风 |
+| `OnlineAI.swift` | 可选 OpenAI 兼容客户端；Keychain 存 Key；默认关闭；只发送用户输入 |
+| `OnlineAIView.swift` | 联网 AI 聊天页与配置页；连接测试、错误提示、隐私边界 |
 
 边界：
 
 - Parser 只接收 `CategoryOption` / `AccountOption` 快照，不直接持有 `NSManagedObject`。
 - 小 AI 只做本地规则解释和字段完整度，不生成不存在的金额/分类。
 - MoneyBrain 只给建议排序/提示，不覆盖解析器明确结果；置信度低于 0.42 不显示。
-- 快捷指令只有在金额、收支、分类、账户都无歧义时才自动保存；否则返回需确认信息。
-- App Intents 通过 `MainActor.run` 使用 `viewContext` 写入，与 UI 共用主上下文，复用 `LedgerService`，不绕过余额/日期/Decimal 校验。
+- 已取消 Siri、快捷指令和 App Intents；没有系统自动化写账入口。
+- 联网 AI 默认关闭；只有用户点发送时才请求配置的 HTTPS 接口，不自动上传账本，不自动写账。
 
 ---
 
@@ -334,8 +335,8 @@ CSV 字段：
 | `QuickEntryParser.ParsedEntry` | `QuickEntryParser.swift` | 一句话解析快照与问题列表 |
 | `QuickEntryAI.Insight` | `AIAssistant.swift` | 小 AI 状态、完整度、缺失字段 |
 | `MoneyBrainPrediction` | `MoneyBrain.swift` | 语义类别、置信度、建议收支类型 |
-| `AddTransactionIntent` | `LedgerIntents.swift` | 结构化 App Intent |
-| `QuickAddIntent` | `LedgerIntents.swift` | 一段文本的 App Intent |
+| `OnlineAIMessage` | `OnlineAI.swift` | 联网问答消息 |
+| `OnlineAIClient` | `OnlineAI.swift` | OpenAI 兼容 HTTPS 请求与错误映射 |
 | `LedgerShortcuts` | `LedgerIntents.swift` | 快捷指令/Siri 暴露入口 |
 
 ---
@@ -436,9 +437,10 @@ LedgerBox/
     QuickEntry/MoneyBrainWeights.swift
     QuickEntry/QuickEntryParser.swift
     QuickEntry/QuickEntryView.swift
-    QuickEntry/LedgerIntents.swift
     Settings/SettingsView.swift
     Settings/ChangelogView.swift
+    Settings/OnlineAI.swift
+    Settings/OnlineAIView.swift
     Main/MainTabView.swift
   LedgerBoxWidget/
     LedgerBoxWidgetBundle.swift

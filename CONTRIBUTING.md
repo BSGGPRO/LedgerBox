@@ -59,14 +59,14 @@ LedgerBox 是一个 iOS 17+ 的本地记账本：
 - 新增颜色先加 Theme 令牌，再在页面使用
 - 主要页面必须有浅色/深色 `#Preview`
 
-### QuickEntry / App Intents
+### QuickEntry / 联网 AI
 
 - `QuickEntryParser` 只依赖 Foundation + NaturalLanguage，不依赖 SwiftUI/Core Data。
 - 解析结果缺金额、收支、分类、账户时，必须让用户补全，不能静默猜测后保存。
-- 语音识别必须设置 `requiresOnDeviceRecognition = true`；不支持设备端识别时提示键盘输入，不回退服务器。
-- App Intents 必须经过 `LedgerService` 写入，不能直接改 `Account.balance`。
-- App Intents 必须回到 `MainActor` 使用 `viewContext` 写入，与 UI 串行，避免并发读改写导致余额丢失更新。
-- 快捷指令只有在字段无歧义时才自动保存；否则返回需确认信息。
+- 不再添加语音识别、麦克风、Siri、快捷指令或 App Intents；这些入口已在 0.2.2 删除。
+- 联网 AI 默认关闭，只能由用户主动点发送触发；不得后台同步账本。
+- API Key 只能存 Keychain，不得写入 UserDefaults、源码、日志或仓库。
+- 联网回答只作建议，不能绕过 `LedgerService` 自动写账。
 
 ### 页面
 
@@ -181,8 +181,8 @@ xcodebuild \
 - [ ] 新增颜色/字体/圆角来自 Theme。
 - [ ] 新增主页面有空状态和 `#Preview`。
 - [ ] 删除/转账/模板切换有确认。
-- [ ] 极速记账/语音/快捷指令仍遵守本地优先与 `LedgerService` 写入边界。
-- [ ] 没有提交 `.p12`、`.mobileprovision`、Team ID、真实个人信息。
+- [ ] 极速记账/小模型/联网 AI 仍遵守本地优先与 `LedgerService` 写入边界。
+- [ ] 没有提交 `.p12`、`.mobileprovision`、Team ID、真实个人信息或 API Key。
 - [ ] 文档同步更新。
 - [ ] 没有声称“已编译/已测试”，除非附上实际命令与结果。
 

@@ -3,6 +3,26 @@
 All user-visible changes to LedgerBox are recorded here and in the in-app
 **设置 → 更新日志** page.
 
+## 0.2.2 — 2026-10-21
+
+### Added
+
+- 可选联网 AI：OpenAI 兼容 `/chat/completions`，接口地址、模型和 API Key 由用户填写。
+- API Key 只存本机钥匙串；默认关闭，只有点“发送”时才请求，不自动上传账本。
+- 联网问答页：聊天气泡、建议问题、连接状态、发送中状态和错误提示。
+- 设置新增 AI 分区：开关、接口、模型、密钥、连接测试和隐私边界说明。
+- AI 记账卡重做：渐变图标、联网入口、金钱小模型胶囊。
+
+### Removed
+
+- 取消 Siri、快捷指令和 App Intents，删除 `NSSiriUsageDescription`，不再暴露系统自动化入口。
+
+### Notes
+
+- 联网回答只作建议，不自动写账；账本解析仍由本地小 AI 完成。
+- 需要用户自备第三方 API Key；仓库不包含任何密钥。
+- 仍未在真机运行，联网请求未做真实账号测试。
+
 ## 0.2.1 — 2026-10-21
 
 ### Added
@@ -31,7 +51,7 @@ All user-visible changes to LedgerBox are recorded here and in the in-app
 
 ### Kept
 
-- 快捷指令 / Siri。
+- 快捷指令 / Siri（0.2.2 已取消）。
 - WidgetKit 小组件源码；当前默认不嵌入 App，避免自签失败。
 - 设置页作者 Beausoleil 的 Bilibili 入口。
 

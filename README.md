@@ -18,9 +18,10 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 - **预算**：总预算/分类预算、月/周周期、进度、超预算提示、新增/编辑/删除、启停用。
 - **目标**：储蓄目标、进度环、30 天平均净结余倒计时、达成/冻结状态、新增/编辑/删除。
 - **设置**：浅色/深色/跟随系统、五种强调色、模板应用、CSV 本地导出、隐私说明、更新日志。
-- **小 AI 文本记账**：首页“极速”入口；输入“微信买奶茶 15 元”，本地拆出金额/收支/分类/账户/备注；显示字段完整度、示例胶囊、分类建议和常用账户建议；不联网、不上传文本。
+- **小 AI 文本记账**：首页“极速”入口；输入“微信买奶茶 15 元”，本地拆出金额/收支/分类/账户/备注；显示字段完整度、示例胶囊、分类建议和常用账户建议。
 - **金钱小模型**：5,643 参数，字符 n-gram + 逻辑回归，给餐饮/交通/购物/工资/理财等语义排序；只做提示，不覆盖解析器结果。
-- **快捷指令 / Siri**：`AddTransactionIntent` 结构化记账；`QuickAddIntent` 接收分享文本、短信/邮件内容或个人自动化输入；只有字段无歧义时才自动保存，否则返回确认提示。iOS 不允许读取其他 App 的通知。
+- **可选联网 AI**：OpenAI 兼容接口，默认关闭；接口地址、模型和 API Key 自己填，Key 只存钥匙串；只有点发送才联网，不自动上传账本。
+- **已取消 Siri**：删除 App Intents / 快捷指令入口和 `NSSiriUsageDescription`，不再暴露 Siri 记账。
 - **小组件源码**：保留 WidgetKit 小 / 中尺寸源码；当前默认不嵌入 App，避免 `PlugIns` 嵌套签名导致自签安装失败。需要时可在 Xcode 中重新加入 Embed 阶段。
 - **作者入口**：设置页可打开 Beausoleil 的 Bilibili 个人空间。
 - **买车场景**：修机 4,400 → 买车 25,000 优先级、打卡 100、固定工资 500、年度补贴、副业 70/30 分账、本月现金结余结转、奶茶 150/月与 2 杯/周告警、目标专户支出/转出提醒。
@@ -36,8 +37,8 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 | 持久化 | Core Data，`NSPersistentContainer`，本地 SQLite |
 | 金额 | `Decimal` + `NSDecimalNumber` 持久化桥接 |
 | 主题 | 自定义 `Theme`、`ThemeManager`、`EnvironmentKey` |
-| 小 AI | 本地规则 + Apple `NaturalLanguage` + 5,643 参数金钱分类器；无网络 |
-| 自动化 | App Intents / App Shortcuts（快捷指令、Siri） |
+| 小 AI | 本地规则 + Apple `NaturalLanguage` + 5,643 参数金钱分类器；可选 OpenAI 兼容联网问答 |
+| 自动化 | 无 Siri、无 App Intents、无快捷指令 |
 | 图标 | SF Symbols |
 | 依赖 | 无 CocoaPods、无第三方 SPM 包 |
 
@@ -115,9 +116,9 @@ LedgerBox/
     Statistics/                      统计图表
     Budget/                          预算
     Goals/                           储蓄目标、买车场景
-    Settings/                        设置、模板、CSV
+    Settings/                        设置、模板、CSV、联网 AI
     Main/                            五 Tab 容器
-    QuickEntry/                      一句话解析、小 AI 文本助手、App Intents
+    QuickEntry/                      一句话解析、小 AI 文本助手、金钱小模型
   Resources/
     LedgerBox.xcdatamodeld/          Core Data 模型
     Assets.xcassets/                 AppIcon 占位
@@ -158,10 +159,10 @@ CONTRIBUTING.md
 
 - `QuickEntryParser` 只依赖 Foundation + `NaturalLanguage`，不依赖 UI/Core Data。
 - 解析“微信买奶茶 15 元”得到金额、分类、账户与备注；无法唯一匹配时要求手动补全，不静默猜测。
-- `QuickEntryAI` 只做本地解释、字段完整度、示例和建议，不调用云端模型；输入文本不会离开设备。
+- `QuickEntryAI` 做本地解释、字段完整度、示例和建议；本地解析不联网，输入文本不会自动离开设备。
 - 已移除语音识别、麦克风和语音识别权限；App 不再请求麦克风。
-- App Intents 回到 `MainActor` 使用 `viewContext` 串行写入，仍经过 `LedgerService` 的金额、日期、账户与余额校验。
-- 快捷指令只有字段无歧义时才自动保存；否则返回需确认信息，避免误记账。
+- 已删除 App Intents、快捷指令和 Siri 入口；不再注册系统自动化，也不会后台写账。
+- 联网 AI 只在用户主动点发送时请求用户配置的 HTTPS 接口；API Key 存钥匙串，不写入仓库，不上传账本。
 
 ---
 
@@ -194,8 +195,8 @@ CONTRIBUTING.md
 - `AppSettings.themeMode` / `accentColorHex` 字段存在，但当前主题实际由 `ThemeManager` + UserDefaults 驱动，两者未双向同步。
 - 无多币种换算；`currencyCode` 默认 CNY，v1 只按 CNY 展示。
 - 已有 `LedgerBoxTests` Target，共 20 个测试，覆盖财务汇总、退款、预算进度、副业分账、结余优先级、金额分位存储与 11 个极速记账解析用例；尚未实际运行。
-- iOS 不允许读取其他 App 的通知内容；快捷指令只能处理分享文本、短信/邮件、个人自动化等系统允许的输入，不能监听银行/微信通知。
-- 小 AI 是本地规则 + `NaturalLanguage` + 5,643 参数金钱分类器，不是生成式大模型；没有云端推理，也不会“猜”不存在的账。
+- 已取消 Siri、快捷指令和 App Intents，不能监听银行/微信通知，也没有系统自动化写账入口。
+- 小 AI 是本地规则 + `NaturalLanguage` + 5,643 参数金钱分类器，不是生成式大模型；联网 AI 默认关闭，开启后也只发送你手动输入的文本。
 - 新版未签名 IPA 已由 GitHub Actions 生成：`LedgerBox-unsigned-0.2.1-MoneyBrain.ipa`，750,259 字节，SHA-256 `DE6B7DCC0371D14EF06226CB439BC8DAD33F1A921FE3C5263B460216152D48B7`；无 `PlugIns`、无麦克风/语音权限，需自签后安装。
 - 当前默认是单 target：不再嵌入 `PlugIns/LedgerBoxWidget.appex`，所以 `lcsign` 只需签主 App。Widget 源码仍在仓库中，但不会进入 IPA。
 - 如果要重新启用小组件，必须在 Xcode 中恢复 Embed 阶段，并同时签主 App 与 appex；否则会出现图标有、点不开的安装失败。

@@ -14,6 +14,19 @@ struct ChangelogEntry: Identifiable {
 enum ChangelogCatalog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "0.2.2",
+            dateText: "2026.10.21",
+            title: "联网 AI 可选，Siri 退场",
+            changes: [
+                "新增可选的联网 AI：OpenAI 兼容接口，默认关闭，接口地址、模型和 API Key 都由你自己填。",
+                "API Key 只存本机钥匙串；只有你点发送时才联网，不会自动上传账本。",
+                "取消 Siri、快捷指令和 App Intents，删除 NSSiriUsageDescription，不再暴露系统快捷指令入口。",
+                "AI 记账卡重做：渐变图标、联网入口、金钱小模型胶囊；新增联网问答页和聊天气泡。",
+                "设置新增 AI 分区：开关、接口、模型、密钥、连接测试和隐私边界说明。",
+                "联网回答只作建议，不自动写账；账本解析仍由本地小 AI 完成。"
+            ]
+        ),
+        ChangelogEntry(
             version: "0.2.1",
             dateText: "2026.10.21",
             title: "塞进一个金钱小模型",

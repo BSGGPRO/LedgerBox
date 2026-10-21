@@ -41,6 +41,7 @@ struct SettingsView: View {
     @State private var alertTitle = ""
     @State private var alertMessage = ""
     @State private var showingAlert = false
+    @AppStorage(OnlineAIConfig.enabledKey) private var onlineAIEnabled = false
 
     private var theme: Theme {
         themeManager.theme(for: colorScheme)
@@ -53,6 +54,7 @@ struct SettingsView: View {
                     appearanceSection
                     templateSection
                     dataSection
+                    aiSection
                     aboutSection
                 }
                 .padding(.horizontal, theme.pagePadding)
@@ -266,12 +268,96 @@ struct SettingsView: View {
                             .font(theme.rowIconFont)
                             .foregroundStyle(theme.secondaryText)
 
-                        Text("所有数据只保存在本机 Core Data。无登录、无网络、无广告、无内购；CSV 只导出到你选择的位置。")
+                        Text("账本默认只保存在本机 Core Data。联网 AI 默认关闭，只有你在设置里开启并点发送时才会联网；无登录、无广告、无内购。")
                             .font(theme.captionFont)
                             .foregroundStyle(theme.secondaryText)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
+            }
+        }
+    }
+
+    private var aiSection: some View {
+        VStack(spacing: theme.smallSpacing) {
+            LedgerSectionHeader(title: "AI")
+
+            NavigationLink {
+                OnlineAISettingsView()
+            } label: {
+                LedgerCard {
+                    HStack(spacing: 12) {
+                        ZStack {
+                            Circle()
+                                .fill(theme.surfaceElevated)
+                                .frame(width: theme.iconCircleSize, height: theme.iconCircleSize)
+
+                            Image(systemName: "network")
+                                .font(theme.rowIconFont)
+                                .foregroundStyle(theme.accent)
+                        }
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("联网 AI")
+                                .font(theme.bodyFont)
+                                .foregroundStyle(theme.primaryText)
+
+                            Text("接口、模型、API Key；默认关闭")
+                                .font(theme.captionFont)
+                                .foregroundStyle(theme.secondaryText)
+                        }
+
+                        Spacer(minLength: theme.smallSpacing)
+
+                        Text(onlineAIEnabled ? "已开启" : "未开启")
+                            .font(theme.captionFont)
+                            .foregroundStyle(onlineAIEnabled ? theme.income : theme.secondaryText)
+
+                        Image(systemName: "chevron.right")
+                            .font(theme.controlIconFont)
+                            .foregroundStyle(theme.secondaryText)
+                    }
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("配置可选的联网 AI")
+
+            if onlineAIEnabled {
+                NavigationLink {
+                    OnlineAIView()
+                } label: {
+                    LedgerCard {
+                        HStack(spacing: 12) {
+                            ZStack {
+                                Circle()
+                                    .fill(theme.accent.opacity(0.12))
+                                    .frame(width: theme.iconCircleSize, height: theme.iconCircleSize)
+
+                                Image(systemName: "bubble.left.and.bubble.right.fill")
+                                    .font(theme.rowIconFont)
+                                    .foregroundStyle(theme.accent)
+                            }
+
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("和联网 AI 聊聊")
+                                    .font(theme.bodyFont)
+                                    .foregroundStyle(theme.primaryText)
+
+                                Text("只发送你输入的文本，不自动上传账本")
+                                    .font(theme.captionFont)
+                                    .foregroundStyle(theme.secondaryText)
+                            }
+
+                            Spacer(minLength: theme.smallSpacing)
+
+                            Image(systemName: "chevron.right")
+                                .font(theme.controlIconFont)
+                                .foregroundStyle(theme.secondaryText)
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("打开联网 AI 问答")
             }
         }
     }

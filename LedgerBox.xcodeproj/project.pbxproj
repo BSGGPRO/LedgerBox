@@ -34,7 +34,8 @@
 		BB0000000000000000000025 /* AIAssistant.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000023 /* AIAssistant.swift */; };
 		BB0000000000000000000026 /* MoneyBrain.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000024 /* MoneyBrain.swift */; };
 		BB0000000000000000000027 /* MoneyBrainWeights.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000025 /* MoneyBrainWeights.swift */; };
-		BB0000000000000000000019 /* LedgerIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000019 /* LedgerIntents.swift */; };
+		BB0000000000000000000028 /* OnlineAI.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000026 /* OnlineAI.swift */; };
+		BB0000000000000000000029 /* OnlineAIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000027 /* OnlineAIView.swift */; };
 		BB000000000000000000001A /* ChangelogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000001A /* ChangelogView.swift */; };
 		BB0000000000000000000021 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA000000000000000000003C /* WidgetKit.framework */; };
 		BB0000000000000000000022 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA000000000000000000003D /* SwiftUI.framework */; };
@@ -71,7 +72,8 @@
 		CC0000000000000000000023 /* AIAssistant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAssistant.swift; sourceTree = "<group>"; };
 		CC0000000000000000000024 /* MoneyBrain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoneyBrain.swift; sourceTree = "<group>"; };
 		CC0000000000000000000025 /* MoneyBrainWeights.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoneyBrainWeights.swift; sourceTree = "<group>"; };
-		CC0000000000000000000019 /* LedgerIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LedgerIntents.swift; sourceTree = "<group>"; };
+		CC0000000000000000000026 /* OnlineAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnlineAI.swift; sourceTree = "<group>"; };
+		CC0000000000000000000027 /* OnlineAIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnlineAIView.swift; sourceTree = "<group>"; };
 		CC000000000000000000001A /* ChangelogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangelogView.swift; sourceTree = "<group>"; };
 		AA000000000000000000001F /* LedgerBoxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LedgerBoxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA0000000000000000000031 /* LedgerBoxWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LedgerBoxWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -226,7 +228,6 @@
 				CC0000000000000000000023 /* AIAssistant.swift */,
 				CC0000000000000000000024 /* MoneyBrain.swift */,
 				CC0000000000000000000025 /* MoneyBrainWeights.swift */,
-				CC0000000000000000000019 /* LedgerIntents.swift */,
 			);
 			path = QuickEntry;
 			sourceTree = "<group>";
@@ -269,6 +270,8 @@
 			children = (
 				CC0000000000000000000012 /* SettingsView.swift */,
 				CC000000000000000000001A /* ChangelogView.swift */,
+				CC0000000000000000000026 /* OnlineAI.swift */,
+				CC0000000000000000000027 /* OnlineAIView.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -485,7 +488,8 @@
 				BB0000000000000000000025 /* AIAssistant.swift in Sources */,
 				BB0000000000000000000026 /* MoneyBrain.swift in Sources */,
 				BB0000000000000000000027 /* MoneyBrainWeights.swift in Sources */,
-				BB0000000000000000000019 /* LedgerIntents.swift in Sources */,
+				BB0000000000000000000028 /* OnlineAI.swift in Sources */,
+				BB0000000000000000000029 /* OnlineAIView.swift in Sources */,
 				BB0000000000000000000009 /* LedgerBox.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -638,7 +642,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = LedgerBox;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
-				INFOPLIST_KEY_NSSiriUsageDescription = "LedgerBox 使用 Siri 和快捷指令快速记录收支。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -649,7 +652,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.1;
+				MARKETING_VERSION = 0.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -670,7 +673,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = LedgerBox;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
-				INFOPLIST_KEY_NSSiriUsageDescription = "LedgerBox 使用 Siri 和快捷指令快速记录收支。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -681,7 +683,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.1;
+				MARKETING_VERSION = 0.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -705,7 +707,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.1;
+				MARKETING_VERSION = 0.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -729,7 +731,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.1;
+				MARKETING_VERSION = 0.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -754,7 +756,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.2.1;
+				MARKETING_VERSION = 0.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -779,7 +781,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.2.1;
+				MARKETING_VERSION = 0.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

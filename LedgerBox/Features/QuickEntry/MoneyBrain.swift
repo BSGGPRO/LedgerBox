@@ -93,8 +93,8 @@ struct MoneyBrainPrediction {
 
 final class MoneyBrain {
     static let shared = MoneyBrain()
-    static let parameterCount = MoneyBrainWeights.bucketCount
-        * MoneyBrainWeights.classCount
+    static let parameterCount =
+        (MoneyBrainWeights.bucketCount * MoneyBrainWeights.classCount)
         + MoneyBrainWeights.classCount
 
     private let weights: [Float]

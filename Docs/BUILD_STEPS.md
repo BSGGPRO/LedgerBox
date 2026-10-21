@@ -292,21 +292,19 @@ The model configuration used to open the store is incompatible with the one that
 
 它不能替代 Swift 类型检查、SwiftUI 宏展开、Core Data 代码生成和链接。以 Xcode 实际报错为准。
 
-### 7.11 语音权限已移除
+### 7.11 语音与 Siri 权限已移除
 
-0.2.0 起不再使用 `Speech` / `AVAudioEngine`，0.2.1 继续保留该收敛，也不再注入：
+0.2.0 起不再使用 `Speech` / `AVAudioEngine`；0.2.2 进一步删除 Siri / 快捷指令。当前不再注入：
 
 - `NSMicrophoneUsageDescription`
 - `NSSpeechRecognitionUsageDescription`
+- `NSSiriUsageDescription`
 
-只保留 `NSSiriUsageDescription` 给快捷指令 / Siri。如果真机仍然弹出麦克风权限，说明装的是旧 IPA，不是当前 `0.2.1` 构建。小 AI 只处理键盘文本，不访问麦克风。
+`LedgerIntents.swift` 已删除，App target 不再包含 `AppIntents`、`AppShortcutsProvider` 或 `AddTransactionIntent`。如果真机仍然弹出麦克风/Siri 权限，说明装的是旧 IPA。
 
-### 7.12 快捷指令里看不到 LedgerBox
+### 7.12 快捷指令里找不到 LedgerBox
 
-- 确认 `LedgerIntents.swift` 在 App target 的 Compile Sources 中。
-- 确认 `LedgerShortcuts: AppShortcutsProvider` 没有被条件编译排除。
-- 先完整安装一次 App，再打开“快捷指令”搜索 LedgerBox；新装或改短语后系统可能需要时间刷新。
-- App Intents 的元数据由 Xcode 构建时提取；静态检查无法验证这一步。
+这是预期行为。0.2.2 已取消 Siri、快捷指令和 App Intents；不要再添加 `NSSiriUsageDescription`，也不要把 `LedgerIntents.swift` 加回 target。
 
 ---
 
