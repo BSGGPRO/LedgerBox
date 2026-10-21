@@ -624,19 +624,23 @@ struct SettingsView: View {
             .buttonStyle(.plain)
             .accessibilityHint("打开离线的财务专用小模型")
 
-            LedgerCard {
-                SettingsRow(
-                    theme: theme,
-                    icon: "cpu",
-                    tint: localModel.status.isReady ? theme.income : theme.warning,
-                    title: "Qwen2.5-0.5B 本地解释",
-                    subtitle: "\(localModel.completedGenerations) 次真实生成 · \(localModel.rejectedGenerations) 次拒绝 · \(localModel.status.summary)",
-                    trailingText: localModel.status.isReady ? "已加载" : "未就绪",
-                    trailingTint: localModel.status.isReady ? theme.income : theme.warning,
-                    showsChevron: false
-                )
+            NavigationLink {
+                FinanceAdvisorView()
+            } label: {
+                LedgerCard {
+                    SettingsRow(
+                        theme: theme,
+                        icon: "cpu",
+                        tint: localModel.status.isReady ? theme.income : theme.warning,
+                        title: "Qwen2.5-0.5B 本地解释",
+                        subtitle: "\(localModel.completedGenerations) 次真实生成 · \(localModel.rejectedGenerations) 次拒绝 · \(localModel.status.summary)",
+                        trailingText: localModel.status.isReady ? "已加载" : "未就绪",
+                        trailingTint: localModel.status.isReady ? theme.income : theme.warning
+                    )
+                }
             }
-            .accessibilityHint("在财务大脑页运行一次真实 0.5B 解释自检")
+            .buttonStyle(.plain)
+            .accessibilityHint("进入财务大脑，运行一次真实 0.5B 解释自检")
         }
     }
 

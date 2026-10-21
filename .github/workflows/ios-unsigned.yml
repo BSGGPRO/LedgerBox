@@ -85,8 +85,8 @@ jobs:
           HASH=$(shasum -a 256 "$IPA" | awk '{print $1}')
           unzip -l "$IPA" > build/ipa-listing.txt
           cat > build/artifact-info.txt <<EOF
-          version=0.11.0
-          build=16
+          version=0.11.1
+          build=17
           size=$SIZE
           sha256=$HASH
           run=${{ github.run_id }}
@@ -98,12 +98,12 @@ jobs:
       - name: Upload artifact metadata
         uses: actions/upload-artifact@v4
         with:
-          name: LedgerBox-0.11.0-metadata
+          name: LedgerBox-0.11.1-metadata
           path: build/artifact-info.txt
           if-no-files-found: error
           retention-days: 30
 
-      - name: Publish 0.11.0 release
+      - name: Publish 0.11.1 release
         if: github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -113,14 +113,16 @@ jobs:
           SIZE=$(stat -f%z "$IPA")
           HASH=$(shasum -a 256 "$IPA" | awk '{print $1}')
           BODY=$(cat <<EOF
-          ## LedgerBox 0.11.0
+          ## LedgerBox 0.11.1
+
+          ### Fixed
+          - 浅色/白色主题的浮动标题、底栏、记账气泡、账户页和图片页关闭按钮改用主题表面色，不再出现固定深色块。
+          - 浅色底栏选中态使用对比度校正后的强调色，未选中态使用次级文字色。
 
           ### Added
-          - 一张图多账单：按 OCR 行距切分，逐笔核对、排除重复、整批确认。
-          - 批量入账全有或全无；成功后一次撤销整批，余额随之恢复。
-          - JSON 全量备份/恢复：账户、分类、流水、预算、目标、模板与设置。
-          - 财务大脑动作路由：记一笔、查账、导出 CSV、导出 JSON、图片记账；写账和导出前必须确认。
-          - 本地诊断日志：只记录事件与计数，不记录金额、商户、问题原文、截图或订单号。
+          - 财务大脑“Qwen2.5-0.5B 本地解释层”显示真实加载状态、完成/拒绝计数和最近一次真实输出。
+          - “运行一次真实解释”自检：固定示例调用 llama.cpp，只有通过数字白名单校验才显示输出；模拟器明确提示不加载。
+          - 设置 AI 区显示 0.5B 状态与真实调用计数，可进入财务大脑运行自检。
 
           ### Bundled
           - Qwen2.5-0.5B-Instruct Q4_K_M, 491,400,032 bytes
@@ -141,16 +143,16 @@ jobs:
           - The app is not a medical, tax, or investment advisor.
           EOF
           )
-          if gh release view v0.11.0 >/dev/null 2>&1; then
-            gh release edit v0.11.0 --notes "$BODY"
-            gh release upload v0.11.0 "$IPA" --clobber
+          if gh release view v0.11.1 >/dev/null 2>&1; then
+            gh release edit v0.11.1 --notes "$BODY"
+            gh release upload v0.11.1 "$IPA" --clobber
           else
-            gh release create v0.11.0 "$IPA" \
-              --title "LedgerBox 0.11.0 — 多账单与 JSON 备份" \
+            gh release create v0.11.1 "$IPA" \
+              --title "LedgerBox 0.11.1 — 浅色主题收口与 0.5B 自检" \
               --notes "$BODY" \
               --prerelease
           fi
-          gh release view v0.11.0 --json url,assets
+          gh release view v0.11.1 --json url,assets
 
       - name: Upload unsigned IPA
         if: github.event_name == 'workflow_dispatch'

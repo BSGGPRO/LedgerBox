@@ -14,6 +14,18 @@ struct ChangelogEntry: Identifiable {
 enum ChangelogCatalog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "0.11.1",
+            dateText: "2026.10.22",
+            title: "浅色主题收口与 0.5B 真实自检",
+            changes: [
+                "浅色/白色主题的浮动标题、底栏、记账气泡、账户页和图片页关闭按钮改用主题表面色，不再固定成深色块。",
+                "财务大脑的“Qwen 0.5B 本地解释层”显示真实加载状态、完成/拒绝计数和最近一次真实输出。",
+                "新增“运行一次真实解释”自检：用固定示例调用 llama.cpp，只显示通过数字白名单校验的输出；模拟器明确提示不加载。",
+                "设置 AI 区显示 0.5B 状态与真实调用计数，点按可进入财务大脑运行自检。",
+                "解释层仍然只改写确定性结果，不写账、不改金额、不补日期。"
+            ]
+        ),
+        ChangelogEntry(
             version: "0.11.0",
             dateText: "2026.10.22",
             title: "多账单、JSON 备份与 AI 动作",

@@ -322,7 +322,7 @@ enum AIActionRouter {
     }
 
     /// A concrete format wins over a vague "备份": "备份成 CSV" exports,
-    /// while "导出 JSON" routes to the (not yet implemented) JSON backup.
+    /// while "导出 JSON" routes to the JSON backup exporter.
     private static func exportIntent(
         in text: String
     ) -> (intent: AIActionIntent, keyword: String)? {
