@@ -1,4 +1,4 @@
-﻿import CoreData
+import CoreData
 import Foundation
 import SwiftUI
 
@@ -103,6 +103,9 @@ struct QuickEntryView: View {
         }
         .onChange(of: accounts.count) { _, _ in
             reparse()
+        }
+        .onChange(of: date) { _, _ in
+            focusedField = nil
         }
         .alert(item: $alert) { item in
             Alert(
@@ -459,6 +462,7 @@ struct QuickEntryView: View {
         Binding(
             get: { selectedCategoryID },
             set: { newValue in
+                focusedField = nil
                 selectedCategoryID = newValue
                 autoCategoryID = nil
                 categoryManuallyEdited = true
@@ -470,6 +474,7 @@ struct QuickEntryView: View {
         Binding(
             get: { selectedAccountID },
             set: { newValue in
+                focusedField = nil
                 selectedAccountID = newValue
                 autoAccountID = nil
                 accountManuallyEdited = true
@@ -478,6 +483,7 @@ struct QuickEntryView: View {
     }
 
     private func selectType(_ type: TransactionType) {
+        focusedField = nil
         // Tapping the already-selected type pins it against later parser
         // changes; it must still be treated as a manual choice.
         typeManuallyEdited = true

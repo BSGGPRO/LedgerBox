@@ -82,7 +82,20 @@ struct AddTransactionView: View {
             seedSelections()
         }
         .onChange(of: type) { _, _ in
+            focusedField = nil
             normalizeSelection()
+        }
+        .onChange(of: selectedAccountID) { _, _ in
+            focusedField = nil
+        }
+        .onChange(of: selectedToAccountID) { _, _ in
+            focusedField = nil
+        }
+        .onChange(of: selectedCategoryID) { _, _ in
+            focusedField = nil
+        }
+        .onChange(of: date) { _, _ in
+            focusedField = nil
         }
         .alert(
             "无法保存",

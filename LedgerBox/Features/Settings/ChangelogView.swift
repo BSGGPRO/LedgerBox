@@ -1,4 +1,4 @@
-﻿import SwiftUI
+import SwiftUI
 
 // Add a new entry at the top for every user-visible release. Keep the wording
 // factual: what changed, not a promise that it has been verified on device.
@@ -13,6 +13,20 @@ struct ChangelogEntry: Identifiable {
 
 enum ChangelogCatalog {
     static let entries: [ChangelogEntry] = [
+        ChangelogEntry(
+            version: "0.7.0",
+            dateText: "2026.10.21",
+            title: "键盘会收，颜色会看",
+            changes: [
+                "所有输入框增加键盘“完成”栏：金额数字键盘、备注多行输入、预算/目标/买车副业、财务大脑探针都能直接收起键盘，不用再上下滑动或退出页面。",
+                "点卡片外空白、保存、取消、下滑也会收起键盘；切换账户/分类/日期后自动收起，数字键盘不再必须退出页面。",
+                "重做首页和设置页视觉：20pt 圆角、20pt 卡片内边距、8pt 间距、胶囊按钮、细分隔线；首页只保留右上角一个用户图标进设置。",
+                "重做配色：浅色/深色双层表面、可读的收入/支出/警告色；强调色不再一律白字，浅色强调色自动改用深色文字。",
+                "设置页新增自定义强调色：5 个预设、ColorPicker、HEX 输入、实时预览和对比度提示；非法颜色会回退或提示，不再静默变灰。",
+                "金额、目标、预算、统计等卡片统一等高和单行缩放，减少一边高一边低；大字号下本月三列自动改为竖排。",
+                "财务大脑仍为 20,971,560 参数、524,288 哈希桶；这次没有改模型数字。"
+            ]
+        ),
         ChangelogEntry(
             version: "0.6.0",
             dateText: "2026.10.21",
