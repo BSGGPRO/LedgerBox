@@ -1,208 +1,6 @@
-import AVFoundation
-import Combine
 import CoreData
-import Dispatch
 import Foundation
-import Speech
 import SwiftUI
-
-// MARK: - On-device speech
-
-/// A deliberately small Speech wrapper. It never falls back to Apple's server
-/// recognizer: if on-device recognition is unavailable, the UI asks the user to
-/// type instead. [隐私边界] [无网络 API]
-final class QuickEntrySpeechRecognizer: ObservableObject {
-    @Published private(set) var transcript = ""
-    @Published private(set) var isRecording = false
-    @Published private(set) var errorMessage: String?
-
-    private let recognizer = SFSpeechRecognizer(locale: Locale(identifier: "zh-CN"))
-    private let audioEngine = AVAudioEngine()
-    private var request: SFSpeechAudioBufferRecognitionRequest?
-    private var task: SFSpeechRecognitionTask?
-    private var tapInstalled = false
-    private var isStopped = true
-
-    var supportsOnDeviceRecognition: Bool {
-        recognizer?.supportsOnDeviceRecognition == true
-    }
-
-    func start() {
-        guard !isRecording, isStopped else {
-            return
-        }
-
-        errorMessage = nil
-        transcript = ""
-        isStopped = false
-
-        guard let recognizer else {
-            isStopped = true
-            errorMessage = "当前设备不支持中文语音识别，请使用键盘输入。"
-            return
-        }
-
-        guard recognizer.supportsOnDeviceRecognition else {
-            isStopped = true
-            errorMessage = "当前设备不支持本地中文语音识别。为避免上传音频，请使用键盘输入。"
-            return
-        }
-
-        SFSpeechRecognizer.requestAuthorization { [weak self] status in
-            DispatchQueue.main.async {
-                guard let self, !self.isStopped else {
-                    return
-                }
-
-                switch status {
-                case .authorized:
-                    self.requestMicrophonePermission()
-                case .denied, .restricted:
-                    self.isStopped = true
-                    self.errorMessage = "语音识别权限未开启，请在系统设置中允许 LedgerBox 使用语音识别。"
-                case .notDetermined:
-                    self.isStopped = true
-                    self.errorMessage = "尚未获得语音识别权限。"
-                @unknown default:
-                    self.isStopped = true
-                    self.errorMessage = "语音识别权限状态未知。"
-                }
-            }
-        }
-    }
-
-    func stop() {
-        isStopped = true
-        guard isRecording else {
-            return
-        }
-
-        isRecording = false
-        request?.endAudio()
-        audioEngine.stop()
-
-        if tapInstalled {
-            audioEngine.inputNode.removeTap(onBus: 0)
-            tapInstalled = false
-        }
-
-        try? AVAudioSession.sharedInstance().setActive(
-            false,
-            options: .notifyOthersOnDeactivation
-        )
-        request = nil
-        task = nil
-    }
-
-    func clearError() {
-        errorMessage = nil
-    }
-
-    private func requestMicrophonePermission() {
-        AVAudioApplication.requestRecordPermission { [weak self] granted in
-            DispatchQueue.main.async {
-                guard let self, !self.isStopped else {
-                    return
-                }
-
-                if granted {
-                    self.beginRecognition()
-                } else {
-                    self.isStopped = true
-                    self.errorMessage = "麦克风权限未开启，请在系统设置中允许 LedgerBox 使用麦克风。"
-                }
-            }
-        }
-    }
-
-    private func beginRecognition() {
-        guard !isStopped else {
-            return
-        }
-        guard let recognizer else {
-            isStopped = true
-            errorMessage = "当前设备不支持中文语音识别，请使用键盘输入。"
-            return
-        }
-
-        do {
-            let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.record, mode: .measurement, options: [])
-            try session.setActive(true, options: [])
-        } catch {
-            isStopped = true
-            errorMessage = "无法启动录音：\(error.localizedDescription)"
-            return
-        }
-
-        let request = SFSpeechAudioBufferRecognitionRequest()
-        request.shouldReportPartialResults = true
-        request.requiresOnDeviceRecognition = true
-        request.taskHint = .dictation
-        self.request = request
-
-        let inputNode = audioEngine.inputNode
-        let format = inputNode.outputFormat(forBus: 0)
-        guard format.sampleRate > 0, format.channelCount > 0 else {
-            isStopped = true
-            errorMessage = "没有可用的麦克风输入。"
-            cleanupAudio()
-            return
-        }
-
-        inputNode.installTap(onBus: 0, bufferSize: 1_024, format: format) { buffer, _ in
-            request.append(buffer)
-        }
-        tapInstalled = true
-
-        audioEngine.prepare()
-        do {
-            try audioEngine.start()
-        } catch {
-            isStopped = true
-            cleanupAudio()
-            errorMessage = "无法启动录音：\(error.localizedDescription)"
-            return
-        }
-
-        isRecording = true
-        task = recognizer.recognitionTask(with: request) { [weak self] result, error in
-            DispatchQueue.main.async {
-                guard let self else {
-                    return
-                }
-
-                if let result {
-                    self.transcript = result.bestTranscription.formattedString
-                    if result.isFinal {
-                        self.stop()
-                    }
-                }
-
-                if let error, self.isRecording {
-                    self.errorMessage = "语音识别失败：\(error.localizedDescription)"
-                    self.stop()
-                }
-            }
-        }
-    }
-
-    private func cleanupAudio() {
-        audioEngine.stop()
-        if tapInstalled {
-            audioEngine.inputNode.removeTap(onBus: 0)
-            tapInstalled = false
-        }
-        request?.endAudio()
-        request = nil
-        task?.cancel()
-        task = nil
-        try? AVAudioSession.sharedInstance().setActive(
-            false,
-            options: .notifyOthersOnDeactivation
-        )
-    }
-}
 
 // MARK: - Quick entry panel
 
@@ -210,7 +8,6 @@ struct QuickEntryView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
     @Environment(\.ledgerTheme) private var theme
-    @Environment(\.scenePhase) private var scenePhase
 
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \Account.sortOrder, ascending: true)],
@@ -224,7 +21,6 @@ struct QuickEntryView: View {
     )
     private var categories: FetchedResults<Category>
 
-    @StateObject private var speech = QuickEntrySpeechRecognizer()
     @State private var text = ""
     @State private var parsed: QuickEntryParser.ParsedEntry?
     @State private var selectedType: TransactionType?
@@ -254,6 +50,7 @@ struct QuickEntryView: View {
             ScrollView {
                 VStack(spacing: theme.spacing) {
                     inputCard
+                    aiCard
                     previewCard
                     detailsCard
                     saveButton
@@ -263,14 +60,13 @@ struct QuickEntryView: View {
             }
             .scrollDismissesKeyboard(.interactively)
             .background(theme.background.ignoresSafeArea())
-            .navigationTitle("极速记账")
+            .navigationTitle("AI 记账")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(theme.background, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("关闭") {
-                        speech.stop()
                         dismiss()
                     }
                     .foregroundStyle(theme.secondaryText)
@@ -279,37 +75,14 @@ struct QuickEntryView: View {
         }
         .tint(theme.accent)
         .presentationDragIndicator(.visible)
-        .interactiveDismissDisabled(speech.isRecording)
         .onAppear {
             reparse()
-        }
-        .onDisappear {
-            speech.stop()
-        }
-        .onChange(of: scenePhase) { _, phase in
-            if phase != .active, speech.isRecording {
-                speech.stop()
-            }
         }
         .onChange(of: text) { _, _ in
             reparse()
         }
         .onChange(of: amountText) { _, newValue in
             sanitizeAmount(newValue)
-        }
-        .onChange(of: speech.transcript) { _, newValue in
-            guard !newValue.isEmpty else {
-                return
-            }
-            if text != newValue {
-                text = newValue
-            }
-        }
-        .onChange(of: speech.errorMessage) { _, newValue in
-            if let newValue {
-                alert = QuickEntryAlert(message: newValue)
-                speech.clearError()
-            }
         }
         .onChange(of: categorySignature) { _, _ in
             normalizeSelection()
@@ -320,7 +93,7 @@ struct QuickEntryView: View {
         }
         .alert(item: $alert) { item in
             Alert(
-                title: Text("极速记账"),
+                title: Text("小 AI 记账"),
                 message: Text(item.message),
                 dismissButton: .default(Text("好"))
             )
@@ -332,9 +105,20 @@ struct QuickEntryView: View {
     private var inputCard: some View {
         LedgerCard {
             VStack(alignment: .leading, spacing: theme.smallSpacing) {
-                Text("一句话记账")
-                    .font(theme.sectionTitleFont)
-                    .foregroundStyle(theme.primaryText)
+                HStack(spacing: 8) {
+                    Text("告诉小 AI 一笔账")
+                        .font(theme.sectionTitleFont)
+                        .foregroundStyle(theme.primaryText)
+
+                    Spacer(minLength: 4)
+
+                    Label("本地", systemImage: "sparkles")
+                        .font(theme.badgeFont)
+                        .foregroundStyle(theme.accent)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(theme.accent.opacity(0.10), in: Capsule())
+                }
 
                 HStack(alignment: .bottom, spacing: theme.smallSpacing) {
                     TextField("例如：微信买奶茶 15 元", text: $text, axis: .vertical)
@@ -353,24 +137,83 @@ struct QuickEntryView: View {
                         )
 
                     Button {
-                        toggleSpeech()
+                        inputFocused = false
+                        reparse()
                     } label: {
-                        Image(systemName: speech.isRecording ? "stop.fill" : "mic.fill")
+                        Image(systemName: "sparkles")
                             .font(theme.headerActionFont)
                             .foregroundStyle(theme.onAccent)
                             .frame(width: 48, height: 48)
-                            .background(
-                                speech.isRecording ? theme.expense : theme.accent,
-                                in: Circle()
-                            )
+                            .background(theme.accent, in: Circle())
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(speech.isRecording ? "停止语音输入" : "开始语音输入")
+                    .accessibilityLabel("让小 AI 重新理解这段文字")
                 }
 
-                Text("语音只在本机识别；不支持本地识别时不会回退到服务器。")
+                Text("小 AI 只在本机拆文本：金额、收支、分类、账户；不会上传，也不会假装成云端大模型。")
                     .font(theme.captionFont)
                     .foregroundStyle(theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                ScrollView(.horizontal) {
+                    HStack(spacing: 8) {
+                        ForEach(QuickEntryAI.examples, id: \.self) { example in
+                            Button {
+                                text = example
+                                inputFocused = false
+                            } label: {
+                                Text(example)
+                                    .font(theme.captionFont)
+                                    .foregroundStyle(theme.secondaryText)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(theme.surfaceElevated, in: Capsule())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                .scrollIndicators(.hidden)
+            }
+        }
+    }
+
+    private var aiCard: some View {
+        let insight = aiInsight
+
+        return LedgerCard {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                        .font(theme.rowIconFont)
+                        .foregroundStyle(aiColor(insight.state))
+
+                    Text(insight.title)
+                        .font(theme.bodyFont.weight(.semibold))
+                        .foregroundStyle(theme.primaryText)
+
+                    Spacer(minLength: 4)
+
+                    Text("\(insight.recognizedFields)/\(insight.totalFields)")
+                        .font(theme.badgeFont)
+                        .foregroundStyle(theme.secondaryText)
+                }
+
+                Text(insight.detail)
+                    .font(theme.captionFont)
+                    .foregroundStyle(theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                ProgressView(value: Double(insight.confidence), total: 100)
+                    .tint(aiColor(insight.state))
+
+                HStack {
+                    Text("字段完整度")
+                    Spacer()
+                    Text("\(insight.confidence)%")
+                }
+                .font(theme.badgeFont)
+                .foregroundStyle(theme.secondaryText)
             }
         }
     }
@@ -379,7 +222,7 @@ struct QuickEntryView: View {
         LedgerCard {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("实时解析")
+                    Text("识别结果")
                         .font(theme.sectionTitleFont)
                         .foregroundStyle(theme.primaryText)
 
@@ -397,7 +240,7 @@ struct QuickEntryView: View {
                 }
 
                 if parsed == nil {
-                    Text("输入或说一句话，例如“微信买奶茶 15 元”。")
+                    Text("输入一句话，例如“微信买奶茶 15 元”。")
                         .font(theme.bodyFont)
                         .foregroundStyle(theme.secondaryText)
                 } else {
@@ -414,6 +257,63 @@ struct QuickEntryView: View {
                     HStack(spacing: 8) {
                         summaryChip(title: "分类", value: effectiveCategory?.name ?? "待选择")
                         summaryChip(title: "账户", value: effectiveAccount?.name ?? "待选择")
+                    }
+
+                    if effectiveCategory == nil, !filteredCategories.isEmpty {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("小 AI 建议")
+                                .font(theme.badgeFont)
+                                .foregroundStyle(theme.secondaryText)
+
+                            ScrollView(.horizontal) {
+                                HStack(spacing: 8) {
+                                    ForEach(Array(filteredCategories.prefix(5)), id: \.id) { category in
+                                        Button {
+                                            if effectiveType == nil {
+                                                selectedType = category.categoryKind == .income ? .income : .expense
+                                            }
+                                            categorySelection.wrappedValue = category.id
+                                        } label: {
+                                            Text(category.name)
+                                                .font(theme.captionFont)
+                                                .foregroundStyle(theme.accent)
+                                                .padding(.horizontal, 10)
+                                                .padding(.vertical, 6)
+                                                .background(theme.accent.opacity(0.10), in: Capsule())
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                            }
+                            .scrollIndicators(.hidden)
+                        }
+                    }
+
+                    if effectiveAccount == nil, !accounts.isEmpty {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("小 AI 常用账户")
+                                .font(theme.badgeFont)
+                                .foregroundStyle(theme.secondaryText)
+
+                            ScrollView(.horizontal) {
+                                HStack(spacing: 8) {
+                                    ForEach(Array(accounts.prefix(4)), id: \.id) { account in
+                                        Button {
+                                            accountSelection.wrappedValue = account.id
+                                        } label: {
+                                            Text(account.name)
+                                                .font(theme.captionFont)
+                                                .foregroundStyle(theme.accent)
+                                                .padding(.horizontal, 10)
+                                                .padding(.vertical, 6)
+                                                .background(theme.accent.opacity(0.10), in: Capsule())
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                            }
+                            .scrollIndicators(.hidden)
+                        }
                     }
 
                     if !visibleIssues.isEmpty {
@@ -786,16 +686,33 @@ struct QuickEntryView: View {
         return true
     }
 
-    // MARK: - Actions
+    private var aiInsight: QuickEntryAI.Insight {
+        QuickEntryAI.insight(
+            text: text,
+            parsed: parsed,
+            canSave: canSave,
+            visibleIssueCount: visibleIssues.count,
+            type: effectiveType,
+            amount: amountValue,
+            categoryName: effectiveCategory?.name,
+            accountName: effectiveAccount?.name
+        )
+    }
 
-    private func toggleSpeech() {
-        if speech.isRecording {
-            speech.stop()
-        } else {
-            inputFocused = false
-            speech.start()
+    private func aiColor(_ state: QuickEntryAI.State) -> Color {
+        switch state {
+        case .idle:
+            return theme.accent
+        case .ready:
+            return theme.income
+        case .needsInfo:
+            return theme.warning
+        case .blocked:
+            return theme.expense
         }
     }
+
+    // MARK: - Actions
 
     private func reparse() {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -957,7 +874,6 @@ struct QuickEntryView: View {
                 category: category,
                 in: viewContext
             )
-            speech.stop()
             dismiss()
         } catch {
             alert = QuickEntryAlert(message: error.localizedDescription)

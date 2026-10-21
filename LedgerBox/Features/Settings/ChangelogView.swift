@@ -14,6 +14,18 @@ struct ChangelogEntry: Identifiable {
 enum ChangelogCatalog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "0.2.0",
+            dateText: "2026.10.21",
+            title: "小 AI 来了，语音退场",
+            changes: [
+                "新增本地文本小 AI：输入一句话，拆出金额、收支、分类和账户；不联网、不上传文本。",
+                "新增字段完整度、示例胶囊、分类建议和常用账户建议，补全更快。",
+                "移除语音识别、麦克风与语音识别权限，减少权限弹窗和自签变量。",
+                "重做 AI 记账页：小 AI 状态卡、识别结果卡、补全信息卡分层展示。",
+                "保留快捷指令 / Siri 与原生 WidgetKit 小组件。"
+            ]
+        ),
+        ChangelogEntry(
             version: "0.1.0",
             dateText: "2026.10.21",
             title: "目标更清楚，记账更快",

@@ -15,7 +15,7 @@
 
 | 项目 | 结论 |
 |---|---|
-| 静态源码 | 26 个 Swift 文件（22 个 App + 2 个 Widget + 2 个测试） |
+| 静态源码 | 27 个 Swift 文件（23 个 App + 2 个 Widget + 2 个测试） |
 | 文档 | README、LICENSE、.gitignore、CONTRIBUTING、核心 Docs、开源调研与 10 项目清单 |
 | 静态语法 | tree-sitter-swift 解析通过 |
 | 工程结构 | pbxproj / XML / plist 解析通过；App + Widget Extension 两个 Target |
@@ -34,16 +34,16 @@
 最后一次静态检查结果：
 
 ```text
-SWIFT SYNTAX OK 26
-XML/PLIST/PBX OK 34 31
+SWIFT SYNTAX OK 27
+XML/PLIST/PBX OK 35 32
 NO BOM
 ```
 
 解释：
 
-- `SWIFT SYNTAX OK 26`：26 个 `.swift` 文件（22 个 App + 2 个 Widget + 2 个测试）均可被 tree-sitter-swift 解析，根节点无错误。
-- `34`：`PBXFileReference` 数量（22 个 App Swift + 2 个 Widget Swift + 2 个测试 Swift + 图标/框架/产品/Info.plist 等）。
-- `31`：`PBXBuildFile` 数量（App 源文件 + Widget 源文件 + 测试源文件 + 模型/资源/框架/嵌入扩展）。
+- `SWIFT SYNTAX OK 27`：27 个 `.swift` 文件（23 个 App + 2 个 Widget + 2 个测试）均可被 tree-sitter-swift 解析，根节点无错误。
+- `35`：`PBXFileReference` 数量（23 个 App Swift + 2 个 Widget Swift + 2 个测试 Swift + 图标/框架/产品/Info.plist 等）。
+- `32`：`PBXBuildFile` 数量（App 源文件 + Widget 源文件 + 测试源文件 + 模型/资源/框架/嵌入扩展）。
 - `NO BOM`：`project.pbxproj` 为 UTF-8 无 BOM。
 
 其他静态检查：
@@ -129,8 +129,8 @@ NO BOM
 | P1-21 | 奶茶预算 | 150/月、2 杯/周告警 | 未运行 |
 | P1-22 | 目标专户警告 | 支出/转出提醒 | 未运行 |
 | P1-23 | Preview | 各页面浅色/深色可渲染 | 未运行 |
-| P1-24 | 极速记账解析 | 一句话识别金额/收支/分类/账户；缺项高亮；不静默猜分类 | 未运行 |
-| P1-25 | 本地语音输入 | 仅设备端识别；无本地能力时退回键盘；不上传音频 | 未运行 |
+| P1-24 | 小 AI 文本解析 | 一句话识别金额/收支/分类/账户；字段完整度、示例、分类/账户建议 | 未运行 |
+| P1-25 | 权限收敛 | 已移除麦克风/语音识别权限；不再请求语音权限 | 未运行 |
 | P1-26 | 快捷指令/App Intents | 结构化记账与一句话记账；无歧义才自动保存；主上下文串行写入 | 未运行 |
 | P1-27 | WidgetKit 小组件 | 小/中尺寸可添加；嵌入 appex；不读账本数据 | 未运行 |
 | P1-28 | 更新日志/作者入口 | 设置页可打开 Changelog 与 Beausoleil Bilibili | 未运行 |
@@ -153,7 +153,7 @@ NO BOM
 | P5-10 | 测试 Target | 已加入（2 个测试源文件），未运行 |
 | P5-11 | 实际 Xcode 编译 | GitHub Actions archive 成功（commit `5026749`） |
 | P5-12 | 实际运行 | 未验证（无模拟器/真机） |
-| P5-13 | 未签名 IPA | `LedgerBox-unsigned-0.1.0-Widget.ipa`（741,459 字节，含极速记账/小组件/更新日志）；旧版保留为历史产物 |
+| P5-13 | 未签名 IPA | Widget 版 `LedgerBox-unsigned-0.1.0-Widget.ipa`（741,459 字节）；单 target 版 `LedgerBox-unsigned-0.1.0-NoWidget.ipa`（722,423 字节，移除 PlugIns，适合 lcsign） |
 | P5-14 | 自签验证 | 未执行 |
 | P5-15 | 截图/视觉回归 | 缺失 |
 | P5-16 | 本地化 | 缺失（仅中文） |
@@ -227,7 +227,7 @@ NO BOM
 22. 记奶茶 160，确认月上限警告；本周第 2 杯确认周警告。
 23. 从目标专户直接支出，确认警告。
 24. 首页点“极速”，输入“微信买奶茶 15 元”，确认分类/账户/金额，保存后首页刷新。
-25. 点麦克风说同一句话；若设备不支持本地中文识别，确认提示并退回键盘。
+25. 点示例胶囊“支付宝打车 32.5”，确认小 AI 状态卡、分类建议、账户建议和字段完整度更新。
 26. 在快捷指令中运行“记一笔”，分别验证结构化参数与一句话文本；歧义输入不得自动保存。
 27. 导出 CSV，用文本编辑器/Excel 检查中文与字段。
 28. 归档 `CODE_SIGNING_ALLOWED=NO`，确认产物。

@@ -3,6 +3,24 @@
 All user-visible changes to LedgerBox are recorded here and in the in-app
 **设置 → 更新日志** page.
 
+## 0.2.0 — 2026-10-21
+
+### Added
+
+- 本地文本小 AI：输入一句话，拆出金额、收支、分类和账户；不联网、不上传文本。
+- 字段完整度、示例胶囊、分类建议和常用账户建议。
+- AI 记账页重做：小 AI 状态卡、识别结果卡、补全信息卡分层展示。
+
+### Removed
+
+- 移除语音识别、麦克风和语音识别权限，减少权限弹窗与自签变量。
+
+### Kept
+
+- 快捷指令 / Siri。
+- 原生 WidgetKit 小组件。
+- 设置页作者 Beausoleil 的 Bilibili 入口。
+
 ## 0.1.0 — 2026-10-21
 
 ### Added

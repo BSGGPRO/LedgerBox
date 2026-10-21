@@ -196,7 +196,15 @@ Widget：      com.example.ledgerbox.widget
 Payload/LedgerBox.app/PlugIns/LedgerBoxWidget.appex
 ```
 
-如果 `lcsign` 只签主 App、不递归签 `PlugIns`，安装会失败。签名前先确认工具会处理 appex；否则需要分别给主 App 和 Widget 签名，或从 IPA 里移除 `PlugIns/LedgerBoxWidget.appex` 后只装主 App。移除后就没有小组件。
+如果 `lcsign` 只签主 App、不递归签 `PlugIns`，安装会失败。签名前先确认工具会处理 appex；否则需要分别给主 App 和 Widget 签名。
+
+已经额外生成一个单 target 版本：
+
+```text
+LedgerBox-unsigned-0.1.0-NoWidget.ipa
+```
+
+它和 Widget 版的主 App 二进制字节完全相同，只移除了 `Payload/LedgerBox.app/PlugIns/`。因此它没有小组件，但 `lcsign` 只需要处理主 App，适合你之前能正常安装的单 target 流程。
 
 ---
 
