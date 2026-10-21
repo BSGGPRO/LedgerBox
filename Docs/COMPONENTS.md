@@ -407,9 +407,9 @@ CSV 字段：
 - 无账户管理 UI、无分类管理 UI。
 - 无周期记账页面；“补记本期”尚未接入。
 - `AppSettings.themeMode` 与 `ThemeManager` 未双向同步。
-- 测试 Target 已运行：23 个测试在 iPhone 16 / iOS 26.2 模拟器通过（run `39584757968`）。
+- 测试 Target 已运行：23 个测试在 iPhone 16 / iOS 26.2 模拟器通过（run `39585640730`）。
 - AppIcon 与 Asset Catalog 已随 GitHub Actions archive 编译；未做真机视觉检查。
-- 已通过 GitHub Actions `macos-15` 归档（run `39584745878`）；未在本地 Xcode 运行，也未做真机验证。
+- 已通过 GitHub Actions `macos-15` 归档（run `39585632223`）；未在本地 Xcode 运行，也未做真机验证。
 - iOS 不能读取其他 App 的通知内容；已取消快捷指令/Siri，没有系统自动化写账入口。
 - 本地小 AI 是规则 + 5,643 参数金钱分类器 + 15,380 参数财务意图模型；财务大脑未做真实账本准确率测试；联网 AI 需用户自配接口，未做真实网络验证。
 
