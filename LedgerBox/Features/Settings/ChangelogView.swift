@@ -14,6 +14,17 @@ struct ChangelogEntry: Identifiable {
 enum ChangelogCatalog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "0.2.1",
+            dateText: "2026.10.21",
+            title: "塞进一个金钱小模型",
+            changes: [
+                "新增 5,643 参数的本地金钱小模型，识别餐饮/交通/购物/住房/娱乐/医疗/工资/理财/转账/退款等语义。",
+                "小模型只做分类提示和建议排序，不覆盖解析器明确结果，不生成金额。",
+                "卡片新增“金钱小模型 · 餐饮 84%”提示。",
+                "它不是 0.5B/1B 大语言模型；训练数据是合成短语，真实准确率仍需测试。"
+            ]
+        ),
+        ChangelogEntry(
             version: "0.2.0",
             dateText: "2026.10.21",
             title: "小 AI 来了，语音退场",

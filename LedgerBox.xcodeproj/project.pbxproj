@@ -32,6 +32,8 @@
 		BB0000000000000000000017 /* QuickEntryParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000017 /* QuickEntryParserTests.swift */; };
 		BB0000000000000000000018 /* QuickEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000018 /* QuickEntryView.swift */; };
 		BB0000000000000000000025 /* AIAssistant.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000023 /* AIAssistant.swift */; };
+		BB0000000000000000000026 /* MoneyBrain.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000024 /* MoneyBrain.swift */; };
+		BB0000000000000000000027 /* MoneyBrainWeights.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000025 /* MoneyBrainWeights.swift */; };
 		BB0000000000000000000019 /* LedgerIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000019 /* LedgerIntents.swift */; };
 		BB000000000000000000001A /* ChangelogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000001A /* ChangelogView.swift */; };
 		BB0000000000000000000021 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA000000000000000000003C /* WidgetKit.framework */; };
@@ -67,6 +69,8 @@
 		CC0000000000000000000017 /* QuickEntryParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickEntryParserTests.swift; sourceTree = "<group>"; };
 		CC0000000000000000000018 /* QuickEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickEntryView.swift; sourceTree = "<group>"; };
 		CC0000000000000000000023 /* AIAssistant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAssistant.swift; sourceTree = "<group>"; };
+		CC0000000000000000000024 /* MoneyBrain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoneyBrain.swift; sourceTree = "<group>"; };
+		CC0000000000000000000025 /* MoneyBrainWeights.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoneyBrainWeights.swift; sourceTree = "<group>"; };
 		CC0000000000000000000019 /* LedgerIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LedgerIntents.swift; sourceTree = "<group>"; };
 		CC000000000000000000001A /* ChangelogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangelogView.swift; sourceTree = "<group>"; };
 		AA000000000000000000001F /* LedgerBoxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LedgerBoxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -220,6 +224,8 @@
 				CC0000000000000000000016 /* QuickEntryParser.swift */,
 				CC0000000000000000000018 /* QuickEntryView.swift */,
 				CC0000000000000000000023 /* AIAssistant.swift */,
+				CC0000000000000000000024 /* MoneyBrain.swift */,
+				CC0000000000000000000025 /* MoneyBrainWeights.swift */,
 				CC0000000000000000000019 /* LedgerIntents.swift */,
 			);
 			path = QuickEntry;
@@ -477,6 +483,8 @@
 				BB0000000000000000000016 /* QuickEntryParser.swift in Sources */,
 				BB0000000000000000000018 /* QuickEntryView.swift in Sources */,
 				BB0000000000000000000025 /* AIAssistant.swift in Sources */,
+				BB0000000000000000000026 /* MoneyBrain.swift in Sources */,
+				BB0000000000000000000027 /* MoneyBrainWeights.swift in Sources */,
 				BB0000000000000000000019 /* LedgerIntents.swift in Sources */,
 				BB0000000000000000000009 /* LedgerBox.xcdatamodeld in Sources */,
 			);
@@ -641,7 +649,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.2.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -673,7 +681,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.2.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -697,7 +705,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.2.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -721,7 +729,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.2.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -746,7 +754,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.2.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -771,7 +779,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.2.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

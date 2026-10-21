@@ -19,6 +19,7 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 - **目标**：储蓄目标、进度环、30 天平均净结余倒计时、达成/冻结状态、新增/编辑/删除。
 - **设置**：浅色/深色/跟随系统、五种强调色、模板应用、CSV 本地导出、隐私说明、更新日志。
 - **小 AI 文本记账**：首页“极速”入口；输入“微信买奶茶 15 元”，本地拆出金额/收支/分类/账户/备注；显示字段完整度、示例胶囊、分类建议和常用账户建议；不联网、不上传文本。
+- **金钱小模型**：5,643 参数，字符 n-gram + 逻辑回归，给餐饮/交通/购物/工资/理财等语义排序；只做提示，不覆盖解析器结果。
 - **快捷指令 / Siri**：`AddTransactionIntent` 结构化记账；`QuickAddIntent` 接收分享文本、短信/邮件内容或个人自动化输入；只有字段无歧义时才自动保存，否则返回确认提示。iOS 不允许读取其他 App 的通知。
 - **小组件源码**：保留 WidgetKit 小 / 中尺寸源码；当前默认不嵌入 App，避免 `PlugIns` 嵌套签名导致自签安装失败。需要时可在 Xcode 中重新加入 Embed 阶段。
 - **作者入口**：设置页可打开 Beausoleil 的 Bilibili 个人空间。
@@ -35,7 +36,7 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 | 持久化 | Core Data，`NSPersistentContainer`，本地 SQLite |
 | 金额 | `Decimal` + `NSDecimalNumber` 持久化桥接 |
 | 主题 | 自定义 `Theme`、`ThemeManager`、`EnvironmentKey` |
-| 小 AI | 本地规则 + Apple `NaturalLanguage`；无模型、无网络 |
+| 小 AI | 本地规则 + Apple `NaturalLanguage` + 5,643 参数金钱分类器；无网络 |
 | 自动化 | App Intents / App Shortcuts（快捷指令、Siri） |
 | 图标 | SF Symbols |
 | 依赖 | 无 CocoaPods、无第三方 SPM 包 |
@@ -53,7 +54,7 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 
 - Target：`LedgerBox`
 - Bundle ID：`com.example.ledgerbox`
-- Marketing Version：`0.2.0`
+- Marketing Version：`0.2.1`
 - Deployment Target：`17.0`
 - 设备族：iPhone + iPad
 - 无 `DEVELOPMENT_TEAM`、无证书、无描述文件
@@ -210,6 +211,7 @@ CONTRIBUTING.md
 - [`Docs/ACCEPTANCE.md`](Docs/ACCEPTANCE.md)：P0/P1/P5 验收清单、静态证据、已知缺口
 - [`Docs/THEMING.md`](Docs/THEMING.md)：主题令牌、明暗配色、扩展方式
 - [`Docs/GITHUB_RESEARCH.md`](Docs/GITHUB_RESEARCH.md)：开源 iOS 记账项目调研与可借鉴项
+- [`Docs/MONEY_BRAIN.md`](Docs/MONEY_BRAIN.md)：5,643 参数金钱小模型、训练边界、0.5B 模型选项
 - [`Docs/OPEN_SOURCE_10.md`](Docs/OPEN_SOURCE_10.md)：10 个开源记账项目的许可证与取舍
 - [`CHANGELOG.md`](CHANGELOG.md)：面向用户的版本更新记录
 - [`CONTRIBUTING.md`](CONTRIBUTING.md)：贡献流程与硬规则

@@ -214,6 +214,17 @@ struct QuickEntryView: View {
                 }
                 .font(theme.badgeFont)
                 .foregroundStyle(theme.secondaryText)
+
+                if let brain = brainPrediction {
+                    HStack(spacing: 6) {
+                        Image(systemName: "brain")
+                        Text("金钱小模型 · \(brain.domain.displayName)")
+                        Spacer()
+                        Text("\(brain.percent)%")
+                    }
+                    .font(theme.badgeFont)
+                    .foregroundStyle(theme.secondaryText)
+                }
             }
         }
     }
@@ -267,7 +278,7 @@ struct QuickEntryView: View {
 
                             ScrollView(.horizontal) {
                                 HStack(spacing: 8) {
-                                    ForEach(Array(filteredCategories.prefix(5)), id: \.id) { category in
+                                    ForEach(suggestedCategories, id: \.id) { category in
                                         Button {
                                             if effectiveType == nil {
                                                 selectedType = category.categoryKind == .income ? .income : .expense
@@ -572,7 +583,13 @@ struct QuickEntryView: View {
     }
 
     private var categoryKindForSelection: CategoryKind {
-        effectiveType == .income ? .income : .expense
+        if let effectiveType {
+            return effectiveType == .income ? .income : .expense
+        }
+        if let brain = brainPrediction, let brainType = brain.type, brainType == .income {
+            return .income
+        }
+        return .expense
     }
 
     // Count alone misses soft-deletes, which keep the row count unchanged.
@@ -697,6 +714,33 @@ struct QuickEntryView: View {
             categoryName: effectiveCategory?.name,
             accountName: effectiveAccount?.name
         )
+    }
+
+    private var brainPrediction: MoneyBrainPrediction? {
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return nil
+        }
+        return MoneyBrain.shared.predict(text)
+    }
+
+    private var suggestedCategories: [Category] {
+        let base = filteredCategories
+        guard
+            let prediction = brainPrediction,
+            !prediction.domain.categoryAliases.isEmpty
+        else {
+            return Array(base.prefix(5))
+        }
+
+        let aliases = prediction.domain.categoryAliases
+        let preferred = base.filter { category in
+            aliases.contains { alias in
+                category.name.localizedCaseInsensitiveContains(alias)
+            }
+        }
+        let preferredIDs = Set(preferred.map(\.id))
+        let rest = base.filter { !preferredIDs.contains($0.id) }
+        return Array((preferred + rest).prefix(5))
     }
 
     private func aiColor(_ state: QuickEntryAI.State) -> Color {
