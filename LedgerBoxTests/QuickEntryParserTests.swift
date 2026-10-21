@@ -242,3 +242,34 @@ final class QuickEntryParserTests: XCTestCase {
         XCTAssertFalse(result.issues.contains(.multipleAmounts))
     }
 }
+
+
+final class AIActionRouterTests: XCTestCase {
+
+    func testExplicitRecordCommandKeepsAmountTextForParser() {
+        let action = AIActionRouter.route("\u5e2e\u6211\u8bb0\u4e00\u7b14 \u5fae\u4fe1\u4e70\u5976\u833615")
+        XCTAssertEqual(action.intent, .record)
+        XCTAssertEqual(action.recordText, "\u5fae\u4fe1\u4e70\u5976\u833615")
+    }
+
+    func testQuestionAboutSpendingRoutesToQuery() {
+        XCTAssertEqual(AIActionRouter.route("\u8fd9\u4e2a\u6708\u82b1\u4e86\u591a\u5c11").intent, .query)
+        XCTAssertEqual(AIActionRouter.route("\u9884\u7b97\u8fd8\u5269\u591a\u5c11").intent, .query)
+    }
+
+    func testExportFormatsRouteToDistinctActions() {
+        XCTAssertEqual(AIActionRouter.route("\u5bfc\u51fa JSON").intent, .backupJSON)
+        XCTAssertEqual(AIActionRouter.route("\u5bfc\u51fa CSV").intent, .exportCSV)
+    }
+
+    func testImageCommandDoesNotBecomeRecord() {
+        let action = AIActionRouter.route("\u622a\u56fe\u8bb0\u4e00\u7b14")
+        XCTAssertEqual(action.intent, .imageImport)
+    }
+
+    func testIncomeSentenceRoutesToRecord() {
+        let action = AIActionRouter.route("\u5de5\u8d44\u5230\u8d26 8000")
+        XCTAssertEqual(action.intent, .record)
+        XCTAssertNotNil(action.recordText)
+    }
+}

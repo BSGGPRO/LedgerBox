@@ -705,3 +705,47 @@ final class ReceiptImportTests: XCTestCase {
         ImportHistoryStore(fileURL: temporaryHistoryURL())
     }
 }
+
+final class LedgerBackupTests: XCTestCase {
+
+    func testBackupRoundTripRestoresAccountBalance() throws {
+        let controller = PersistenceController(inMemory: true)
+        let context = controller.container.viewContext
+        let account = try XCTUnwrap(try context.fetch(Account.fetchRequest()).first)
+        account.setBalance(Decimal(string: "1234.56", locale: Locale(identifier: "en_US_POSIX"))!)
+        try context.save()
+
+        let data = try LedgerBackupService.makeBackup(context: context)
+        account.setBalance(Decimal.zero)
+        try context.save()
+
+        let summary = try LedgerBackupService.restore(data: data, context: context)
+        XCTAssertEqual(summary.accountCount, 1)
+
+        let restored = try XCTUnwrap(try context.fetch(Account.fetchRequest()).first)
+        XCTAssertEqual(restored.balanceValue, Decimal(string: "1234.56"))
+    }
+
+    func testUnsupportedSchemaVersionIsRejected() throws {
+        let controller = PersistenceController(inMemory: true)
+        let context = controller.container.viewContext
+        let data = try LedgerBackupService.makeBackup(context: context)
+
+        var object = try XCTUnwrap(
+            JSONSerialization.jsonObject(with: data) as? [String: Any]
+        )
+        object["schemaVersion"] = 99
+        let mutated = try JSONSerialization.data(withJSONObject: object)
+
+        XCTAssertThrowsError(
+            try LedgerBackupService.restore(data: mutated, context: context)
+        ) { error in
+            guard let backupError = error as? BackupError,
+                  case .unsupportedSchemaVersion(let version) = backupError else {
+                XCTFail("Expected unsupportedSchemaVersion, got \(error)")
+                return
+            }
+            XCTAssertEqual(version, 99)
+        }
+    }
+}
