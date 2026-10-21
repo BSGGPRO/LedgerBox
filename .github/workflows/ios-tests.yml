@@ -1,0 +1,35 @@
+name: iOS Tests
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Run XCTest on simulator
+    runs-on: macos-15
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Xcode and destinations
+        run: |
+          xcodebuild -version
+          xcodebuild -project LedgerBox.xcodeproj -scheme LedgerBox -showdestinations
+
+      - name: Run tests
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          xcodebuild test \
+            -project LedgerBox.xcodeproj \
+            -scheme LedgerBox \
+            -configuration Debug \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
