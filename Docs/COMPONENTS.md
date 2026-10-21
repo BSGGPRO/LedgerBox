@@ -143,7 +143,7 @@ protocol TransactionProviding {
 | `Features/Settings` | `SettingsView`、`ChangelogView` | 主题、模板、CSV、更新日志、作者入口 |
 | `LedgerBoxWidget` | `LedgerBoxWidget`、`LedgerBoxWidgetBundle` | WidgetKit 源码保留；默认不嵌入 App，避免自签失败 |
 | `Features/Main` | `MainTabView` | 五 Tab 容器 |
-| `Features/QuickEntry` | `QuickEntryParser`、`QuickEntryAI`、`MoneyBrain`、`FinanceMind`、`FinanceAdvisorView`、`FinanceBrainMapView`、`QuickEntryView` | 一句话解析、本地文本小 AI、5,643 参数金钱分类器、10,485,800 参数财务意图模型、大脑可视化 |
+| `Features/QuickEntry` | `QuickEntryParser`、`QuickEntryAI`、`MoneyBrain`、`FinanceMind`、`FinanceAdvisorView`、`FinanceBrainMapView`、`QuickEntryView` | 一句话解析、本地文本小 AI、5,643 参数金钱分类器、20,971,560 参数财务意图模型、大脑可视化 |
 
 ### 2.7 QuickEntry 层
 
@@ -153,8 +153,8 @@ protocol TransactionProviding {
 | `QuickEntryAI.swift` | 本地解释层；输出状态、字段完整度、缺失字段和示例；不调用模型/网络 |
 | `MoneyBrain.swift` | 5,643 参数多项逻辑回归；字符 n-gram 哈希；输出语义类别与置信度 |
 | `MoneyBrainWeights.swift` | 由 `Tools/train_money_brain.py` 生成的 Int16 量化权重 |
-| `FinanceMind.swift` | 10,485,800 参数财务意图分类器 + 账本快照 + 固定规则回答；不生成数字、不写账、不联网 |
-| `FinanceMindWeights.swift` | 模型元数据：40 意图 × 262,144 桶 + 40 bias，scale 48；大权重在 `Resources/FinanceMindWeights.bin` |
+| `FinanceMind.swift` | 20,971,560 参数财务意图分类器 + 账本快照 + 固定规则回答；不生成数字、不写账、不联网 |
+| `FinanceMindWeights.swift` | 模型元数据：40 意图 × 524,288 桶 + 40 bias，scale 48；大权重在 `Resources/FinanceMindWeights.bin` |
 | `FinanceAdvisorView.swift` | 财务大脑页；“对话 / 大脑”分段；本月收支/结余/余额、预算/目标快照、财务问答和提示胶囊 |
 | `FinanceBrainMapView.swift` | 本地模型可视化：持续动画的意图激活图、4.4 秒自动巡演、模型体检、实时探针、延迟与 40 类覆盖 |
 | `QuickEntryView.swift` | AI 记账面板；示例胶囊、小 AI 状态卡、金钱小模型提示、财务大脑入口、分类/账户建议；不请求麦克风 |
@@ -200,7 +200,7 @@ QuickEntryView
   → 首页 @FetchRequest 刷新
 
 FinanceAdvisorView（对话）
-  → FinanceMind.predict(text)（40 意图，10,485,800 参数）
+  → FinanceMind.predict(text)（40 意图，20,971,560 参数）
   → FinanceSnapshot（本机账本/预算/目标）
   → FinanceAdvisor.answer（固定模板 + Decimal）
 
@@ -406,11 +406,11 @@ CSV 字段：
 - 无账户管理 UI、无分类管理 UI。
 - 无周期记账页面；“补记本期”尚未接入。
 - `AppSettings.themeMode` 与 `ThemeManager` 未双向同步。
-- 测试 Target 已运行：33 个测试在 iPhone 16 / iOS 26.2 模拟器通过（run `39596723535`）。
+- 测试 Target 已运行：33 个测试在 iPhone 16 / iOS 26.2 模拟器通过（run `39598536163`）。
 - AppIcon 与 Asset Catalog 已随 GitHub Actions archive 编译；未做真机视觉检查。
-- 已通过 GitHub Actions `macos-15` 归档（run `39596549161`）；未在本地 Xcode 运行，也未做真机验证。
+- 已通过 GitHub Actions `macos-15` 归档（run `39598323723`）；未在本地 Xcode 运行，也未做真机验证。
 - iOS 不能读取其他 App 的通知内容；已取消快捷指令/Siri，没有系统自动化写账入口。
-- 本地小 AI 是规则 + 5,643 参数金钱分类器 + 10,485,800 参数财务意图模型；财务大脑未做真实账本准确率测试，也未做真机视觉验收；0.4.0 起不含联网 AI。
+- 本地小 AI 是规则 + 5,643 参数金钱分类器 + 20,971,560 参数财务意图模型；财务大脑未做真实账本准确率测试，也未做真机视觉验收；0.4.0 起不含联网 AI。
 
 ---
 

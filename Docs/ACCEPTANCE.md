@@ -19,9 +19,9 @@
 | 文档 | README、LICENSE、.gitignore、CONTRIBUTING、核心 Docs、开源调研与 10 项目清单 |
 | 静态语法 | tree-sitter-swift 解析通过 |
 | 工程结构 | pbxproj / XML / plist 解析通过；App + Widget Extension 两个 Target，Widget 默认不嵌入 |
-| 实际编译 | GitHub Actions `macos-15` archive 成功（run `39596549161`，commit `bf19dda`） |
-| 实际运行 | 33 个 XCTest 在 iPhone 16 / iOS 26.2 模拟器通过（run `39596723535`）；App UI 未人工逐页验收 |
-| 签名/IPA | `LedgerBox-unsigned-0.5.0-BrainLive.ipa` 已生成；未签名、未真机安装 |
+| 实际编译 | GitHub Actions `macos-15` archive 成功（run `39598323723`，commit `d791803`） |
+| 实际运行 | 33 个 XCTest 在 iPhone 16 / iOS 26.2 模拟器通过（run `39598536163`）；App UI 未人工逐页验收 |
+| 签名/IPA | `LedgerBox-unsigned-0.6.0-Mind20M.ipa` 已生成；未签名、未真机安装 |
 | Assets/AppIcon | 已随 archive 编译；未做视觉/真机验证 |
 | GitHub Actions | 已实际运行，结论 success |
 | 测试 Target | 已加入；33 个测试在模拟器全部通过 |
@@ -60,7 +60,7 @@ NO BOM
 | AppIcon | 1024×1024、RGB、无 alpha；未做视觉审查 |
 | Asset Catalog JSON | `Contents.json` 可解析；已随 archive 编译 |
 | Assets 工程引用 | 文件引用 + Resources build phase 已存在 |
-| GitHub Actions | `.github/workflows/ios-unsigned.yml` 已实际运行成功（run `39596549161`） |
+| GitHub Actions | `.github/workflows/ios-unsigned.yml` 已实际运行成功（run `39598323723`） |
 | 测试 Target | `LedgerBoxTests` 已加入；3 个测试源文件；33 个测试通过 |
 | Scheme Test Action | 已加入 `TestableReference` 与 `MacroExpansion`；`xcodebuild test` 已实际执行 |
 
@@ -91,8 +91,8 @@ NO BOM
 | P0-12 | README / LICENSE / .gitignore / CONTRIBUTING | 源码具备 | 均已创建 |
 | P0-13 | Docs 核心文档 | 源码具备 | COMPONENTS / FINANCE_RULES / BUILD_STEPS / WINDOWS_BUILD_SIGN / ACCEPTANCE / THEMING；另有 GITHUB_RESEARCH、OPEN_SOURCE_10、CHANGELOG |
 | P0-14 | Assets.xcassets / AppIcon | 源码具备（占位） | 1024×1024 PNG + Contents.json；已随 archive 编译，未做视觉检查 |
-| P0-15 | GitHub Actions 无签名归档 | 已运行成功 | `.github/workflows/ios-unsigned.yml`；run `39596549161` |
-| P0-16 | 测试 Target | 已运行通过 | `LedgerBoxTests`；33 个测试在模拟器通过（run `39596723535`） |
+| P0-15 | GitHub Actions 无签名归档 | 已运行成功 | `.github/workflows/ios-unsigned.yml`；run `39598323723` |
+| P0-16 | 测试 Target | 已运行通过 | `LedgerBoxTests`；33 个测试在模拟器通过（run `39598536163`） |
 | P0-17 | 实际编译/运行/签名 | **部分** | 远程 archive 成功；模拟器测试通过；签名/真机未验证 |
 | P0-18 | 不虚假宣称已编译/已签名 | 文档具备 | README 与 Docs 区分模拟器测试、签名与真机 |
 
@@ -133,7 +133,7 @@ NO BOM
 | P1-27 | WidgetKit 小组件 | 源码保留；当前默认不嵌入 appex，避免自签失败 | 未运行 |
 | P1-28 | 更新日志/作者入口 | 设置页可打开 Changelog 与 Beausoleil Bilibili | 未运行 |
 | P1-29 | 无联网 AI | 0.4.0 已删除接口、Keychain 和网络请求 | 源码具备 |
-| P1-30 | 财务大脑 | 10,485,800 参数、40 意图；本机账本快照 + 固定规则；不联网、不写账、不生成数字；含可视化探针 | 未运行；合成集准确率不代表真实 |
+| P1-30 | 财务大脑 | 20,971,560 参数、40 意图；本机账本快照 + 固定规则；不联网、不写账、不生成数字；含可视化探针 | 未运行；合成集准确率不代表真实 |
 
 ---
 
@@ -149,11 +149,11 @@ NO BOM
 | P5-6 | 版本号 0.3.1 / Bundle ID 占位 | 具备 |
 | P5-7 | 无 DEVELOPMENT_TEAM | 具备 |
 | P5-8 | Assets/AppIcon | 已有占位，已随 archive 编译，未视觉验证 |
-| P5-9 | GitHub Actions workflow | 已实际运行，run `39596549161` success |
+| P5-9 | GitHub Actions workflow | 已实际运行，run `39598323723` success |
 | P5-10 | 测试 Target | 已加入（3 个测试源文件），33 个测试通过 |
-| P5-11 | 实际 Xcode 编译 | GitHub Actions archive 成功（commit `bf19dda`） |
+| P5-11 | 实际 Xcode 编译 | GitHub Actions archive 成功（commit `d791803`） |
 | P5-12 | 实际运行 | 33 个 XCTest 在 iOS 26.2 模拟器通过；App UI 未人工验收 |
-| P5-13 | 未签名 IPA | `LedgerBox-unsigned-0.5.0-BrainLive.ipa`（1,306,923 字节，无 PlugIns、无麦克风/语音/Siri 权限，适合 lcsign）；run `39596549161` |
+| P5-13 | 未签名 IPA | `LedgerBox-unsigned-0.6.0-Mind20M.ipa`（1,379,205 字节，无 PlugIns、无麦克风/语音/Siri 权限，适合 lcsign）；run `39598323723` |
 | P5-14 | 自签验证 | 未执行 |
 | P5-15 | 截图/视觉回归 | 缺失 |
 | P5-16 | 本地化 | 缺失（仅中文） |
@@ -169,8 +169,8 @@ NO BOM
 ### 6.1 必须先补的交付物
 
 1. `Assets.xcassets` 与 AppIcon 已随 archive 编译；仍需真机/视觉检查。
-2. GitHub Actions workflow 已实际触发，run `39596549161` 成功。
-3. `LedgerBoxTests` 的 33 个测试已在 iPhone 16 / iOS 26.2 模拟器通过（run `39596723535`）。
+2. GitHub Actions workflow 已实际触发，run `39598323723` 成功。
+3. `LedgerBoxTests` 的 33 个测试已在 iPhone 16 / iOS 26.2 模拟器通过（run `39598536163`）。
 4. 已有远程 archive 与模拟器测试记录；仍缺真机运行、签名和安装记录。
 5. 未签名 IPA 已生成并通过结构校验；签名与安装未验证。
 
@@ -277,7 +277,7 @@ NO BOM
 - `AppSettings` 主题字段与 `ThemeManager` 未同步。
 - 无多币种换算。
 - iOS 不允许读取其他 App 的通知内容；已取消 Siri/快捷指令，不能“监听银行/微信通知”后完美复刻商业记账 App。
-- 本地小 AI 是规则 + 5,643 参数分类器 + 10,485,800 参数财务意图模型，不是生成式模型；财务大脑未做真实账本准确率测试；0.4.0 起不含联网 AI。
+- 本地小 AI 是规则 + 5,643 参数分类器 + 20,971,560 参数财务意图模型，不是生成式模型；财务大脑未做真实账本准确率测试；0.4.0 起不含联网 AI。
 
 这些缺口不阻塞“静态源码 + 文档”交付，但阻塞“生产可用/已验证”结论。
 
