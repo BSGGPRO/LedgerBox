@@ -79,6 +79,16 @@ final class FinanceMindTests: XCTestCase {
         XCTAssertTrue(calculation?.formula.contains("3,200.00") ?? false)
     }
 
+    func testAIModelRoutesBalanceSeparatelyFromMonthlyNet() {
+        let calculation = FinanceComputeRouter.route(
+            "账户余额还有多少",
+            snapshot: computeSnapshot
+        )
+        XCTAssertEqual(calculation?.kind, .accountBalance)
+        XCTAssertEqual(calculation?.value, Decimal(string: "12000"))
+        XCTAssertEqual(calculation?.secondaryValue, Decimal(string: "4800"))
+    }
+
     func testAIModelRoutesBudgetAndKeepsExactRemainder() {
         let calculation = FinanceComputeRouter.route(
             "预算还剩多少",

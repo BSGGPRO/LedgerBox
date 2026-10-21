@@ -739,6 +739,7 @@ enum FinanceCalculationKind: String, CaseIterable, Identifiable {
     case spendingTotal
     case categoryShare
     case budgetRemaining
+    case accountBalance
     case monthlyNet
     case savingsRate
     case emergencyFund
@@ -752,6 +753,7 @@ enum FinanceCalculationKind: String, CaseIterable, Identifiable {
         case .spendingTotal: return "支出合计"
         case .categoryShare: return "分类占比"
         case .budgetRemaining: return "预算剩余"
+        case .accountBalance: return "账户余额"
         case .monthlyNet: return "本月结余"
         case .savingsRate: return "结余率"
         case .emergencyFund: return "应急金"
@@ -765,6 +767,7 @@ enum FinanceCalculationKind: String, CaseIterable, Identifiable {
         case .spendingTotal: return "sum"
         case .categoryShare: return "chart.pie.fill"
         case .budgetRemaining: return "gauge.with.dots.needle.50percent"
+        case .accountBalance: return "banknote.fill"
         case .monthlyNet: return "equal.circle.fill"
         case .savingsRate: return "percent"
         case .emergencyFund: return "shield.lefthalf.filled"
@@ -838,7 +841,7 @@ enum FinanceComputeRouter {
                 ? nil
                 : .categoryShare
         case .balanceQuery:
-            return .monthlyNet
+            return .accountBalance
         case .budgetStatus:
             return snapshot.budgetLimit == nil ? nil : .budgetRemaining
         case .cashflow:
@@ -865,9 +868,8 @@ enum FinanceComputeRouter {
             return .savingsRate
         }
         if text.contains("现金流") { return .cashflowForecast }
-        if text.contains("余额") || text.contains("结余") || text.contains("剩多少") {
-            return .monthlyNet
-        }
+        if text.contains("余额") || text.contains("总资产") { return .accountBalance }
+        if text.contains("结余") || text.contains("剩多少") { return .monthlyNet }
         if text.contains("花") || text.contains("支出") || text.contains("消费") {
             return .spendingTotal
         }
@@ -897,6 +899,8 @@ struct FinanceComputeEngine {
             )
         case .budgetRemaining:
             return budgetRemaining(intent: intent, confidence: confidence, routedByModel: routedByModel)
+        case .accountBalance:
+            return accountBalance(intent: intent, confidence: confidence, routedByModel: routedByModel)
         case .monthlyNet:
             return monthlyNet(intent: intent, confidence: confidence, routedByModel: routedByModel)
         case .savingsRate:
@@ -1015,6 +1019,26 @@ struct FinanceComputeEngine {
         )
     }
 
+    private func accountBalance(
+        intent: FinanceIntent,
+        confidence: Float?,
+        routedByModel: Bool
+    ) -> FinanceCalculation {
+        let balance = snapshot.totalBalance
+        let net = snapshot.monthIncome - snapshot.monthExpense
+        return FinanceCalculation(
+            kind: .accountBalance,
+            title: "账户总余额 \(money(balance))",
+            value: balance,
+            secondaryValue: net,
+            detail: "所有账户当前余额合计 \(money(balance))；本月收入 \(money(snapshot.monthIncome))、支出 \(money(snapshot.monthExpense))，本月结余 \(money(net))。数据来自本机账本，不联网。",
+            formula: "账户总余额 = Σ账户余额 = \(money(balance))；本月结余 = \(money(snapshot.monthIncome)) − \(money(snapshot.monthExpense)) = \(money(net))",
+            modelIntent: intent,
+            modelConfidence: confidence,
+            routedByModel: routedByModel
+        )
+    }
+
     private func monthlyNet(
         intent: FinanceIntent,
         confidence: Float?,
@@ -1061,7 +1085,10 @@ struct FinanceComputeEngine {
         intent: FinanceIntent,
         confidence: Float?,
         routedByModel: Bool
-    ) -> FinanceCalculation {
+    ) -> FinanceCalculation? {
+        guard snapshot.monthExpense > 0 else {
+            return nil
+        }
         let low = snapshot.monthExpense * 3
         let high = snapshot.monthExpense * 6
         return FinanceCalculation(
