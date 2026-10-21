@@ -3,6 +3,26 @@
 All user-visible changes to LedgerBox are recorded here and in the in-app
 **设置 → 更新日志** page.
 
+## 0.10.0 — 2026-10-22
+
+### Added
+
+- 内置 Qwen2.5-0.5B-Instruct Q4_K_M（491,400,032 字节）。
+- 内置 llama.cpp b11796 `llama.framework`（ios-arm64），通过 `dlopen` 加载。
+- 财务大脑新增“0.5B 本地解释”：只改写已由 Decimal 算好的结果，不参与金额、比例、日期计算。
+- 解释文本做数字白名单校验；出现原结果之外的数字时整段丢弃并回退。
+
+### Changed
+
+- 模拟器不加载 0.5B，避免缺少模拟器 slice 导致测试失败。
+- 模型加载失败、框架缺失、内存不足时，旧记账/查询/统计功能继续可用。
+
+### Known limits
+
+- IPA 482,293,759 字节，未签名。
+- 未做真机安装、真机生成、内存峰值、发热和截图级视觉验收。
+- 自签工具必须重签 `Frameworks/llama.framework`，否则 0.5B 不可用。
+
 ## 0.9.4 — 2026-10-21
 
 ### Fixed

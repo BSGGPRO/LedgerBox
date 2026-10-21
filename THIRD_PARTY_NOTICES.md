@@ -21,7 +21,7 @@ the sole source of financial arithmetic.
 - Upstream: https://github.com/ggml-org/llama.cpp
 - Release: `b11796`
 - Artifact: `llama-b11796-xcframework.zip`
-- iOS slice: `ios-arm64/llama.framework`
+- iOS slice: `ios-arm64/llama.framework`\n- Framework binary SHA-256: `B86990922D559C80FC863836C784887DDBAE871C9A1D726015E96936C3EDB3EC`
 - SHA-256 of the downloaded ZIP: `07460786882E91BD41C2C7F55BA3E163B7F28DF55148B59700F1AB52780A055F`
 - License: MIT
 

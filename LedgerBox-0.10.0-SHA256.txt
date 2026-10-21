@@ -1,0 +1,35 @@
+LedgerBox 0.10.0 — SHA-256
+Generated: 2026-10-22
+
+LedgerBox-unsigned.ipa
+Size: 482,293,759 bytes
+SHA-256: 48137EB3E7CECEC42CE7A1D74B4E9B895431C93E83EFEC21E6259028DDD8BFB1
+
+LedgerBox-source-0.10.0-Qwen.zip
+Size: 4,427,789 bytes
+SHA-256: D65164B475207592BAC9E8DB4FA0D5AC598CEC68DA1863D77238FA68055DA958
+
+Embedded Qwen2.5-0.5B-Instruct-Q4_K_M.gguf
+Size: 491,400,032 bytes
+SHA-256: 74A4DA8C9FDBCD15BD1F6D01D621410D31C6FC00986F5EB687824E7B93D7A9DB
+
+Embedded llama.framework/llama (ios-arm64)
+Size: 11,982,920 bytes
+SHA-256: B86990922D559C80FC863836C784887DDBAE871C9A1D726015E96936C3EDB3EC
+
+llama-b11796-xcframework.zip
+Size: 66,792,337 bytes
+SHA-256: 07460786882E91BD41C2C7F55BA3E163B7F28DF55148B59700F1AB52780A055F
+
+Embedded FinanceMindWeights.bin
+Size: 41,943,200 bytes
+SHA-256: 6F5E92B17EC300D7A0C69AB79324903AE4407FB992393140BB2F783B7355F380
+
+Verification notes:
+- IPA built by GitHub Actions run 39632398591, commit 92a1995.
+- Model downloaded from hf-mirror.com and SHA-256 checked in CI before archive.
+- IPA listing verified Qwen2.5-0.5B-Instruct-Q4_K_M.gguf and Frameworks/llama.framework/llama.
+- IPA is unsigned; requires your own certificate/profile.
+- No physical-device install, runtime generation, memory, or screenshot-level visual acceptance was performed.
+- Simulator deliberately does not load the 0.5B model.
+- Repository is private; release links require a GitHub account with access.
