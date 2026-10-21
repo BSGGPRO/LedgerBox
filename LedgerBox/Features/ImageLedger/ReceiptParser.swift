@@ -3,14 +3,14 @@ import Foundation
 
 // MARK: - Receipt model
 
-enum ReceiptSource: String, Codable, CaseIterable, Equatable {
+enum ReceiptSource: String, Codable, CaseIterable, Equatable, Hashable {
     case wechat
     case alipay
     case bank
     case unknown
 }
 
-enum ReceiptWarning: String, Codable, CaseIterable, Equatable {
+enum ReceiptWarning: String, Codable, CaseIterable, Equatable, Hashable {
     case lowOCRConfidence
     case ambiguousAmount
     case missingAmount
@@ -23,7 +23,7 @@ enum ReceiptWarning: String, Codable, CaseIterable, Equatable {
 /// How a withdrawal fee is charged. The parser only supplies a default; the UI
 /// must let the user switch because a single OCR line often cannot prove which
 /// side paid the fee.
-enum FeeMode: String, Codable, CaseIterable, Equatable {
+enum FeeMode: String, Codable, CaseIterable, Equatable, Hashable {
     case feeDeductedFromPrincipal
     case feePaidSeparately
 }

@@ -2,7 +2,7 @@ import Foundation
 
 /// The small, stable category set exposed by image import. Raw values are the
 /// Chinese names used by the seeded `Category` rows.
-enum LedgerCategory: String, Codable, CaseIterable, Identifiable, Equatable {
+enum LedgerCategory: String, Codable, CaseIterable, Identifiable, Equatable, Hashable {
     case food = "餐饮"
     case transport = "交通"
     case shopping = "购物"
@@ -36,15 +36,22 @@ final class LedgerCategoryClassifier {
     static let shared = LedgerCategoryClassifier()
 
     private let lexicon: MerchantLexicon
+    private let probe: (String, Int) -> FinanceBrainProbe?
 
-    init(lexicon: MerchantLexicon = .shared) {
+    init(
+        lexicon: MerchantLexicon = .shared,
+        probe: @escaping (String, Int) -> FinanceBrainProbe? = { text, limit in
+            FinanceMind.shared.probe(text, limit: limit)
+        }
+    ) {
         self.lexicon = lexicon
+        self.probe = probe
     }
 
     func classify(_ text: String, fields: ReceiptFields) -> CategoryResult {
-        let probe = FinanceMind.shared.probe(text, limit: 40)
-        let top = probe?.predictions.first
-        let second = probe?.predictions.dropFirst().first
+        let probeResult = probe(text, 40)
+        let top = probeResult?.predictions.first
+        let second = probeResult?.predictions.dropFirst().first
 
         let modelIntent = top?.intent
         let modelCategory = modelIntent.map { Self.category(for: $0) } ?? .other

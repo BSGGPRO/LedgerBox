@@ -285,7 +285,8 @@ final class ReceiptImportTests: XCTestCase {
 
     func testClassifierFallsBackToOtherWithoutSignal() {
         let classifier = LedgerCategoryClassifier(
-            lexicon: MerchantLexicon(entries: [])
+            lexicon: MerchantLexicon(entries: []),
+            probe: { _, _ in nil }
         )
         let fields = ReceiptParser.parse(
             "??",
@@ -314,6 +315,36 @@ final class ReceiptImportTests: XCTestCase {
         XCTAssertEqual(result.category, .food)
         XCTAssertTrue(result.usedLexicon)
         XCTAssertGreaterThan(result.confidence, 0.6)
+    }
+
+    func testModelIntentMapsSubscriptionToShopping() {
+        let probe = FinanceBrainProbe(
+            predictions: [
+                FinanceIntentPrediction(intent: .subscription, confidence: 0.90),
+                FinanceIntentPrediction(intent: .recordExpense, confidence: 0.20)
+            ],
+            latencyMilliseconds: 1,
+            featureCount: 1,
+            bucketCount: 1,
+            parameterCount: 1
+        )
+        let classifier = LedgerCategoryClassifier(
+            lexicon: MerchantLexicon(entries: []),
+            probe: { _, _ in probe }
+        )
+        let text = "NETFLIX 订阅 实付 ¥30.00"
+        let fields = ReceiptParser.parse(
+            text,
+            now: date(2026, 10, 21, 12, 0),
+            calendar: testCalendar
+        )
+
+        let result = classifier.classify(text, fields: fields)
+
+        XCTAssertEqual(result.category, .shopping)
+        XCTAssertEqual(result.modelIntent, "subscription")
+        XCTAssertFalse(result.usedLexicon)
+        XCTAssertFalse(result.needsReview)
     }
 
     // MARK: - History, commit and undo
@@ -369,6 +400,64 @@ final class ReceiptImportTests: XCTestCase {
         XCTAssertEqual(account.balanceValue, decimal("1000.00"))
         XCTAssertEqual(history.session(id: session.id)?.status, .undone)
         XCTAssertNil(history.duplicate(for: draft.dedupeKey))
+        XCTAssertEqual(try context.count(for: LedgerTransaction.fetchRequest()), 0)
+    }
+
+    func testTransferCommitRecordsFeeAndUndoRestoresBothAccounts() throws {
+        let controller = PersistenceController(inMemory: true)
+        let context = controller.container.viewContext
+        let source = try XCTUnwrap(try context.fetch(Account.fetchRequest()).first)
+        source.setBalance(decimal("1000.00"))
+
+        let destination = Account(context: context)
+        destination.id = UUID()
+        destination.name = "零钱"
+        destination.type = AccountType.cash.rawValue
+        destination.balance = NSDecimalNumber(decimal: decimal("0.00"))
+        destination.currencyCode = "CNY"
+        destination.locked = false
+        destination.sortOrder = 1
+        destination.createdAt = Date()
+        destination.updatedAt = Date()
+        try context.save()
+
+        let draft = ImportDraft(
+            source: .wechat,
+            rawText: "微信零钱提现",
+            cleanText: "微信零钱提现",
+            merchant: "微信零钱",
+            amount: decimal("1000.00"),
+            fee: decimal("0.10"),
+            date: Date().addingTimeInterval(-60),
+            category: .transfer,
+            type: .transfer,
+            dedupeKey: "transfer-test-key",
+            transferSplit: nil
+        )
+        let history = makeHistory()
+
+        let session = try ImportCommitService.commit(
+            draft,
+            account: source,
+            toAccount: destination,
+            category: nil,
+            context: context,
+            history: history
+        )
+
+        XCTAssertEqual(session.transactionIDs.count, 2)
+        XCTAssertEqual(source.balanceValue, decimal("0.00"))
+        XCTAssertEqual(destination.balanceValue, decimal("999.90"))
+        XCTAssertEqual(try context.count(for: LedgerTransaction.fetchRequest()), 2)
+
+        try ImportCommitService.undo(
+            sessionID: session.id,
+            context: context,
+            history: history
+        )
+
+        XCTAssertEqual(source.balanceValue, decimal("1000.00"))
+        XCTAssertEqual(destination.balanceValue, decimal("0.00"))
         XCTAssertEqual(try context.count(for: LedgerTransaction.fetchRequest()), 0)
     }
 

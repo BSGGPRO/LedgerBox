@@ -108,7 +108,7 @@ enum ImportError: LocalizedError, Equatable {
         case .accountUnavailable:
             return "找不到可写入的账户。"
         case .transferRequiresDestinationAccount:
-            return "转账/提现需要选择转入账户，当前导入接口只支持单账户记账。"
+            return "转账/提现需要选择转入账户。"
         case .sessionNotFound:
             return "找不到这次导入记录。"
         case .historyWriteFailed(let message):

@@ -550,6 +550,7 @@ struct ImageLedgerFlowView: View {
 
     private func recognize(_ image: UIImage) {
         guard let cgImage = image.cgImage else {
+            isProcessing = false
             errorMessage = "无法读取这张图片，请换一张截图。"
             return
         }
@@ -617,10 +618,17 @@ struct ImageLedgerFlowView: View {
             return
         }
 
+        let feeTextValue = feeText
+            .replacingOccurrences(of: ",", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
         let fee = Decimal(
-            string: feeText.replacingOccurrences(of: ",", with: ""),
+            string: feeTextValue,
             locale: Locale(identifier: "en_US_POSIX")
         )?.roundedToCents()
+        if !feeTextValue.isEmpty, fee == nil {
+            errorMessage = "手续费格式无效，请填写数字或留空。"
+            return
+        }
         let split = original.transferSplit?.switching(to: feeMode)
         let updated = ImportDraft(
             id: original.id,
