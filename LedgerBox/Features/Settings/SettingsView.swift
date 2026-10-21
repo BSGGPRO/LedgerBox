@@ -9,6 +9,12 @@ struct SettingsView: View {
     @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject private var themeManager: ThemeManager
 
+    private let showsDoneButton: Bool
+
+    init(showsDoneButton: Bool = true) {
+        self.showsDoneButton = showsDoneButton
+    }
+
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \TemplateRules.createdAt, ascending: true)],
         animation: .snappy
@@ -78,12 +84,14 @@ struct SettingsView: View {
             .toolbarBackground(theme.background, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("完成") {
-                        dismiss()
+                if showsDoneButton {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("完成") {
+                            dismiss()
+                        }
+                        .fontWeight(.semibold)
+                        .foregroundStyle(theme.accentText)
                     }
-                    .fontWeight(.semibold)
-                    .foregroundStyle(theme.accentText)
                 }
             }
         }

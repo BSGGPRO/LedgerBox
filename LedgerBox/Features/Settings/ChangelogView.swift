@@ -14,6 +14,17 @@ struct ChangelogEntry: Identifiable {
 enum ChangelogCatalog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "0.9.3",
+            dateText: "2026.10.21",
+            title: "设置改成页面，记账选项变气泡",
+            changes: [
+                "设置不再以 sheet 抽屉弹出，改为底栏第七个页面；切换后底栏保持可见，不再盖住当前页面。",
+                "中间加号图标从 16pt 提到 22pt，仍与其它项同宽同高，不凸出、不缩小。",
+                "极速记账与记一笔改为两个很小的气泡，带小尾巴，点加号后依次向上弹出。",
+                "点任一气泡立即收起并进入对应记账流程；切换 Tab 会自动收起。"
+            ]
+        ),
+        ChangelogEntry(
             version: "0.9.2",
             dateText: "2026.10.21",
             title: "底栏七等分，头像回右上",

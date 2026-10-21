@@ -6,6 +6,7 @@ enum MainTab: Hashable, CaseIterable {
     case statistics
     case budget
     case goals
+    case settings
 
     var title: String {
         switch self {
@@ -14,6 +15,7 @@ enum MainTab: Hashable, CaseIterable {
         case .statistics: return "统计"
         case .budget: return "预算"
         case .goals: return "目标"
+        case .settings: return "设置"
         }
     }
 
@@ -25,6 +27,7 @@ enum MainTab: Hashable, CaseIterable {
         case .statistics: return "chart.pie"
         case .budget: return "gauge.with.dots.needle.50percent"
         case .goals: return "target"
+        case .settings: return "gearshape"
         }
     }
 }
@@ -38,8 +41,8 @@ struct MainTabView: View {
     @StateObject private var router = LedgerRouter()
     @StateObject private var toastCenter = ImportToastCenter()
     @State private var selection: MainTab = .home
-    @State private var showingSettings = false
-    @State private var showingEntryOptions = false
+    @State private var isEntryMenuExpanded = false
+    @State private var entryMenuStep = 0
     @State private var errorMessage: String?
 
     var body: some View {
@@ -50,9 +53,9 @@ struct MainTabView: View {
                     .tag(tab)
             }
         }
-        // The custom bar contains the five destinations, the local avatar,
-        // Settings and the centered entry button in one row. The native bar is
-        // hidden so the "+" sits inside that row rather than in a second row.
+        // The custom bar is one row of seven equal slots: five destinations,
+        // Settings at the far right, and the entry button in the exact center.
+        // The native bar is hidden so nothing is stacked above this row.
         .toolbar(.hidden, for: .tabBar)
         .tint(theme.accentText)
         .safeAreaInset(edge: .bottom, spacing: 0) {
@@ -69,11 +72,6 @@ struct MainTabView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .animation(.easeInOut(duration: 0.2), value: toastCenter.toast)
             }
-        }
-        .sheet(isPresented: $showingSettings) {
-            SettingsView()
-                .environment(\.managedObjectContext, viewContext)
-                .environmentObject(themeManager)
         }
         .sheet(item: $router.sheet) { sheet in
             switch sheet {
@@ -95,21 +93,6 @@ struct MainTabView: View {
                     .environment(\.managedObjectContext, viewContext)
                     .environment(\.ledgerTheme, theme)
             }
-        }
-        .confirmationDialog(
-            "选择记账方式",
-            isPresented: $showingEntryOptions,
-            titleVisibility: .hidden
-        ) {
-            Button("⚡ 极速记账") {
-                router.open(.image)
-            }
-
-            Button("📝 记一笔") {
-                router.open(.manual)
-            }
-
-            Button("取消", role: .cancel) {}
         }
         .alert(
             "操作未完成",
@@ -133,33 +116,23 @@ struct MainTabView: View {
             tabButton(.statistics)
 
             Button {
-                showingEntryOptions = true
+                toggleEntryMenu()
             } label: {
                 barItemContent(
                     systemImage: "plus",
                     title: "记账",
-                    isSelected: false
+                    isSelected: false,
+                    iconSize: 22,
+                    isEmphasized: true
                 )
             }
             .buttonStyle(.plain)
             .accessibilityLabel("记账")
-            .accessibilityHint("选择极速记账或手动记一笔")
+            .accessibilityHint("依次展开极速记账和手动记一笔")
 
             tabButton(.budget)
             tabButton(.goals)
-
-            Button {
-                showingSettings = true
-            } label: {
-                barItemContent(
-                    systemImage: "gearshape",
-                    title: "设置",
-                    isSelected: false
-                )
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("设置")
-            .accessibilityHint("打开主题、分类、导出与关于")
+            tabButton(.settings)
         }
         .padding(.horizontal, 6)
         .padding(.top, 5)
@@ -183,6 +156,14 @@ struct MainTabView: View {
             }
             .ignoresSafeArea(edges: .bottom)
         }
+        .overlay(alignment: .bottom) {
+            if isEntryMenuExpanded {
+                entryIsland
+                    .offset(y: -58)
+                    .transition(.opacity)
+                    .zIndex(2)
+            }
+        }
         .overlay(alignment: .top) {
             Rectangle()
                 .fill(Color.white.opacity(0.10))
@@ -190,8 +171,137 @@ struct MainTabView: View {
         }
     }
 
+    // MARK: - Entry island
+
+    private var entryIsland: some View {
+        VStack(spacing: 8) {
+            if entryMenuStep >= 2 {
+                entryBubble(
+                    title: "记一笔",
+                    systemImage: "square.and.pencil"
+                ) {
+                    collapseEntryMenu()
+                    router.open(.manual)
+                }
+                .transition(entryBubbleTransition)
+            }
+
+            if entryMenuStep >= 1 {
+                entryBubble(
+                    title: "极速记账",
+                    systemImage: "bolt.fill"
+                ) {
+                    collapseEntryMenu()
+                    router.open(.image)
+                }
+                .transition(entryBubbleTransition)
+            }
+        }
+        .animation(.spring(response: 0.26, dampingFraction: 0.82), value: entryMenuStep)
+    }
+
+    private func entryBubble(
+        title: String,
+        systemImage: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 5) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 11, weight: .semibold))
+                    .accessibilityHidden(true)
+
+                Text(title)
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .lineLimit(1)
+            }
+            .foregroundStyle(Color.white)
+            .padding(.horizontal, 12)
+            .frame(height: 30)
+            .padding(.bottom, 7)
+            .background {
+                EntryBubbleShape()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(
+                                    .sRGB,
+                                    red: 34.0 / 255.0,
+                                    green: 34.0 / 255.0,
+                                    blue: 38.0 / 255.0,
+                                    opacity: 0.98
+                                ),
+                                Color(
+                                    .sRGB,
+                                    red: 18.0 / 255.0,
+                                    green: 18.0 / 255.0,
+                                    blue: 21.0 / 255.0,
+                                    opacity: 0.98
+                                )
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+            }
+            .shadow(color: Color.black.opacity(0.30), radius: 7, x: 0, y: 4)
+            .contentShape(EntryBubbleShape())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title)
+        .accessibilityHint(
+            Text(
+                title == "极速记账"
+                    ? "打开相机或相册识别记账"
+                    : "手动填写金额与分类"
+            )
+        )
+    }
+
+    private var entryBubbleTransition: AnyTransition {
+        .asymmetric(
+            insertion: .move(edge: .bottom)
+                .combined(with: .opacity)
+                .combined(with: .scale(scale: 0.72, anchor: .bottom)),
+            removal: .opacity
+                .combined(with: .scale(scale: 0.88, anchor: .bottom))
+        )
+    }
+
+    private func toggleEntryMenu() {
+        if isEntryMenuExpanded {
+            collapseEntryMenu()
+            return
+        }
+
+        entryMenuStep = 0
+        isEntryMenuExpanded = true
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.02) {
+            guard isEntryMenuExpanded else { return }
+            withAnimation(.spring(response: 0.26, dampingFraction: 0.82)) {
+                entryMenuStep = 1
+            }
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.11) {
+            guard isEntryMenuExpanded else { return }
+            withAnimation(.spring(response: 0.26, dampingFraction: 0.82)) {
+                entryMenuStep = 2
+            }
+        }
+    }
+
+    private func collapseEntryMenu() {
+        withAnimation(.easeOut(duration: 0.14)) {
+            entryMenuStep = 0
+            isEntryMenuExpanded = false
+        }
+    }
+
     private func tabButton(_ tab: MainTab) -> some View {
         Button {
+            collapseEntryMenu()
             withAnimation(.easeOut(duration: 0.18)) {
                 selection = tab
             }
@@ -210,19 +320,35 @@ struct MainTabView: View {
     private func barItemContent(
         systemImage: String,
         title: String,
-        isSelected: Bool
+        isSelected: Bool,
+        iconSize: CGFloat = 16,
+        isEmphasized: Bool = false
     ) -> some View {
         VStack(spacing: 2) {
             Image(systemName: systemImage)
-                .font(.system(size: 16, weight: isSelected ? .semibold : .regular))
+                .font(
+                    .system(
+                        size: iconSize,
+                        weight: isEmphasized || isSelected ? .semibold : .regular
+                    )
+                )
                 .frame(height: 20)
 
             Text(title)
-                .font(.system(size: 9, weight: isSelected ? .semibold : .medium))
+                .font(
+                    .system(
+                        size: isEmphasized ? 9.5 : 9,
+                        weight: isEmphasized || isSelected ? .semibold : .medium
+                    )
+                )
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
         }
-        .foregroundStyle(isSelected ? Color.white : Color.white.opacity(0.56))
+        .foregroundStyle(
+            isSelected
+                ? Color.white
+                : Color.white.opacity(isEmphasized ? 0.84 : 0.56)
+        )
         .frame(maxWidth: .infinity)
         .frame(height: 48)
         .contentShape(Rectangle())
@@ -253,7 +379,38 @@ struct MainTabView: View {
             BudgetView()
         case .goals:
             GoalsView()
+        case .settings:
+            SettingsView(showsDoneButton: false)
+                .environment(\.managedObjectContext, viewContext)
+                .environmentObject(themeManager)
         }
+    }
+}
+
+private struct EntryBubbleShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        let tailHeight: CGFloat = 7
+        let tailWidth: CGFloat = 12
+        let bodyHeight = max(rect.height - tailHeight, 0)
+        let radius = min(15, bodyHeight / 2)
+
+        var path = RoundedRectangle(cornerRadius: radius, style: .continuous)
+            .path(
+                in: CGRect(
+                    x: rect.minX,
+                    y: rect.minY,
+                    width: rect.width,
+                    height: bodyHeight
+                )
+            )
+
+        let tailTop = bodyHeight - 1
+        let centerX = rect.midX
+        path.move(to: CGPoint(x: centerX - tailWidth / 2, y: tailTop))
+        path.addLine(to: CGPoint(x: centerX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: centerX + tailWidth / 2, y: tailTop))
+        path.closeSubpath()
+        return path
     }
 }
 
