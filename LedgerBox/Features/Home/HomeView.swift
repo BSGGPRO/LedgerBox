@@ -90,6 +90,7 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("LedgerBox")
                     .font(theme.largeTitleFont)
+                    .tracking(-0.6)
                     .foregroundStyle(theme.primaryText)
 
                 Text(Date.now.formatted(.dateTime.year().month(.wide)))

@@ -1,4 +1,4 @@
-import Combine
+﻿import Combine
 import Foundation
 import SwiftUI
 
@@ -100,9 +100,9 @@ struct Theme {
             income: Color(hex: isDark ? "4CC38A" : "248A5B"),
             expense: Color(hex: isDark ? "F07178" : "C9454F"),
             warning: Color(hex: isDark ? "F2B84B" : "B87400"),
-            cardRadius: 18,
+            cardRadius: 20,
             pagePadding: 16,
-            cardPadding: 16,
+            cardPadding: 18,
             spacing: 16,
             smallSpacing: 8
         )
@@ -113,7 +113,7 @@ struct Theme {
     }
 
     var sectionTitleFont: Font {
-        .system(size: 17, weight: .semibold, design: .rounded)
+        .system(size: 18, weight: .semibold, design: .rounded)
     }
 
     var bodyFont: Font {
