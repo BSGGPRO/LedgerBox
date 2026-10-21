@@ -14,6 +14,17 @@ struct ChangelogEntry: Identifiable {
 enum ChangelogCatalog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "0.9.4",
+            dateText: "2026.10.21",
+            title: "去掉设置和目标的返回按钮",
+            changes: [
+                "不再把设置作为 TabView 的第六个页面；TabView 固定五个页面，避免 iOS 自动生成 More 列表。",
+                "目标页不再出现“返回 / More”导航按钮。",
+                "设置改为独立页面覆盖层，进入后齿轮高亮，其它 Tab 不再同时高亮。",
+                "设置页仍然是页面切换，不是 sheet 抽屉。"
+            ]
+        ),
+        ChangelogEntry(
             version: "0.9.3",
             dateText: "2026.10.21",
             title: "设置改成页面，记账选项变气泡",

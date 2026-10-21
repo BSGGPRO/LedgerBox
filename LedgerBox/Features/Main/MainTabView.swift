@@ -6,7 +6,6 @@ enum MainTab: Hashable, CaseIterable {
     case statistics
     case budget
     case goals
-    case settings
 
     var title: String {
         switch self {
@@ -15,7 +14,6 @@ enum MainTab: Hashable, CaseIterable {
         case .statistics: return "统计"
         case .budget: return "预算"
         case .goals: return "目标"
-        case .settings: return "设置"
         }
     }
 
@@ -27,7 +25,6 @@ enum MainTab: Hashable, CaseIterable {
         case .statistics: return "chart.pie"
         case .budget: return "gauge.with.dots.needle.50percent"
         case .goals: return "target"
-        case .settings: return "gearshape"
         }
     }
 }
@@ -41,22 +38,36 @@ struct MainTabView: View {
     @StateObject private var router = LedgerRouter()
     @StateObject private var toastCenter = ImportToastCenter()
     @State private var selection: MainTab = .home
+    @State private var showingSettingsPage = false
     @State private var isEntryMenuExpanded = false
     @State private var entryMenuStep = 0
     @State private var errorMessage: String?
 
     var body: some View {
-        TabView(selection: $selection) {
-            ForEach(MainTab.allCases, id: \.self) { tab in
-                tabContent(for: tab)
-                    .toolbar(.hidden, for: .tabBar)
-                    .tag(tab)
+        ZStack {
+            TabView(selection: $selection) {
+                ForEach(MainTab.allCases, id: \.self) { tab in
+                    tabContent(for: tab)
+                        .toolbar(.hidden, for: .tabBar)
+                        .tag(tab)
+                }
+            }
+            // Keep exactly five TabView children. A sixth child makes UIKit
+            // synthesize a "More" list and adds back buttons to 目标/设置.
+            .toolbar(.hidden, for: .tabBar)
+            .opacity(showingSettingsPage ? 0 : 1)
+            .allowsHitTesting(!showingSettingsPage)
+            .accessibilityHidden(showingSettingsPage)
+
+            if showingSettingsPage {
+                SettingsView(showsDoneButton: false)
+                    .environment(\.managedObjectContext, viewContext)
+                    .environmentObject(themeManager)
+                    .transition(.opacity)
+                    .zIndex(1)
             }
         }
-        // The custom bar is one row of seven equal slots: five destinations,
-        // Settings at the far right, and the entry button in the exact center.
-        // The native bar is hidden so nothing is stacked above this row.
-        .toolbar(.hidden, for: .tabBar)
+        .animation(.easeInOut(duration: 0.18), value: showingSettingsPage)
         .tint(theme.accentText)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             bottomBar
@@ -132,7 +143,23 @@ struct MainTabView: View {
 
             tabButton(.budget)
             tabButton(.goals)
-            tabButton(.settings)
+
+            Button {
+                collapseEntryMenu()
+                withAnimation(.easeOut(duration: 0.18)) {
+                    showingSettingsPage = true
+                }
+            } label: {
+                barItemContent(
+                    systemImage: "gearshape",
+                    title: "设置",
+                    isSelected: showingSettingsPage
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("设置")
+            .accessibilityValue(showingSettingsPage ? "已选中" : "")
+            .accessibilityHint("打开主题、分类、导出与关于")
         }
         .padding(.horizontal, 6)
         .padding(.top, 5)
@@ -302,6 +329,7 @@ struct MainTabView: View {
     private func tabButton(_ tab: MainTab) -> some View {
         Button {
             collapseEntryMenu()
+            showingSettingsPage = false
             withAnimation(.easeOut(duration: 0.18)) {
                 selection = tab
             }
@@ -309,12 +337,14 @@ struct MainTabView: View {
             barItemContent(
                 systemImage: tab.symbolName,
                 title: tab.title,
-                isSelected: selection == tab
+                isSelected: !showingSettingsPage && selection == tab
             )
         }
         .buttonStyle(.plain)
         .accessibilityLabel(tab.title)
-        .accessibilityValue(selection == tab ? "已选中" : "")
+        .accessibilityValue(
+            !showingSettingsPage && selection == tab ? "已选中" : ""
+        )
     }
 
     private func barItemContent(
@@ -379,10 +409,6 @@ struct MainTabView: View {
             BudgetView()
         case .goals:
             GoalsView()
-        case .settings:
-            SettingsView(showsDoneButton: false)
-                .environment(\.managedObjectContext, viewContext)
-                .environmentObject(themeManager)
         }
     }
 }
