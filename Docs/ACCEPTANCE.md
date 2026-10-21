@@ -19,7 +19,7 @@
 | 文档 | README、LICENSE、.gitignore、CONTRIBUTING、核心 Docs、开源调研与 10 项目清单 |
 | 静态语法 | tree-sitter-swift 解析通过 |
 | 工程结构 | pbxproj / XML / plist 解析通过；App + Widget Extension 两个 Target，Widget 默认不嵌入 |
-| 实际编译 | GitHub Actions `macos-15` archive 成功（run `39579640282`，commit `c59e677`） |
+| 实际编译 | GitHub Actions `macos-15` archive 成功（run `39580367114`，commit `954cdff`） |
 | 实际运行 | **未执行**（无模拟器/真机） |
 | 签名/IPA | `LedgerBox-unsigned-0.3.0-FinanceMind.ipa` 已生成；未签名、未真机安装 |
 | Assets/AppIcon | 已随 archive 编译；未做视觉/真机验证 |
@@ -60,7 +60,7 @@ NO BOM
 | AppIcon | 1024×1024、RGB、无 alpha；未做视觉审查 |
 | Asset Catalog JSON | `Contents.json` 可解析；已随 archive 编译 |
 | Assets 工程引用 | 文件引用 + Resources build phase 已存在 |
-| GitHub Actions | `.github/workflows/ios-unsigned.yml` 已实际运行成功（run `39579640282`） |
+| GitHub Actions | `.github/workflows/ios-unsigned.yml` 已实际运行成功（run `39580367114`） |
 | 测试 Target | `LedgerBoxTests` 已加入；2 个测试源文件；未运行 |
 | Scheme Test Action | 已加入 `TestableReference` 与 `MacroExpansion`；未运行 |
 
@@ -93,7 +93,7 @@ NO BOM
 | P0-12 | README / LICENSE / .gitignore / CONTRIBUTING | 源码具备 | 均已创建 |
 | P0-13 | Docs 核心文档 | 源码具备 | COMPONENTS / FINANCE_RULES / BUILD_STEPS / WINDOWS_BUILD_SIGN / ACCEPTANCE / THEMING；另有 GITHUB_RESEARCH、OPEN_SOURCE_10、CHANGELOG |
 | P0-14 | Assets.xcassets / AppIcon | 源码具备（占位） | 1024×1024 PNG + Contents.json；已随 archive 编译，未做视觉检查 |
-| P0-15 | GitHub Actions 无签名归档 | 已运行成功 | `.github/workflows/ios-unsigned.yml`；run `39579640282` |
+| P0-15 | GitHub Actions 无签名归档 | 已运行成功 | `.github/workflows/ios-unsigned.yml`；run `39580367114` |
 | P0-16 | 测试 Target | 源码具备（未运行） | `LedgerBoxTests` 已加入；覆盖财务汇总/退款/预算/分账；未执行 |
 | P0-17 | 实际编译/运行/签名 | **部分** | 远程 archive 成功；运行/签名/真机未验证 |
 | P0-18 | 不虚假宣称已编译/已签名 | 文档具备 | README 与 Docs 明确标注未编译 |
@@ -151,11 +151,11 @@ NO BOM
 | P5-6 | 版本号 0.3.0 / Bundle ID 占位 | 具备 |
 | P5-7 | 无 DEVELOPMENT_TEAM | 具备 |
 | P5-8 | Assets/AppIcon | 已有占位，已随 archive 编译，未视觉验证 |
-| P5-9 | GitHub Actions workflow | 已实际运行，run `39579640282` success |
+| P5-9 | GitHub Actions workflow | 已实际运行，run `39580367114` success |
 | P5-10 | 测试 Target | 已加入（2 个测试源文件），未运行 |
-| P5-11 | 实际 Xcode 编译 | GitHub Actions archive 成功（commit `c59e677`） |
+| P5-11 | 实际 Xcode 编译 | GitHub Actions archive 成功（commit `954cdff`） |
 | P5-12 | 实际运行 | 未验证（无模拟器/真机） |
-| P5-13 | 未签名 IPA | `LedgerBox-unsigned-0.3.0-FinanceMind.ipa`（883,045 字节，无 PlugIns、无麦克风/语音/Siri 权限，适合 lcsign）；run `39579640282` |
+| P5-13 | 未签名 IPA | `LedgerBox-unsigned-0.3.0-FinanceMind.ipa`（883,050 字节，无 PlugIns、无麦克风/语音/Siri 权限，适合 lcsign）；run `39580367114` |
 | P5-14 | 自签验证 | 未执行 |
 | P5-15 | 截图/视觉回归 | 缺失 |
 | P5-16 | 本地化 | 缺失（仅中文） |
@@ -171,7 +171,7 @@ NO BOM
 ### 6.1 必须先补的交付物
 
 1. `Assets.xcassets` 与 AppIcon 已随 archive 编译；仍需真机/视觉检查。
-2. GitHub Actions workflow 已实际触发，run `39579640282` 成功。
+2. GitHub Actions workflow 已实际触发，run `39580367114` 成功。
 3. `LedgerBoxTests` 已加入，但尚未在 Xcode 中运行。
 4. 已有远程 archive 记录；仍缺真机运行记录。
 5. 未签名 IPA 已生成并通过结构校验；签名与安装未验证。

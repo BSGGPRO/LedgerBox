@@ -5,7 +5,7 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 作者：**Beausoleil** · [Bilibili 个人空间](https://space.bilibili.com/1477283849)
 
 > **当前状态**  
-> 静态源码与文档已完成；GitHub Actions `macos-15` 已成功归档未签名 IPA（run `39579640282`，commit `c59e677`），版本 `0.3.0`，包含 15,380 参数财务专用小模型、5,643 参数金钱分类器、可选联网 AI、更新日志和作者入口；已取消 Siri/快捷指令，移除语音与 Siri 权限，默认不嵌入 Widget，方便自签。测试尚未运行，IPA 未签名，需要你用自己的证书自签；尚未做真机运行验证。
+> 静态源码与文档已完成；GitHub Actions `macos-15` 已成功归档未签名 IPA（run `39580367114`，commit `954cdff`），版本 `0.3.0`，包含 15,380 参数财务专用小模型、5,643 参数金钱分类器、可选联网 AI、更新日志和作者入口；已取消 Siri/快捷指令，移除语音与 Siri 权限，默认不嵌入 Widget，方便自签。测试尚未运行，IPA 未签名，需要你用自己的证书自签；尚未做真机运行验证。
 
 ---
 
@@ -198,7 +198,7 @@ CONTRIBUTING.md
 - 已有 `LedgerBoxTests` Target，共 20 个测试，覆盖财务汇总、退款、预算进度、副业分账、结余优先级、金额分位存储与 11 个极速记账解析用例；尚未实际运行。
 - 已取消 Siri、快捷指令和 App Intents，不能监听银行/微信通知，也没有系统自动化写账入口。
 - 小 AI 是本地规则 + `NaturalLanguage` + 5,643 参数金钱分类器 + 15,380 参数财务意图模型，不是生成式大模型；联网 AI 默认关闭，开启后也只发送你手动输入的文本。
-- 新版未签名 IPA 已由 GitHub Actions 生成：`LedgerBox-unsigned-0.3.0-FinanceMind.ipa`，883,045 字节，SHA-256 `12478FAC0DD91DB6F3A6F1BCFD0F27498782FEF3EE07C2D3D70D9FB105982734`；无 `PlugIns`、无麦克风/语音/Siri 权限，需自签后安装。
+- 新版未签名 IPA 已由 GitHub Actions 生成：`LedgerBox-unsigned-0.3.0-FinanceMind.ipa`，883,050 字节，SHA-256 `41C5575D5A87A998BF759DEAC684A4E6E7F7F48DEA045FC9222DD0BDBAE4FFBF`；无 `PlugIns`、无麦克风/语音/Siri 权限，需自签后安装。
 - 源码包：`LedgerBox-source-0.3.0-FinanceMind.zip`（大小与 SHA-256 见交付说明）。
 - 当前默认是单 target：不再嵌入 `PlugIns/LedgerBoxWidget.appex`，所以 `lcsign` 只需签主 App。Widget 源码仍在仓库中，但不会进入 IPA。
 - 如果要重新启用小组件，必须在 Xcode 中恢复 Embed 阶段，并同时签主 App 与 appex；否则会出现图标有、点不开的安装失败。
