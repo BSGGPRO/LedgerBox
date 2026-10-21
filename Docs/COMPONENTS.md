@@ -1,4 +1,4 @@
-﻿# LedgerBox 组件与架构
+# LedgerBox 组件与架构
 
 本文描述当前源码的分层、关键类型、数据流和扩展点。GitHub Actions 已成功 archive，33 个 XCTest 已在 iPhone 16 / iOS 26.2 模拟器通过；但本文不代表真机运行、签名安装或人工 UI 验收。
 
@@ -115,7 +115,8 @@ protocol TransactionProviding {
 
 | 文件 | 职责 |
 |---|---|
-| `LedgerBox/Design/Theme.swift` | `ThemeMode`、`ThemeAccent`、`Theme`、`ThemeManager`、`LedgerThemeKey`、`LedgerCard`、`LedgerSectionHeader`、`Color(hex:)` |
+| `LedgerBox/Design/Theme.swift` | `ThemeMode`、`ThemeAccent`、`Theme`、`ThemeManager`、`LedgerThemeKey`、`LedgerCard`、`LedgerSectionHeader`、`LedgerTag`、`LedgerSegmentedControl`、按钮样式、`Color(hex:)` |
+| `LedgerBox/Design/KeyboardDismiss.swift` | `.keyboardDoneBar`、`.keyboardDismissOnBlankTap`、`KeyboardDismissArea`；统一键盘“完成”和点空白收起 |
 
 `Theme` 是值类型，包含：
 
@@ -321,7 +322,7 @@ CSV 字段：
 | 类型 | 位置 | 说明 |
 |---|---|---|
 | `ThemeMode` | `Theme.swift` | system/light/dark |
-| `ThemeAccent` | `Theme.swift` | 蓝/绿/橙/红/紫 |
+| `ThemeAccent` | `Theme.swift` | 绿/蓝/橙/紫/玫红；另有 ColorPicker/HEX 自定义 |
 | `Theme` | `Theme.swift` | 颜色、字号、圆角、间距 |
 | `ThemeManager` | `Theme.swift` | 主题持久化 |
 | `AccountType` | `FinanceEngine.swift` | cash/savings/goal/reserve |
@@ -406,9 +407,9 @@ CSV 字段：
 - 无账户管理 UI、无分类管理 UI。
 - 无周期记账页面；“补记本期”尚未接入。
 - `AppSettings.themeMode` 与 `ThemeManager` 未双向同步。
-- 测试 Target 已运行：33 个测试在 iPhone 16 / iOS 26.2 模拟器通过（run `39598536163`）。
+- 测试 Target 已运行：33 个测试在 iPhone 16 / iOS 26.2 模拟器通过（run `39602690412`）。
 - AppIcon 与 Asset Catalog 已随 GitHub Actions archive 编译；未做真机视觉检查。
-- 已通过 GitHub Actions `macos-15` 归档（run `39598323723`）；未在本地 Xcode 运行，也未做真机验证。
+- 已通过 GitHub Actions `macos-15` 归档（run `39602446769`）；未在本地 Xcode 运行，也未做真机验证。
 - iOS 不能读取其他 App 的通知内容；已取消快捷指令/Siri，没有系统自动化写账入口。
 - 本地小 AI 是规则 + 5,643 参数金钱分类器 + 20,971,560 参数财务意图模型；财务大脑未做真实账本准确率测试，也未做真机视觉验收；0.4.0 起不含联网 AI。
 

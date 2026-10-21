@@ -1,4 +1,4 @@
-# 本地财务大脑（0.6.0）
+# 本地财务大脑（0.7.0）
 
 ## 1. 它是什么
 
@@ -122,7 +122,7 @@ python Tools/train_finance_mind.py
 
 | 方案 | 体积 | 运行 | 风险 |
 |---|---:|---|---|
-| FinanceMind 0.6.0 | 约 20MB 权重 | 纯 Swift，毫秒级 | 只能做意图+规则，不会聊天 |
+| FinanceMind 0.7.0 | 约 20MB 权重 | 纯 Swift，毫秒级 | 只能做意图+规则，不会聊天 |
 | Qwen2.5-0.5B 4-bit | 300–400MB | Core ML/llama.cpp + tokenizer + KV cache | 当前无 Mac/真机验证，首 token 慢，可能被杀 |
 | 远程 API | 0MB | 需要 Key + 网络 | 不是本地，0.4.0 已移除 |
 

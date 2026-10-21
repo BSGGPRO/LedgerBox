@@ -15,13 +15,13 @@
 
 | 项目 | 结论 |
 |---|---|
-| 静态源码 | 33 个 Swift 文件（28 个 App + 2 个 Widget + 3 个测试） |
+| 静态源码 | 34 个 Swift 文件（29 个 App + 2 个 Widget + 3 个测试） |
 | 文档 | README、LICENSE、.gitignore、CONTRIBUTING、核心 Docs、开源调研与 10 项目清单 |
 | 静态语法 | tree-sitter-swift 解析通过 |
 | 工程结构 | pbxproj / XML / plist 解析通过；App + Widget Extension 两个 Target，Widget 默认不嵌入 |
-| 实际编译 | GitHub Actions `macos-15` archive 成功（run `39598323723`，commit `d791803`） |
-| 实际运行 | 33 个 XCTest 在 iPhone 16 / iOS 26.2 模拟器通过（run `39598536163`）；App UI 未人工逐页验收 |
-| 签名/IPA | `LedgerBox-unsigned-0.6.0-Mind20M.ipa` 已生成；未签名、未真机安装 |
+| 实际编译 | GitHub Actions `macos-15` archive 成功（run `39602446769`，commit `fa093de`） |
+| 实际运行 | 33 个 XCTest 在 iPhone 16 / iOS 26.2 模拟器通过（run `39602690412`）；App UI 未人工逐页验收 |
+| 签名/IPA | `LedgerBox-unsigned-0.7.0-KeyboardUI.ipa` 已生成；未签名、未真机安装 |
 | Assets/AppIcon | 已随 archive 编译；未做视觉/真机验证 |
 | GitHub Actions | 已实际运行，结论 success |
 | 测试 Target | 已加入；33 个测试在模拟器全部通过 |
@@ -34,14 +34,14 @@
 最后一次静态检查结果：
 
 ```text
-SWIFT SYNTAX OK 33
+SWIFT SYNTAX OK 34
 XML/PLIST/PBX OK 41 37
 NO BOM
 ```
 
 解释：
 
-- `33`：33 个 `.swift` 文件（28 个 App + 2 个 Widget + 3 个测试）；编译结论以 GitHub Actions archive 为准。
+- `34`：34 个 `.swift` 文件（29 个 App + 2 个 Widget + 3 个测试）；编译结论以 GitHub Actions archive 为准。
 - `42`：`PBXFileReference` 数量（28 个 App Swift + 2 个 Widget Swift + 3 个测试 Swift + 图标/框架/产品/Info.plist/模型资源等）。
 - `38`：`PBXBuildFile` 数量（App 源文件 + Widget 源文件 + 测试源文件 + 模型/资源/框架；Widget 不再嵌入，因此没有 appex 嵌入项）。
 - `NO BOM`：`project.pbxproj` 为 UTF-8 无 BOM。
@@ -60,7 +60,7 @@ NO BOM
 | AppIcon | 1024×1024、RGB、无 alpha；未做视觉审查 |
 | Asset Catalog JSON | `Contents.json` 可解析；已随 archive 编译 |
 | Assets 工程引用 | 文件引用 + Resources build phase 已存在 |
-| GitHub Actions | `.github/workflows/ios-unsigned.yml` 已实际运行成功（run `39598323723`） |
+| GitHub Actions | `.github/workflows/ios-unsigned.yml` 已实际运行成功（run `39602446769`） |
 | 测试 Target | `LedgerBoxTests` 已加入；3 个测试源文件；33 个测试通过 |
 | Scheme Test Action | 已加入 `TestableReference` 与 `MacroExpansion`；`xcodebuild test` 已实际执行 |
 
@@ -91,8 +91,8 @@ NO BOM
 | P0-12 | README / LICENSE / .gitignore / CONTRIBUTING | 源码具备 | 均已创建 |
 | P0-13 | Docs 核心文档 | 源码具备 | COMPONENTS / FINANCE_RULES / BUILD_STEPS / WINDOWS_BUILD_SIGN / ACCEPTANCE / THEMING；另有 GITHUB_RESEARCH、OPEN_SOURCE_10、CHANGELOG |
 | P0-14 | Assets.xcassets / AppIcon | 源码具备（占位） | 1024×1024 PNG + Contents.json；已随 archive 编译，未做视觉检查 |
-| P0-15 | GitHub Actions 无签名归档 | 已运行成功 | `.github/workflows/ios-unsigned.yml`；run `39598323723` |
-| P0-16 | 测试 Target | 已运行通过 | `LedgerBoxTests`；33 个测试在模拟器通过（run `39598536163`） |
+| P0-15 | GitHub Actions 无签名归档 | 已运行成功 | `.github/workflows/ios-unsigned.yml`；run `39602446769` |
+| P0-16 | 测试 Target | 已运行通过 | `LedgerBoxTests`；33 个测试在模拟器通过（run `39602690412`） |
 | P0-17 | 实际编译/运行/签名 | **部分** | 远程 archive 成功；模拟器测试通过；签名/真机未验证 |
 | P0-18 | 不虚假宣称已编译/已签名 | 文档具备 | README 与 Docs 区分模拟器测试、签名与真机 |
 
@@ -149,11 +149,11 @@ NO BOM
 | P5-6 | 版本号 0.3.1 / Bundle ID 占位 | 具备 |
 | P5-7 | 无 DEVELOPMENT_TEAM | 具备 |
 | P5-8 | Assets/AppIcon | 已有占位，已随 archive 编译，未视觉验证 |
-| P5-9 | GitHub Actions workflow | 已实际运行，run `39598323723` success |
+| P5-9 | GitHub Actions workflow | 已实际运行，run `39602446769` success |
 | P5-10 | 测试 Target | 已加入（3 个测试源文件），33 个测试通过 |
 | P5-11 | 实际 Xcode 编译 | GitHub Actions archive 成功（commit `d791803`） |
 | P5-12 | 实际运行 | 33 个 XCTest 在 iOS 26.2 模拟器通过；App UI 未人工验收 |
-| P5-13 | 未签名 IPA | `LedgerBox-unsigned-0.6.0-Mind20M.ipa`（1,379,205 字节，无 PlugIns、无麦克风/语音/Siri 权限，适合 lcsign）；run `39598323723` |
+| P5-13 | 未签名 IPA | `LedgerBox-unsigned-0.7.0-KeyboardUI.ipa`（1,462,132 字节，无 PlugIns、无麦克风/语音/Siri 权限，适合 lcsign）；run `39602446769` |
 | P5-14 | 自签验证 | 未执行 |
 | P5-15 | 截图/视觉回归 | 缺失 |
 | P5-16 | 本地化 | 缺失（仅中文） |
@@ -169,8 +169,8 @@ NO BOM
 ### 6.1 必须先补的交付物
 
 1. `Assets.xcassets` 与 AppIcon 已随 archive 编译；仍需真机/视觉检查。
-2. GitHub Actions workflow 已实际触发，run `39598323723` 成功。
-3. `LedgerBoxTests` 的 33 个测试已在 iPhone 16 / iOS 26.2 模拟器通过（run `39598536163`）。
+2. GitHub Actions workflow 已实际触发，run `39602446769` 成功。
+3. `LedgerBoxTests` 的 33 个测试已在 iPhone 16 / iOS 26.2 模拟器通过（run `39602690412`）。
 4. 已有远程 archive 与模拟器测试记录；仍缺真机运行、签名和安装记录。
 5. 未签名 IPA 已生成并通过结构校验；签名与安装未验证。
 
@@ -240,7 +240,7 @@ NO BOM
 
 ### 8.1 已完成
 
-- 33 个 Swift 文件（28 个 App + 2 个 Widget + 3 个测试）。
+- 34 个 Swift 文件（29 个 App + 2 个 Widget + 3 个测试）。
 - Xcode 工程、共享 scheme、App target、`LedgerBoxTests` target。
 - Core Data 模型、持久化、主题、财务引擎、全部主页面。
 - 小 AI 文本记账：纯 Foundation 解析器、`QuickEntryAI` 本地解释、字段完整度、示例/分类/账户建议、5,643 参数金钱分类器。

@@ -1,0 +1,23 @@
+﻿LedgerBox 0.7.0 SHA-256
+=======================
+
+Version: 0.7.0 (1)
+Commit: fa093de
+Date: 2026-10-21
+
+5BC51F9FB95CBDADD0E336FC006B0421AB0FC9D1CEBECEA92EF812A38223A240  LedgerBox-unsigned-0.7.0-KeyboardUI.ipa
+65740C375C047D137F798A3301E053AF16CA5524E3917407E5FE4BCE86D2B06B  LedgerBox-source-0.7.0-KeyboardUI.zip
+506931280D71A7FC13AB7F38CEDF8CB5916D85F2BE22D3FCB4BDF3D003A320BC  LedgerBox/Resources/FinanceMindWeights.bin
+
+Sizes
+-----
+LedgerBox-unsigned-0.7.0-KeyboardUI.ipa: 1,462,132 bytes
+LedgerBox-source-0.7.0-KeyboardUI.zip: 778,544 bytes
+LedgerBox/Resources/FinanceMindWeights.bin: 20,971,680 bytes
+
+Verification
+------------
+GitHub Actions unsigned archive: run 39602446769, success
+GitHub Actions simulator XCTest: run 39602690412, 33 passed / 0 failed / 0 skipped
+IPA bundle id: com.example.ledgerbox
+IPA is unsigned and not installed on a physical device.

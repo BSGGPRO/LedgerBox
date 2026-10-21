@@ -207,7 +207,7 @@ xcodebuild \
 - 物品识别：电动车型号 `M5200` 不被当金额；口红价格 1000 识别为支出并给出软提醒；`2台` 数量不压过价格
 - 财务大脑：模型加载、20,971,560 参数、40 类标签、现金流/报销/折旧/权责发生/应收/增值税/房贷/发票路由、非财务文本回落、空输入
 
-> 已在 GitHub Actions 的 iPhone 16 / iOS 26.2 模拟器实际运行：33 passed / 0 failed（run `39598536163`）。本机命令模板仍可能因 Xcode 版本和模拟器名称不同而需要调整。
+> 已在 GitHub Actions 的 iPhone 16 / iOS 26.2 模拟器实际运行：33 passed / 0 failed（run `39602690412`）。本机命令模板仍可能因 Xcode 版本和模拟器名称不同而需要调整。
 
 ---
 
@@ -313,9 +313,9 @@ The model configuration used to open the store is incompatible with the one that
 ## 8. 本仓库当前仍缺的东西
 
 - `Assets.xcassets` 与 AppIcon 已随 archive 编译；仍未做真机/视觉检查。
-- `LedgerBoxTests` 已加入并实际运行：33 个测试通过（iPhone 16 / iOS 26.2 模拟器，run `39598536163`）。
-- `.github/workflows/ios-unsigned.yml` 已实际运行：run `39598323723`，结论 success。
-- 新版未签名 IPA 已生成：`LedgerBox-unsigned-0.6.0-Mind20M.ipa`（1,379,205 字节，含 20,971,560 参数财务大脑、40 个意图、大脑可视化、本地小 AI、5,643 参数金钱模型，无联网 AI、无语音/Siri 权限、无 `PlugIns`）。
+- `LedgerBoxTests` 已加入并实际运行：33 个测试通过（iPhone 16 / iOS 26.2 模拟器，run `39602690412`）。
+- `.github/workflows/ios-unsigned.yml` 已实际运行：run `39602446769`，结论 success。
+- 新版未签名 IPA 已生成：`LedgerBox-unsigned-0.7.0-KeyboardUI.ipa`（1,462,132 字节，含 20,971,560 参数财务大脑、40 个意图、大脑可视化、本地小 AI、5,643 参数金钱模型，无联网 AI、无语音/Siri 权限、无 `PlugIns`）。
 - Widget Extension 源码保留，但当前**不嵌入** `Payload/LedgerBox.app/PlugIns/`；这是为了兼容只签主 App 的 `lcsign`。需要小组件时再恢复 Embed 阶段并签 appex。
 - Widget 未配置 App Group，因此即使重新嵌入也不读取真实账本。
 - 没有证书、描述文件、Team ID。

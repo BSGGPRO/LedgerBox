@@ -3,6 +3,30 @@
 All user-visible changes to LedgerBox are recorded here and in the in-app
 **设置 → 更新日志** page.
 
+## 0.7.0 — 2026-10-21
+
+### Fixed
+
+- 金额 `decimalPad` 没有 Return 键，输入后键盘挂在屏幕上：所有输入页统一加键盘“完成”栏（`Design/KeyboardDismiss.swift`），金额、备注、预算、目标、买车副业、财务大脑探针都能直接收起。
+- 点空白、保存、取消、下滑、切换账户/分类/日期后自动清焦点；`BuyCarPlanView` 从完全没有收起手段补到与其它页一致。
+- 财务大脑页两处旧文案：`1048 万参数` → `2097 万参数`，权重体积 `10.0 MB` → `20.0 MB`。
+- 设置页与财务大脑同栈可能重复键盘“完成”栏：设置页移除键盘栏，保留导航栏“完成”和 HEX 输入 Return。
+
+### Changed
+
+- 首页/设置/主 Tab 重新排版：20pt 圆角、20pt 卡片内边距、8pt 间距、胶囊按钮、细分隔线；首页右上角只保留一个用户图标进设置。
+- `Theme` 新增 `surfaceSunken`、`tertiaryText`、`borderStrong`、`incomeSoft`/`expenseSoft`/`warningSoft`、`minTapTarget`、`hairline` 等 token；控件改用语义字号，支持 Dynamic Type。
+- 强调色不再一律白字：`onAccent` 按亮度自动选白或近黑；文字/图标统一用对比度校正过的 `accentText`；默认绿/橙/紫和自定义浅色都能读。
+- 设置页 5 个预设 + ColorPicker + HEX 自定义色，带实时预览、对比度提示和非法色回退提示。
+- 金额统一 `ledgerMoneyLine` 单行缩放；本月三列在无障碍字号下改竖排；统计翻月、记账类型条、分段控件等触控区补到 44pt。
+- 财务大脑动画读取“减弱动态效果”，开启后停自动巡演、固定 Canvas 相位。
+
+### Notes
+
+- 模型仍为 **20,971,560 参数 / 524,288 桶 / 40 类**，`FinanceMindWeights.bin` 20,971,680 字节，未改数字。
+- 已通过 GitHub Actions 未签名归档（run `39602446769`，commit `fa093de`）和 33 个模拟器 XCTest（run `39602690412`）。
+- **没有真机安装、没有截图级视觉验收、没有真实账本准确率测试**；键盘工具栏合并、点空白穿透卡片、键盘遮挡仍需真机确认。仓库目前没有 UI 测试。
+
 ## 0.6.0 — 2026-10-21
 
 ### Changed
