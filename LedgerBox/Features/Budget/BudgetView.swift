@@ -35,6 +35,7 @@ struct BudgetView: View {
                         emptyState
                     } else {
                         overviewCard
+                        coachCard
                         totalBudgetSection
                         categoryBudgetSection
                     }
@@ -101,6 +102,34 @@ struct BudgetView: View {
             }
             .animation(.snappy, value: overviewProgress)
         }
+    }
+
+    private var coachCard: some View {
+        CoachTipCard(
+            tip: FinanceCoach.dailyTip(
+                context: FinanceCoachContext(
+                    monthIncome: monthSummary.income,
+                    monthExpense: monthSummary.expense,
+                    budgetLimit: overviewProgress.limit,
+                    budgetSpent: overviewProgress.spent,
+                    transactionCount: monthTransactionCount
+                )
+            ),
+            compact: true
+        )
+        .animation(.snappy, value: overviewProgress)
+    }
+
+    private var monthSummary: LedgerSummary {
+        FinanceEngine.summary(
+            transactions: Array(transactions),
+            in: FinanceEngine.interval(for: .monthly, containing: Date())
+        )
+    }
+
+    private var monthTransactionCount: Int {
+        let interval = FinanceEngine.interval(for: .monthly, containing: Date())
+        return transactions.filter { interval.contains($0.date) }.count
     }
 
     private var totalBudgetSection: some View {

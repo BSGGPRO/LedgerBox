@@ -6,7 +6,7 @@ import Foundation
 enum FinanceMindWeights {
     static let bucketCount = 262144
     static let classCount = 40
-    static let scale: Float = 64.0
+    static let scale: Float = 48.0
     static let parameterCount = bucketCount * classCount + classCount
     static let weightByteCount = bucketCount * classCount
     static let biasByteCount = classCount * MemoryLayout<Float>.size

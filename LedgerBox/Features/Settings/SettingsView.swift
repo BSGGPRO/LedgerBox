@@ -376,6 +376,40 @@ struct SettingsView: View {
             .buttonStyle(.plain)
             .accessibilityHint("在浏览器打开 Beausoleil 的 Bilibili 个人空间")
 
+            Link(destination: repositoryURL) {
+                LedgerCard {
+                    HStack(spacing: 12) {
+                        ZStack {
+                            Circle()
+                                .fill(theme.accent.opacity(0.12))
+                                .frame(width: theme.iconCircleSize, height: theme.iconCircleSize)
+
+                            Image(systemName: "chevron.left.forwardslash.chevron.right")
+                                .font(theme.rowIconFont)
+                                .foregroundStyle(theme.accent)
+                        }
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("GitHub 开源地址")
+                                .font(theme.bodyFont)
+                                .foregroundStyle(theme.primaryText)
+
+                            Text("BSGGPRO / LedgerBox · MIT")
+                                .font(theme.captionFont)
+                                .foregroundStyle(theme.secondaryText)
+                        }
+
+                        Spacer(minLength: theme.smallSpacing)
+
+                        Image(systemName: "arrow.up.right")
+                            .font(theme.controlIconFont)
+                            .foregroundStyle(theme.secondaryText)
+                    }
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("在浏览器打开 LedgerBox 的 GitHub 仓库")
+
             NavigationLink {
                 ChangelogView()
             } label: {
@@ -428,6 +462,10 @@ struct SettingsView: View {
 
     private var authorURL: URL {
         URL(string: "https://space.bilibili.com/1477283849")!
+    }
+
+    private var repositoryURL: URL {
+        URL(string: "https://github.com/BSGGPRO/LedgerBox")!
     }
 
     private func isSelected(_ accent: ThemeAccent) -> Bool {

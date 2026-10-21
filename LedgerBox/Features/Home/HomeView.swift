@@ -33,6 +33,18 @@ struct HomeView: View {
     )
     private var categories: FetchedResults<Category>
 
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \Budget.startDate, ascending: false)],
+        animation: .snappy
+    )
+    private var budgets: FetchedResults<Budget>
+
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \SavingsGoal.createdAt, ascending: false)],
+        animation: .snappy
+    )
+    private var goals: FetchedResults<SavingsGoal>
+
     @State private var activeSheet: HomeSheet?
 
     var body: some View {
@@ -41,6 +53,7 @@ struct HomeView: View {
                 VStack(spacing: theme.spacing) {
                     header
                     balanceCard
+                    coachCard
                     recentSection
                 }
                 .padding(.horizontal, theme.pagePadding)
@@ -86,31 +99,21 @@ struct HomeView: View {
 
             Spacer(minLength: theme.smallSpacing)
 
-            HStack(spacing: 10) {
-                Button {
-                    activeSheet = .settings
-                } label: {
-                    Image(systemName: "gearshape")
-                        .font(theme.rowIconFont)
-                        .foregroundStyle(theme.secondaryText)
-                        .frame(width: 40, height: 40)
-                        .background(theme.surface, in: Circle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("设置")
+            Button {
+                activeSheet = .settings
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(theme.surface)
+                        .frame(width: 42, height: 42)
 
-                Button {
-                    activeSheet = .add
-                } label: {
-                    Image(systemName: "plus")
-                        .font(theme.headerActionFont)
-                        .foregroundStyle(theme.onAccent)
-                        .frame(width: 40, height: 40)
-                        .background(theme.accent, in: Circle())
+                    Image(systemName: "person.crop.circle.fill")
+                        .font(.system(size: 27, weight: .regular))
+                        .foregroundStyle(theme.accent)
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("记一笔")
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("用户与设置")
         }
     }
 
@@ -172,7 +175,12 @@ struct HomeView: View {
                 .foregroundStyle(color)
                 .contentTransition(.numericText())
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 42, alignment: .leading)
+    }
+
+    private var coachCard: some View {
+        CoachTipCard(tip: FinanceCoach.dailyTip(context: coachContext))
+            .animation(.easeInOut(duration: 0.3), value: summary)
     }
 
     private var recentSection: some View {
@@ -284,6 +292,66 @@ struct HomeView: View {
         FinanceEngine.summary(
             transactions: Array(transactions),
             in: currentMonthInterval
+        )
+    }
+
+    private var coachContext: FinanceCoachContext {
+        let names = Dictionary(uniqueKeysWithValues: categories.map { ($0.id, $0.name) })
+        var spending: [String: Decimal] = [:]
+
+        for transaction in transactions where currentMonthInterval.contains(transaction.date) {
+            guard let categoryID = transaction.categoryId,
+                  let name = names[categoryID] else {
+                continue
+            }
+            switch transaction.transactionType {
+            case .expense:
+                spending[name, default: 0] += transaction.amountValue
+            case .refund:
+                spending[name, default: 0] -= transaction.amountValue
+            case .income, .transfer:
+                break
+            }
+        }
+
+        let top = spending
+            .filter { $0.value > 0 }
+            .max { $0.value < $1.value }
+
+        let monthlyBudgets = budgets.filter { $0.enabled && $0.budgetPeriod == .monthly }
+        let totalBudget = monthlyBudgets.first { $0.categoryId == nil }
+        let budgetLimit: Decimal?
+        let budgetSpent: Decimal?
+        if let totalBudget {
+            budgetLimit = totalBudget.limitValue
+            budgetSpent = summary.expense
+        } else if !monthlyBudgets.isEmpty {
+            budgetLimit = monthlyBudgets.reduce(Decimal.zero) { $0 + $1.limitValue }
+            budgetSpent = monthlyBudgets.reduce(Decimal.zero) { partial, budget in
+                guard let categoryID = budget.categoryId,
+                      let name = names[categoryID] else {
+                    return partial
+                }
+                return partial + (spending[name] ?? 0)
+            }
+        } else {
+            budgetLimit = nil
+            budgetSpent = nil
+        }
+
+        let goal = goals.first { $0.goalStatus == .active }
+        return FinanceCoachContext(
+            monthIncome: summary.income,
+            monthExpense: summary.expense,
+            totalBalance: totalBalance,
+            budgetLimit: budgetLimit,
+            budgetSpent: budgetSpent,
+            goalName: goal?.name,
+            goalTarget: goal?.targetValue,
+            goalCurrent: goal?.currentValue,
+            topCategory: top?.key,
+            topCategoryAmount: top?.value,
+            transactionCount: transactions.filter { currentMonthInterval.contains($0.date) }.count
         )
     }
 

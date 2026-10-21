@@ -13,6 +13,22 @@ struct FinanceBrainMapView: View {
         "这个月现金流怎么样？"
     )
     @State private var hasAppeared = false
+    @State private var autoDemo = true
+    @State private var demoIndex = 0
+    @FocusState private var queryFocused: Bool
+
+    private let demoQueries = [
+        "这个月现金流怎么样？",
+        "预算还剩多少？",
+        "报销怎么记？",
+        "固定资产折旧怎么算？",
+        "客户欠款怎么催？",
+        "怎么存钱才不月光？",
+        "增值税进项税怎么抵扣？",
+        "房贷月供怎么记？",
+        "今天怎样避免乱花钱？",
+        "目标还要多久才能达成？"
+    ]
 
     private var intents: [FinanceIntent] {
         FinanceIntent.allCases
@@ -27,9 +43,29 @@ struct FinanceBrainMapView: View {
             disclaimer
         }
         .onAppear {
-            hasAppeared = true
+            withAnimation(.easeOut(duration: 0.55)) {
+                hasAppeared = true
+            }
             if probe == nil {
                 runProbe()
+            }
+        }
+        .onChange(of: queryFocused) { _, focused in
+            if focused {
+                autoDemo = false
+            }
+        }
+        .onReceive(
+            Timer.publish(every: 4.4, on: .main, in: .common).autoconnect()
+        ) { _ in
+            guard autoDemo, !queryFocused else {
+                return
+            }
+            demoIndex = (demoIndex + 1) % demoQueries.count
+            let next = demoQueries[demoIndex]
+            withAnimation(.easeInOut(duration: 0.55)) {
+                query = next
+                probe = FinanceMind.shared.probe(next)
             }
         }
     }
@@ -61,10 +97,15 @@ struct FinanceBrainMapView: View {
                 }
 
                 ZStack {
-                    BrainOrbCanvas(predictions: probe?.predictions ?? [])
-                        .frame(height: 286)
-                        .scaleEffect(hasAppeared ? 1 : 0.94)
-                        .opacity(hasAppeared ? 1 : 0)
+                    TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
+                        BrainOrbCanvas(
+                            predictions: probe?.predictions ?? [],
+                            phase: timeline.date.timeIntervalSinceReferenceDate
+                        )
+                    }
+                    .frame(height: 286)
+                    .scaleEffect(hasAppeared ? 1 : 0.94)
+                    .opacity(hasAppeared ? 1 : 0)
 
                     VStack(spacing: 3) {
                         Text(millions)
@@ -81,6 +122,34 @@ struct FinanceBrainMapView: View {
                     }
                 }
                 .frame(maxWidth: .infinity)
+
+                HStack(spacing: 8) {
+                    Image(systemName: autoDemo ? "waveform.path.ecg" : "pause.circle")
+                        .font(theme.badgeFont)
+                        .foregroundStyle(autoDemo ? theme.accent : theme.secondaryText)
+
+                    Text(query)
+                        .font(theme.badgeFont)
+                        .foregroundStyle(theme.secondaryText)
+                        .lineLimit(1)
+
+                    Spacer(minLength: 4)
+
+                    Button {
+                        autoDemo.toggle()
+                        if autoDemo {
+                            runProbe()
+                        }
+                    } label: {
+                        Text(autoDemo ? "暂停巡演" : "自动巡演")
+                            .font(theme.badgeFont)
+                            .foregroundStyle(autoDemo ? theme.accent : theme.secondaryText)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(theme.surfaceElevated, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
             }
         }
     }
@@ -139,7 +208,7 @@ struct FinanceBrainMapView: View {
                 .foregroundStyle(theme.secondaryText)
                 .lineLimit(1)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 72, alignment: .topLeading)
         .padding(10)
         .background(
             theme.surfaceElevated,
@@ -171,6 +240,7 @@ struct FinanceBrainMapView: View {
                         .font(theme.bodyFont)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
+                        .focused($queryFocused)
                         .padding(10)
                         .background(
                             theme.surfaceElevated,
@@ -179,15 +249,19 @@ struct FinanceBrainMapView: View {
                                 style: .continuous
                             )
                         )
-                        .onSubmit(runProbe)
+                        .onSubmit {
+                            runProbe(manual: true)
+                        }
 
-                    Button("探测", action: runProbe)
-                        .font(theme.buttonLabelFont)
-                        .foregroundStyle(theme.onAccent)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                        .background(theme.accent, in: Capsule())
-                        .buttonStyle(.plain)
+                    Button("探测") {
+                        runProbe(manual: true)
+                    }
+                    .font(theme.buttonLabelFont)
+                    .foregroundStyle(theme.onAccent)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(theme.accent, in: Capsule())
+                    .buttonStyle(.plain)
                 }
 
                 if let probe {
@@ -239,8 +313,11 @@ struct FinanceBrainMapView: View {
         }
     }
 
-    private func runProbe() {
-        withAnimation(.snappy) {
+    private func runProbe(manual: Bool = false) {
+        if manual {
+            autoDemo = false
+        }
+        withAnimation(.easeInOut(duration: 0.45)) {
             probe = FinanceMind.shared.probe(query)
         }
     }
@@ -309,13 +386,38 @@ struct FinanceBrainMapView: View {
 private struct BrainOrbCanvas: View {
     @Environment(\.ledgerTheme) private var theme
     let predictions: [FinanceIntentPrediction]
+    let phase: TimeInterval
 
     var body: some View {
         Canvas { context, size in
             let center = CGPoint(x: size.width / 2, y: size.height / 2)
             let maxRadius = min(size.width, size.height) * 0.46
+            let breath = 1 + 0.045 * sin(phase * 1.6)
+            let rotation = phase * 0.075
 
-            for fraction in [0.46, 0.70, 0.94] {
+            // Soft breathing halo behind the rings.
+            let haloRadius = maxRadius * 1.04 * CGFloat(breath)
+            context.fill(
+                Path(ellipseIn: CGRect(
+                    x: center.x - haloRadius,
+                    y: center.y - haloRadius,
+                    width: haloRadius * 2,
+                    height: haloRadius * 2
+                )),
+                with: .radialGradient(
+                    Gradient(colors: [
+                        theme.accent.opacity(0.10),
+                        theme.accent.opacity(0.015),
+                        .clear
+                    ]),
+                    center: center,
+                    startRadius: 4,
+                    endRadius: haloRadius
+                )
+            )
+
+            let ringFractions: [CGFloat] = [0.46, 0.70, 0.94]
+            for (ringIndex, fraction) in ringFractions.enumerated() {
                 let radius = maxRadius * fraction
                 let rect = CGRect(
                     x: center.x - radius,
@@ -326,15 +428,20 @@ private struct BrainOrbCanvas: View {
                 context.stroke(
                     Path(ellipseIn: rect),
                     with: .color(theme.separator.opacity(0.55)),
-                    lineWidth: 1
+                    style: StrokeStyle(
+                        lineWidth: 1,
+                        dash: [3, 9],
+                        dashPhase: CGFloat(phase * 20 + Double(ringIndex) * 6)
+                    )
                 )
             }
 
             let intents = FinanceIntent.allCases
             var points: [CGPoint] = []
             for (index, intent) in intents.enumerated() {
-                let angle = (Double(index) / Double(intents.count)) * 2 * Double.pi
+                let baseAngle = (Double(index) / Double(intents.count)) * 2 * Double.pi
                     - Double.pi / 2
+                let angle = baseAngle + rotation
                 let ring: CGFloat = index.isMultiple(of: 2) ? 0.88 : 0.67
                 let radius = maxRadius * ring
                 let point = CGPoint(
@@ -345,7 +452,24 @@ private struct BrainOrbCanvas: View {
 
                 let activation = predictions.first { $0.intent == intent }?.confidence ?? 0
                 let isTop = predictions.first?.intent == intent
-                let dotRadius: CGFloat = isTop ? 5.5 : (2.2 + CGFloat(activation) * 4)
+                let pulse = 0.86 + 0.14 * sin(phase * 2.3 + Double(index) * 0.73)
+                let baseDot: CGFloat = isTop ? 5.5 : (2.2 + CGFloat(activation) * 4)
+                let dotRadius = baseDot * CGFloat(pulse)
+
+                if isTop {
+                    let halo = dotRadius + 6 + CGFloat(sin(phase * 3) * 2)
+                    let haloRect = CGRect(
+                        x: point.x - halo,
+                        y: point.y - halo,
+                        width: halo * 2,
+                        height: halo * 2
+                    )
+                    context.fill(
+                        Path(ellipseIn: haloRect),
+                        with: .color(theme.accent.opacity(0.14))
+                    )
+                }
+
                 let rect = CGRect(
                     x: point.x - dotRadius,
                     y: point.y - dotRadius,
@@ -373,30 +497,66 @@ private struct BrainOrbCanvas: View {
                     ),
                     lineWidth: index == 0 ? 1.8 : 1
                 )
+
+                // A pulse travels from the core to each active intent, so the
+                // map moves even when the user is not typing.
+                let raw = phase * 0.48 + Double(index) * 0.17
+                let progress = CGFloat(raw - floor(raw))
+                let particle = CGPoint(
+                    x: center.x + (point.x - center.x) * progress,
+                    y: center.y + (point.y - center.y) * progress
+                )
+                let particleRadius: CGFloat = index == 0 ? 2.4 : 1.7
+                context.fill(
+                    Path(ellipseIn: CGRect(
+                        x: particle.x - particleRadius,
+                        y: particle.y - particleRadius,
+                        width: particleRadius * 2,
+                        height: particleRadius * 2
+                    )),
+                    with: .color(theme.accent.opacity(0.72 - Double(index) * 0.09))
+                )
             }
 
+            let coreRadius = 38 * CGFloat(breath)
             let core = CGRect(
-                x: center.x - 38,
-                y: center.y - 38,
-                width: 76,
-                height: 76
+                x: center.x - coreRadius,
+                y: center.y - coreRadius,
+                width: coreRadius * 2,
+                height: coreRadius * 2
             )
             context.fill(
                 Path(ellipseIn: core),
                 with: .radialGradient(
                     Gradient(colors: [
-                        theme.accent.opacity(0.32),
-                        theme.accent.opacity(0.04)
+                        theme.accent.opacity(0.36),
+                        theme.accent.opacity(0.05)
                     ]),
                     center: center,
                     startRadius: 2,
-                    endRadius: 44
+                    endRadius: coreRadius + 6
                 )
             )
             context.stroke(
                 Path(ellipseIn: core),
-                with: .color(theme.accent.opacity(0.30)),
+                with: .color(theme.accent.opacity(0.34)),
                 lineWidth: 1
+            )
+
+            let orbitRadius = coreRadius + 7
+            let orbitAngle = phase * 0.9
+            let orbitPoint = CGPoint(
+                x: center.x + CGFloat(cos(orbitAngle)) * orbitRadius,
+                y: center.y + CGFloat(sin(orbitAngle)) * orbitRadius
+            )
+            context.fill(
+                Path(ellipseIn: CGRect(
+                    x: orbitPoint.x - 2,
+                    y: orbitPoint.y - 2,
+                    width: 4,
+                    height: 4
+                )),
+                with: .color(theme.accent.opacity(0.8))
             )
         }
     }

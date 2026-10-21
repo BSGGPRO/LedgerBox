@@ -289,6 +289,69 @@ struct LedgerSectionHeader: View {
     }
 }
 
+/// Shared local-coach card used by Home, Budget, Statistics and Advisor.
+struct CoachTipCard: View {
+    let tip: FinanceCoachTip
+    var compact = false
+
+    @Environment(\.ledgerTheme) private var theme
+
+    var body: some View {
+        LedgerCard {
+            HStack(alignment: .top, spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(tint.opacity(0.13))
+                        .frame(width: 38, height: 38)
+
+                    Image(systemName: tip.symbol)
+                        .font(theme.rowIconFont)
+                        .foregroundStyle(tint)
+                }
+
+                VStack(alignment: .leading, spacing: compact ? 4 : 6) {
+                    HStack(spacing: 6) {
+                        Text(tip.title)
+                            .font(theme.bodyFont.weight(.semibold))
+                            .foregroundStyle(theme.primaryText)
+
+                        Spacer(minLength: 4)
+
+                        Text(tip.tag)
+                            .font(theme.badgeFont)
+                            .foregroundStyle(tint)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3)
+                            .background(tint.opacity(0.1), in: Capsule())
+                    }
+
+                    Text(tip.body)
+                        .font(theme.captionFont)
+                        .foregroundStyle(theme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Text("本地大脑 · 不上传")
+                        .font(theme.badgeFont)
+                        .foregroundStyle(theme.secondaryText.opacity(0.75))
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var tint: Color {
+        switch tip.tone {
+        case .positive:
+            return theme.income
+        case .warning:
+            return theme.expense
+        case .neutral:
+            return theme.accent
+        }
+    }
+}
+
 // MARK: - Hex color parser
 
 extension Color {

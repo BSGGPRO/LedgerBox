@@ -57,6 +57,7 @@ struct FinanceAdvisorView: View {
 
                     if mode == .chat {
                         snapshotGrid
+                        coachCard
 
                         if exchanges.isEmpty {
                             introCard
@@ -181,8 +182,34 @@ struct FinanceAdvisorView: View {
                     .foregroundStyle(theme.primaryText)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
+
+                Spacer(minLength: 0)
             }
+            .frame(maxWidth: .infinity, minHeight: 82, alignment: .topLeading)
         }
+    }
+
+    private var coachCard: some View {
+        CoachTipCard(
+            tip: FinanceCoach.dailyTip(
+                context: FinanceCoachContext(
+                    monthIncome: snapshot.monthIncome,
+                    monthExpense: snapshot.monthExpense,
+                    totalBalance: snapshot.totalBalance,
+                    budgetLimit: snapshot.budgetLimit,
+                    budgetSpent: snapshot.budgetSpent,
+                    goalName: snapshot.goalName,
+                    goalTarget: snapshot.goalTarget,
+                    goalCurrent: snapshot.goalCurrent,
+                    topCategory: snapshot.categories.first?.name,
+                    topCategoryAmount: snapshot.categories.first?.amount,
+                    transactionCount: transactions.filter {
+                        FinanceEngine.interval(for: .monthly, containing: Date()).contains($0.date)
+                    }.count
+                )
+            ),
+            compact: true
+        )
     }
 
     private var introCard: some View {

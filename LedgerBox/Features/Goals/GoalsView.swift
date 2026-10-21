@@ -39,6 +39,7 @@ struct GoalsView: View {
                         emptyState
                     } else {
                         summaryCard
+                        coachCard
                     }
 
                     if activeCarTemplate != nil {
@@ -151,7 +152,8 @@ struct GoalsView: View {
         .buttonStyle(.plain)
     }
 
-    private var summaryCard: some View {        LedgerCard {
+    private var summaryCard: some View {
+        LedgerCard {
             VStack(alignment: .leading, spacing: theme.smallSpacing) {
                 HStack {
                     Text("储蓄进度")
@@ -177,9 +179,60 @@ struct GoalsView: View {
                 Text(summaryMessage)
                     .font(theme.captionFont)
                     .foregroundStyle(theme.secondaryText)
+
+                if let forecastLine {
+                    HStack(alignment: .top, spacing: 7) {
+                        Image(systemName: "brain.head.profile")
+                            .font(theme.badgeFont)
+                            .foregroundStyle(theme.accent)
+
+                        Text(forecastLine)
+                            .font(theme.captionFont)
+                            .foregroundStyle(theme.accent)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.top, 2)
+                }
             }
             .animation(.snappy, value: totalCurrent)
         }
+    }
+
+    private var coachCard: some View {
+        let summary = FinanceEngine.summary(
+            transactions: Array(transactions),
+            in: FinanceEngine.interval(for: .monthly, containing: Date())
+        )
+        let goal = goals.first { $0.goalStatus == .active }
+
+        return CoachTipCard(
+            tip: FinanceCoach.dailyTip(
+                context: FinanceCoachContext(
+                    monthIncome: summary.income,
+                    monthExpense: summary.expense,
+                    goalName: goal?.name,
+                    goalTarget: goal?.targetValue,
+                    goalCurrent: goal?.currentValue,
+                    transactionCount: transactions.filter {
+                        FinanceEngine.interval(for: .monthly, containing: Date()).contains($0.date)
+                    }.count
+                )
+            ),
+            compact: true
+        )
+    }
+
+    private var forecastLine: String? {
+        guard let goal = goals.first(where: { $0.goalStatus == .active }),
+              let countdown = countdown(for: goal),
+              case .estimated(let days, _, _) = countdown.status else {
+            return nil
+        }
+
+        let date = Calendar.current.date(byAdding: .day, value: days, to: Date())
+        let months = max(1, Int(ceil(Double(days) / 30.44)))
+        let dateText = date?.formatted(.dateTime.year().month().day()) ?? "约 \(days) 天后"
+        return "本地大脑估算：按近 30 天速度，「\(goal.name)」约 \(months) 个月后达成（\(dateText)）。"
     }
 
     private var emptyState: some View {
@@ -396,7 +449,10 @@ private struct GoalCard: View {
         case .achieved:
             return "目标已达成，倒计时已停止。"
         case .estimated(let days, let dailyRate, let activeDays):
-            return "预计 \(days) 天 · 近 30 天日均 \(MoneyFormat.currency(dailyRate)) · \(activeDays) 个有效日"
+            let months = max(1, Int(ceil(Double(days) / 30.44)))
+            let date = Calendar.current.date(byAdding: .day, value: days, to: Date())
+            let dateText = date?.formatted(.dateTime.year().month().day()) ?? "\(days) 天后"
+            return "预计 \(days) 天（约 \(months) 个月）· \(dateText) · 近 30 天日均 \(MoneyFormat.currency(dailyRate)) · \(activeDays) 个有效日"
         case .accumulating(let activeDays):
             return "数据积累中（\(activeDays) / 7 个有效日），暂不估算。"
         case .insufficientRate(_, let dailyRate):

@@ -33,6 +33,7 @@ struct StatisticsView: View {
                         emptyState
                     } else {
                         summaryCard
+                        coachCard
                         monthlyBarSection
                         categoryDonutSection
                         cumulativeTrendSection
@@ -117,6 +118,22 @@ struct StatisticsView: View {
         }
     }
 
+    private var coachCard: some View {
+        CoachTipCard(
+            tip: FinanceCoach.dailyTip(
+                context: FinanceCoachContext(
+                    monthIncome: summary.income,
+                    monthExpense: summary.expense,
+                    topCategory: categorySlices.first?.name,
+                    topCategoryAmount: categorySlices.first?.amount,
+                    transactionCount: monthTransactions.count
+                )
+            ),
+            compact: true
+        )
+        .animation(.snappy, value: selectedMonth)
+    }
+
     private func summaryColumn(title: String, value: Decimal, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
@@ -130,7 +147,7 @@ struct StatisticsView: View {
                 .minimumScaleFactor(0.7)
                 .contentTransition(.numericText())
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 42, alignment: .topLeading)
     }
 
     private var monthlyBarSection: some View {

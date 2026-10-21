@@ -178,6 +178,62 @@ final class FinanceEngineTests: XCTestCase {
         XCTAssertEqual(split.reserve, Decimal.zero)
     }
 
+    func testCoachWarnsBeforeBudgetIsExhausted() {
+        let tip = FinanceCoach.dailyTip(
+            context: FinanceCoachContext(
+                monthIncome: Decimal(5_000),
+                monthExpense: Decimal(900),
+                budgetLimit: Decimal(1_000),
+                budgetSpent: Decimal(900),
+                transactionCount: 8
+            )
+        )
+
+        XCTAssertEqual(tip.tag, "预算")
+        XCTAssertTrue(tip.body.contains("只剩"))
+    }
+
+    func testCoachFlagsExpenseAboveIncome() {
+        let tip = FinanceCoach.dailyTip(
+            context: FinanceCoachContext(
+                monthIncome: Decimal(3_000),
+                monthExpense: Decimal(3_500),
+                transactionCount: 5
+            )
+        )
+
+        XCTAssertEqual(tip.tag, "现金流")
+        XCTAssertTrue(tip.body.contains("支出比收入多"))
+    }
+
+    func testCoachMentionsActiveGoal() {
+        let tip = FinanceCoach.dailyTip(
+            context: FinanceCoachContext(
+                monthIncome: Decimal(8_000),
+                monthExpense: Decimal(3_000),
+                goalName: "旅行基金",
+                goalTarget: Decimal(10_000),
+                goalCurrent: Decimal(2_000),
+                transactionCount: 12
+            )
+        )
+
+        XCTAssertEqual(tip.tag, "目标")
+        XCTAssertTrue(tip.body.contains("旅行基金"))
+    }
+
+    func testCoachStartsWithFirstEntryWhenLedgerIsEmpty() {
+        let tip = FinanceCoach.dailyTip(
+            context: FinanceCoachContext(
+                monthIncome: .zero,
+                monthExpense: .zero,
+                transactionCount: 0
+            )
+        )
+
+        XCTAssertEqual(tip.tag, "开始")
+    }
+
     func testSurplusAllocationPrioritizesRepairThenCarThenOverflow() {
         let rules = BuyCarTemplateRules()
 

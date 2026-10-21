@@ -4,6 +4,8 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 
 作者：**Beausoleil** · [Bilibili 个人空间](https://space.bilibili.com/1477283849)
 
+开源地址：**[github.com/BSGGPRO/LedgerBox](https://github.com/BSGGPRO/LedgerBox)**
+
 > **当前状态**  
 > 0.4.0 源码已完成。GitHub Actions `macos-15` 已成功归档未签名 IPA（run `39591530559`，commit `b33319e`），产物约 **1.24 MB**，内含 **10,485,800 参数**本地财务大脑和 `FinanceMindWeights.bin`（原始权重 10,485,920 字节）。29 个 XCTest 已在 iPhone 16 / iOS 26.2 模拟器通过（run `39591706814`：29 passed / 0 failed / 0 skipped）。尚未做真机安装、截图级视觉验收或真实账本准确率测试；IPA 未签名，需要你用自己的证书自签。
 

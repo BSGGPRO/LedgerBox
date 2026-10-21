@@ -178,6 +178,202 @@ struct DailyNetPoint: Identifiable, Equatable {
     var id: Date { date }
 }
 
+// MARK: - Local finance coach
+
+/// A snapshot for the local, deterministic coach. Every number here comes from
+/// Core Data; the coach writes sentences, never transactions.
+struct FinanceCoachContext {
+    var monthIncome: Decimal
+    var monthExpense: Decimal
+    var totalBalance: Decimal?
+    var budgetLimit: Decimal?
+    var budgetSpent: Decimal?
+    var goalName: String?
+    var goalTarget: Decimal?
+    var goalCurrent: Decimal?
+    var topCategory: String?
+    var topCategoryAmount: Decimal?
+    var transactionCount: Int
+
+    init(
+        monthIncome: Decimal,
+        monthExpense: Decimal,
+        totalBalance: Decimal? = nil,
+        budgetLimit: Decimal? = nil,
+        budgetSpent: Decimal? = nil,
+        goalName: String? = nil,
+        goalTarget: Decimal? = nil,
+        goalCurrent: Decimal? = nil,
+        topCategory: String? = nil,
+        topCategoryAmount: Decimal? = nil,
+        transactionCount: Int = 0
+    ) {
+        self.monthIncome = monthIncome
+        self.monthExpense = monthExpense
+        self.totalBalance = totalBalance
+        self.budgetLimit = budgetLimit
+        self.budgetSpent = budgetSpent
+        self.goalName = goalName
+        self.goalTarget = goalTarget
+        self.goalCurrent = goalCurrent
+        self.topCategory = topCategory
+        self.topCategoryAmount = topCategoryAmount
+        self.transactionCount = transactionCount
+    }
+}
+
+struct FinanceCoachTip {
+    enum Tone {
+        case positive
+        case warning
+        case neutral
+    }
+
+    let title: String
+    let body: String
+    let tag: String
+    let symbol: String
+    let tone: Tone
+}
+
+/// Rule-based daily guidance that shares the same local ledger snapshot as
+/// FinanceAdvisor. It is intentionally deterministic for a given day.
+enum FinanceCoach {
+    static func dailyTip(
+        context: FinanceCoachContext,
+        date: Date = Date(),
+        calendar: Calendar = .current
+    ) -> FinanceCoachTip {
+        if context.transactionCount == 0 {
+            return FinanceCoachTip(
+                title: "先记下第一笔",
+                body: "不用等账本完美。先记一笔今天最常见的支出，明天再回来看分类和预算。",
+                tag: "开始",
+                symbol: "sparkles",
+                tone: .neutral
+            )
+        }
+
+        if let limit = context.budgetLimit,
+           let spent = context.budgetSpent,
+           limit > 0 {
+            let ratio = (spent / limit).doubleValue
+            let remaining = max(limit - spent, Decimal.zero)
+
+            if ratio >= 1 {
+                return FinanceCoachTip(
+                    title: "预算已经超了",
+                    body: "本月已超出 \(MoneyFormat.currency(spent - limit))。先暂停非必要支出，把接下来的每一笔记清楚。",
+                    tag: "预算",
+                    symbol: "exclamationmark.triangle.fill",
+                    tone: .warning
+                )
+            }
+
+            if ratio >= 0.85 {
+                return FinanceCoachTip(
+                    title: "预算进入最后一段",
+                    body: "只剩 \(MoneyFormat.currency(remaining))，大约还能花 \(max(Int((1 - ratio) * 100), 1))%。今天先别急着下单。",
+                    tag: "预算",
+                    symbol: "gauge.with.dots.needle.67percent",
+                    tone: .warning
+                )
+            }
+
+            if spent == .zero {
+                return FinanceCoachTip(
+                    title: "预算还没开始动",
+                    body: "本月预算 \(MoneyFormat.currency(limit)) 还没怎么花。先记下今天的支出，再看进度更准。",
+                    tag: "预算",
+                    symbol: "gauge.with.dots.needle.0percent",
+                    tone: .neutral
+                )
+            }
+        }
+
+        if context.monthIncome > 0, context.monthExpense > context.monthIncome {
+            return FinanceCoachTip(
+                title: "支出超过了收入",
+                body: "本月支出比收入多 \(MoneyFormat.currency(context.monthExpense - context.monthIncome))。先找一项可以暂缓的订阅或冲动消费。",
+                tag: "现金流",
+                symbol: "arrow.down.right.circle.fill",
+                tone: .warning
+            )
+        }
+
+        if let name = context.goalName,
+           let target = context.goalTarget,
+           let current = context.goalCurrent,
+           target > current {
+            let remaining = target - current
+            let ratio = (current / target).doubleValue
+            if ratio >= 0.8 {
+                return FinanceCoachTip(
+                    title: "目标只差最后一段",
+                    body: "「\(name)」还差 \(MoneyFormat.currency(remaining))。先别挪用它，完成后再奖励自己。",
+                    tag: "目标",
+                    symbol: "flag.checkered",
+                    tone: .positive
+                )
+            }
+            return FinanceCoachTip(
+                title: "给目标留一点",
+                body: "「\(name)」已完成 \(Int((ratio * 100).rounded()))%。今天先存一笔小钱，也比月底一次硬省更容易。",
+                tag: "目标",
+                symbol: "target",
+                tone: .neutral
+            )
+        }
+
+        if let category = context.topCategory,
+           let amount = context.topCategoryAmount,
+           context.monthExpense > 0 {
+            let share = (amount / context.monthExpense).doubleValue
+            if share >= 0.35 {
+                return FinanceCoachTip(
+                    title: "支出集中在一类",
+                    body: "\(category)占本月支出的 \(Int((share * 100).rounded()))%。不是不能花，先确认这笔钱花得值不值。",
+                    tag: "分类",
+                    symbol: "chart.pie.fill",
+                    tone: .neutral
+                )
+            }
+        }
+
+        let prompts: [(String, String, String)] = [
+            (
+                "今天先别急着下单",
+                "把想买的东西放 24 小时。明天还想要，再回来记一笔；很多冲动会自己消失。",
+                "冷静期"
+            ),
+            (
+                "先存一点，再花",
+                "今天收到钱后，先把 10% 转到不容易随手花掉的账户，剩下的再安排。",
+                "先存后花"
+            ),
+            (
+                "检查一个自动续费",
+                "打开订阅列表，找一个这周没用过的服务。关掉它，比硬省一杯咖啡更有效。",
+                "订阅"
+            ),
+            (
+                "只花预算内的钱",
+                "今天每次付款前看一眼剩余额度。额度不够就换一个更便宜的方案，而不是先买了再说。",
+                "预算"
+            )
+        ]
+        let day = calendar.ordinality(of: .day, in: .era, for: date) ?? 0
+        let pick = prompts[abs(day) % prompts.count]
+        return FinanceCoachTip(
+            title: pick.0,
+            body: pick.1,
+            tag: pick.2,
+            symbol: "leaf.fill",
+            tone: .positive
+        )
+    }
+}
+
 // MARK: - Pure finance engine
 
 enum FinanceEngine {
