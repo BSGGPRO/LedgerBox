@@ -1,0 +1,22 @@
+LedgerBox 0.9.1 — SHA-256
+Generated: 2026-10-21
+
+LedgerBox-unsigned-0.9.1-TabBar.ipa
+Size: 1,801,589 bytes
+SHA-256: F70AF27A9B739997ADC5249482D247CEDD3CFF239C13128DCFCEB5BAD257BC82
+
+LedgerBox-source-0.9.1-TabBar.zip
+Size: 914,979 bytes
+SHA-256: EFA1943D2A567556EAEB2C09B2CD10DEB0FAFDAB7E96274F633A7537E865DC84
+
+Embedded FinanceMindWeights.bin
+Size: 41,943,200 bytes
+SHA-256: 6F5E92B17EC300D7A0C69AB79324903AE4407FB992393140BB2F783B7355F380
+
+Verification notes:
+- IPA built by GitHub Actions run 39620989778, commit 6212d7a.
+- Tests: GitHub Actions run 39621002225, 57 passed / 0 failed / 0 skipped.
+- IPA is unsigned, has no PlugIns directory, and requires your own certificate to install.
+- No physical-device install, screenshot-level visual acceptance, or real receipt accuracy test was performed.
+- The custom bottom bar is a source-level change; SE / Pro Max / Dynamic Type / landscape layout still needs real-device checking.
+- The repository is currently private; release links require a GitHub account with access.
