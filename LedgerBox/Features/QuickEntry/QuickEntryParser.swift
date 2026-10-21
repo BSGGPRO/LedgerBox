@@ -72,7 +72,9 @@ struct QuickEntryParser {
         var typeSource: TypeSource
         var category: CategoryOption?
         var account: AccountOption?
+        var itemName: String?
         var remark: String
+        var warnings: [String]
         var issues: [Issue]
 
         /// A strict gate for the UI. Any unmatched or ambiguous field keeps the
@@ -110,7 +112,9 @@ struct QuickEntryParser {
                 typeSource: .none,
                 category: nil,
                 account: nil,
+                itemName: nil,
                 remark: "",
+                warnings: [],
                 issues: issues
             )
         }
@@ -163,11 +167,17 @@ struct QuickEntryParser {
             issues.append(.missingAccount)
         }
 
-        let remark = makeRemark(
+        let item = extractItem(from: text)
+        let remark = item.detail ?? makeRemark(
             from: text,
             amountRanges: amountResult.ranges,
             categoryMatch: categoryResult.match,
             accountMatch: accountResult.match
+        )
+        let warnings = priceWarnings(
+            itemName: item.name,
+            amount: amountResult.amount,
+            type: resolvedType
         )
 
         return ParsedEntry(
@@ -177,7 +187,9 @@ struct QuickEntryParser {
             typeSource: typeSource,
             category: categoryResult.match?.option,
             account: accountResult.match?.option,
+            itemName: item.name,
             remark: remark,
+            warnings: warnings,
             issues: issues
         )
     }
@@ -246,6 +258,13 @@ struct QuickEntryParser {
                 text: text,
                 numberRange: numberRange,
                 rawNumber: rawNumber
+            ) {
+                continue
+            }
+
+            if isCodeOrQuantityComponent(
+                text: text,
+                numberRange: numberRange
             ) {
                 continue
             }
@@ -357,6 +376,33 @@ struct QuickEntryParser {
         return false
     }
 
+    /// Skip model numbers ("M5200"), capacities ("5200mAh"), and counts
+    /// ("2台", "3杯", "12期"). These are not money even though they look numeric.
+    private func isCodeOrQuantityComponent(
+        text: String,
+        numberRange: Range<String.Index>
+    ) -> Bool {
+        if let before = text[..<numberRange.lowerBound].last,
+           before.isASCII,
+           before.isLetter {
+            return true
+        }
+
+        if let after = text[numberRange.upperBound...].first,
+           after.isASCII,
+           after.isLetter {
+            return true
+        }
+
+        let suffix = text[numberRange.upperBound...].prefix(2)
+        let measureWords = [
+            "台", "个", "件", "只", "瓶", "盒", "包", "双", "套", "张",
+            "本", "份", "杯", "斤", "公", "克", "升", "米", "人", "位",
+            "次", "期", "寸", "集", "季", "周", "天", "晚", "间"
+        ]
+        return measureWords.contains { suffix.hasPrefix($0) }
+    }
+
     // MARK: - Type
 
     private struct TypeDetection {
@@ -366,12 +412,14 @@ struct QuickEntryParser {
 
     private static let expenseKeywords = [
         "支出", "花了", "花费", "消费", "付款", "支付", "买了", "付了",
-        "扣款", "扣费", "发红包", "买", "付", "花"
+        "扣款", "扣费", "发红包", "价格", "售价", "标价", "单价",
+        "实付", "合计", "共计", "总价", "买", "付", "花"
     ]
 
     private static let incomeKeywords = [
         "收入", "入账", "到账", "发工资", "发薪", "发放", "工资", "薪水",
-        "薪资", "奖金", "报销", "收款", "收到", "赚了", "赚", "收", "发"
+        "薪资", "奖金", "报销", "收款", "收到", "收钱", "收红包",
+        "赚了", "赚", "分红", "利息", "返现"
     ]
 
     private func detectType(in text: String) -> TypeDetection {
@@ -422,11 +470,13 @@ struct QuickEntryParser {
         ],
         "交通": [
             "打车", "地铁", "公交", "出租车", "滴滴", "高铁", "火车",
-            "机票", "加油", "停车", "过路费", "共享单车"
+            "机票", "加油", "停车", "过路费", "共享单车", "电动车",
+            "电瓶车", "自行车"
         ],
         "购物": [
             "淘宝", "京东", "拼多多", "衣服", "鞋子", "日用品",
-            "超市", "网购", "商场"
+            "超市", "网购", "商场", "口红", "化妆品", "护肤", "香水",
+            "包包", "手表", "首饰"
         ],
         "住房": [
             "房租", "水费", "电费", "燃气", "物业", "宽带", "维修"
@@ -744,6 +794,152 @@ struct QuickEntryParser {
         }
 
         return result
+    }
+
+    // MARK: - Item
+
+    private struct ItemExtraction {
+        let name: String?
+        let detail: String?
+    }
+
+    private static let productLexicon = [
+        "电动车", "电瓶车", "自行车", "汽车", "口红", "化妆品", "护肤品",
+        "香水", "手机", "电脑", "耳机", "键盘", "鼠标", "相机", "手表",
+        "衣服", "裤子", "鞋子", "包包", "书", "课程", "药", "奶粉",
+        "猫粮", "狗粮", "家具", "冰箱", "洗衣机", "空调", "电视",
+        "电饭煲", "吸尘器", "眼镜", "首饰"
+    ].sorted { $0.count > $1.count }
+
+    private static let itemPatterns: [NSRegularExpression] = [
+        try! NSRegularExpression(
+            pattern: "(?:这个)?(?:物品|东西|商品|品名|项目|产品)(?:是|为|叫)([^，,。；;！!？?\\n]{1,24})"
+        ),
+        try! NSRegularExpression(
+            pattern: "(?:购买了|购买|购入了|购入|入手了|入手|下单了|下单|买了|买)([^，,。；;！!？?\\n0-9]{1,30})"
+        ),
+        try! NSRegularExpression(
+            pattern: "([^，,。；;！!？?\\n]{1,20}?)(?:价格|售价|标价|单价)(?:是|为)?\\s*\\d"
+        )
+    ]
+
+    private static let modelRegex = try! NSRegularExpression(
+        pattern: "(?i)(?:[a-z]{1,8}[-_]?\\d{2,6}|\\d{1,2}号[a-z0-9]{2,10})"
+    )
+
+    private func extractItem(from text: String) -> ItemExtraction {
+        let fullRange = NSRange(text.startIndex..<text.endIndex, in: text)
+
+        for regex in Self.itemPatterns {
+            guard let match = regex.firstMatch(in: text, options: [], range: fullRange),
+                  match.numberOfRanges > 1,
+                  let range = Range(match.range(at: 1), in: text),
+                  let name = cleanItem(String(text[range])) else {
+                continue
+            }
+            let model = modelDetail(from: text, itemName: name)
+            let detail = model.map { "\(name) \($0)" } ?? name
+            return ItemExtraction(name: name, detail: detail)
+        }
+
+        if let known = Self.productLexicon.first(where: { text.contains($0) }) {
+            let model = modelDetail(from: text, itemName: known)
+            let detail = model.map { "\(known) \($0)" } ?? known
+            return ItemExtraction(name: known, detail: detail)
+        }
+
+        return ItemExtraction(name: nil, detail: nil)
+    }
+
+    private func modelDetail(from text: String, itemName: String) -> String? {
+        let fullRange = NSRange(text.startIndex..<text.endIndex, in: text)
+        guard let match = Self.modelRegex.firstMatch(in: text, options: [], range: fullRange),
+              let range = Range(match.range, in: text) else {
+            return nil
+        }
+        let model = String(text[range])
+        guard !itemName.lowercased().contains(model.lowercased()) else {
+            return nil
+        }
+        return model
+    }
+
+    private func cleanItem(_ raw: String) -> String? {
+        var value = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let prefixes = [
+            "这个物品是", "物品是", "东西是", "商品是", "品名是", "项目是",
+            "购买了", "购买", "购入了", "购入", "入手了", "入手", "下单了", "下单",
+            "买了", "但是", "发现", "一项", "不对劲", "这个", "那个", "了",
+            "一台", "一款", "一件", "一个", "一只", "一瓶", "一盒", "一双",
+            "一套", "一张", "一本", "一份", "一杯", "台", "部", "只", "我"
+        ]
+        var changed = true
+        while changed {
+            changed = false
+            for prefix in prefixes where value.hasPrefix(prefix) {
+                value.removeFirst(prefix.count)
+                changed = true
+                break
+            }
+        }
+
+        let suffixes = [
+            "价格", "售价", "标价", "单价", "花费", "花了", "付款", "支付",
+            "实付", "人民币", "元", "块", "的", "花"
+        ]
+        changed = true
+        while changed {
+            changed = false
+            for suffix in suffixes where value.hasSuffix(suffix) {
+                value.removeLast(suffix.count)
+                changed = true
+                break
+            }
+        }
+
+        value = value.trimmingCharacters(
+            in: CharacterSet.whitespacesAndNewlines.union(.punctuationCharacters)
+        )
+
+        guard !value.isEmpty else {
+            return nil
+        }
+
+        if let known = Self.productLexicon.first(where: { value.contains($0) }) {
+            return known
+        }
+
+        return String(value.prefix(20))
+    }
+
+    private func priceWarnings(
+        itemName: String?,
+        amount: Decimal?,
+        type: TransactionType?
+    ) -> [String] {
+        guard type == .expense,
+              let itemName,
+              let amount,
+              amount > 0 else {
+            return []
+        }
+
+        let thresholds: [String: Decimal] = [
+            "口红": 800,
+            "奶茶": 100,
+            "咖啡": 100,
+            "手机": 20_000,
+            "电脑": 30_000,
+            "电动车": 50_000
+        ]
+        guard let limit = thresholds[itemName],
+              amount > limit else {
+            return []
+        }
+
+        let value = NSDecimalNumber(decimal: amount).stringValue
+        return ["\(itemName) \(value) 元，高于常见区间，建议核对小票"]
     }
 
     // MARK: - Remark

@@ -320,8 +320,18 @@ struct QuickEntryView: View {
                     }
 
                     HStack(spacing: 8) {
+                        if let itemName = parsed?.itemName, !itemName.isEmpty {
+                            summaryChip(title: "物品", value: itemName)
+                        }
                         summaryChip(title: "分类", value: effectiveCategory?.name ?? "待选择")
                         summaryChip(title: "账户", value: effectiveAccount?.name ?? "待选择")
+                    }
+
+                    if let warning = parsed?.warnings.first {
+                        Label(warning, systemImage: "exclamationmark.triangle")
+                            .font(theme.captionFont)
+                            .foregroundStyle(theme.warning)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
 
                     if effectiveCategory == nil, !filteredCategories.isEmpty {

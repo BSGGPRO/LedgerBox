@@ -15,6 +15,11 @@ final class QuickEntryParserTests: XCTestCase {
         name: "交通",
         kind: .expense
     )
+    private let shopping = QuickEntryParser.CategoryOption(
+        id: UUID(uuidString: "66666666-6666-6666-6666-666666666666")!,
+        name: "购物",
+        kind: .expense
+    )
     private let salary = QuickEntryParser.CategoryOption(
         id: UUID(uuidString: "33333333-3333-3333-3333-333333333333")!,
         name: "工资",
@@ -190,5 +195,48 @@ final class QuickEntryParserTests: XCTestCase {
         XCTAssertTrue(result.issues.contains(.multipleAmounts))
         XCTAssertTrue(result.issues.contains(.ambiguousCategory))
         XCTAssertFalse(result.isReadyToSave)
+    }
+
+    func testParsesElectricBikeModelWithoutTreatingModelNumberAsAmount() {
+        let result = parser.parse(
+            "我买了一台电动车，9号M5200花费22000",
+            categories: [transport, shopping],
+            accounts: [wechat]
+        )
+
+        XCTAssertEqual(result.amount, Decimal(string: "22000"))
+        XCTAssertTrue(result.type == TransactionType.expense)
+        XCTAssertEqual(result.category?.id, transport.id)
+        XCTAssertEqual(result.itemName, "电动车")
+        XCTAssertEqual(result.remark, "电动车 9号M5200")
+        XCTAssertFalse(result.issues.contains(.multipleAmounts))
+    }
+
+    func testParsesLipstickItemPriceAndFlagsUnusualAmount() {
+        let result = parser.parse(
+            "今天财务报表。呃，发现有一项不对劲，这个物品是口红，但是口红价格是1000元",
+            categories: [shopping],
+            accounts: [wechat]
+        )
+
+        XCTAssertEqual(result.amount, Decimal(string: "1000"))
+        XCTAssertTrue(result.type == TransactionType.expense)
+        XCTAssertEqual(result.category?.id, shopping.id)
+        XCTAssertEqual(result.itemName, "口红")
+        XCTAssertEqual(result.remark, "口红")
+        XCTAssertTrue(result.warnings.contains { $0.contains("高于常见区间") })
+        XCTAssertTrue(result.isReadyToSave)
+    }
+
+    func testQuantityDoesNotOutrankPrice() {
+        let result = parser.parse(
+            "我买了2台电动车，花22000",
+            categories: [transport],
+            accounts: [wechat]
+        )
+
+        XCTAssertEqual(result.amount, Decimal(string: "22000"))
+        XCTAssertEqual(result.itemName, "电动车")
+        XCTAssertFalse(result.issues.contains(.multipleAmounts))
     }
 }

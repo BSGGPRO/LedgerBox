@@ -14,6 +14,17 @@ struct ChangelogEntry: Identifiable {
 enum ChangelogCatalog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "0.3.1",
+            dateText: "2026.10.21",
+            title: "物品与金额识别",
+            changes: [
+                "新增物品识别：从“买了一台电动车”提取电动车，从“这个物品是口红”提取口红。",
+                "新增型号/数量过滤：M5200、9号、2台、3杯等不再被误当成金额。",
+                "新增价格软提醒：口红 1000 元这类高于常见区间的支出会提示核对小票，但不阻止保存。",
+                "支持“价格/售价/标价/实付”等支出线索，减少“发现”被误判为收入关键词的问题。"
+            ]
+        ),
+        ChangelogEntry(
             version: "0.3.0",
             dateText: "2026.10.21",
             title: "财务专用小模型",
