@@ -3,7 +3,7 @@
 - 版本：`0.8.0`
 - 作者：**Beausoleil** · [Bilibili](https://space.bilibili.com/1477283849)
 - 开源地址：https://github.com/BSGGPRO/LedgerBox
-- 代码提交：`f4d6f7a`
+- 代码提交：`893086d`
 - 许可证：MIT
 - 交付日期：2026-10-21
 
@@ -53,7 +53,8 @@
 
 - 建立 `ImportDraft` / `ImportSession` / `ImportError` / `ImportHistoryStore` 契约。
 - 写入只走 `LedgerService.record`，撤销只走 `LedgerService.delete`，不绕过账本写边界。
-- 去重在余额变更前完成；编辑金额/日期/商户后重新计算 dedupe key。
+- 去重 key 固定为 OCR 身份，不随金额/日期/商户编辑而改变；否则修正第一笔后重新导入同一张图会漏过去重。
+- 无订单号的同商户同金额同日疑似重复，提供显式“仍要入账一笔”覆盖；有订单号不提供覆盖。损坏的历史 JSON 隔离为 `ImportHistory.corrupt-*.json`，不静默覆盖。
 - 转账手续费两种口径都支持，两笔交易同一 session，撤销一起回滚。
 - 交付物、哈希、CI run、未验证边界全部写清；不用“本地编译成功”这类无法证明的说法。
 
@@ -136,8 +137,8 @@ ImportDraft 草稿预览（可改金额、商户、分类、账户、时间、�
 
 | 项目 | 结果 |
 |---|---|
-| GitHub Actions 未签名归档 | run `39609649230`，commit `f4d6f7a`，success |
-| 模拟器 XCTest | run `39609659199`，52 passed / 0 failed / 0 skipped |
+| GitHub Actions 未签名归档 | run `39611853481`，commit `893086d`，success |
+| 模拟器 XCTest | run `39611865355`，52 passed / 0 failed / 0 skipped |
 | IPA 版本 | `CFBundleShortVersionString = 0.8.0`，build `8` |
 | IPA 架构 | 无 `PlugIns`，主 App 单 target |
 | IPA 权限 | 相机/相册英文用途说明，未申请麦克风/Siri |
@@ -152,8 +153,8 @@ ImportDraft 草稿预览（可改金额、商户、分类、账户、时间、�
 ### 产物
 
 - `LedgerBox-unsigned-0.8.0-ImageLedger.ipa`
-  - 1,706,356 字节
-  - SHA-256 `56F808C59F21E52A515F8FA6B944BA125828E0B6C6DD5010CAB029CC4B73D93B`
+  - 1,710,877
+  - SHA-256 `1F6CE1072EA017D4E8D2E823FEDAA80177F6977321D30FAABD7858D469FA20A1`
 - `LedgerBox-source-0.8.0-ImageLedger.zip`
   - 大小与 SHA-256 见 `LedgerBox-0.8.0-SHA256.txt`
 - `FinanceMindWeights.bin`
@@ -181,7 +182,9 @@ ImportDraft 草稿预览（可改金额、商户、分类、账户、时间、�
 
 - [x] 模型生成金额/日期/订单号 → 规则层独占。
 - [x] OCR 自动写账 → 草稿 + 确认。
-- [x] 重复订单重复入账 → 写前 dedupe。
+- [x] 重复订单重复入账 → 写前 dedupe + OCR 身份 key 不可编辑。
+- [x] 无订单号误判 → 显式“仍要入账一笔”覆盖，有订单号不覆盖。
+- [x] 历史损坏后静默清空 → 隔离为 `ImportHistory.corrupt-*.json`。
 - [x] 订单号明文落盘 → 只存 SHA-256。
 - [x] 撤销不恢复余额 → 逐条删除并回滚。
 - [x] 转账手续费口径猜死 → 两种模式。
