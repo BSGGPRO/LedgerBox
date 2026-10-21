@@ -57,6 +57,7 @@ final class QwenLocalModel: ObservableObject {
     )
     private var handle: OpaquePointer?
     private var prepared = false
+    private var isGenerating = false
 
     private init() {}
 
@@ -96,6 +97,7 @@ final class QwenLocalModel: ObservableObject {
         }
 
         status = .loading
+        LedgerLog.shared.info("qwen_prepare")
         let frameworkPath = frameworkURL.path
         let modelPath = modelURL.path
 
@@ -123,6 +125,7 @@ final class QwenLocalModel: ObservableObject {
                 }
                 DispatchQueue.main.async {
                     self?.status = .failed(message.isEmpty ? "模型加载失败" : message)
+                    LedgerLog.shared.error("qwen_load_failed")
                 }
                 return
             }
@@ -131,7 +134,20 @@ final class QwenLocalModel: ObservableObject {
             DispatchQueue.main.async {
                 self?.handle = created
                 self?.status = .ready(parameters: parameters)
+                LedgerLog.shared.info("qwen_ready", detail: "params=\(parameters)")
             }
+        }
+    }
+
+    /// Releases the model. Never destroys the C handle while a generation is in
+    /// flight; the queue owns the handle until `narrate` returns.
+    func unload() {
+        guard !isGenerating, let handle else { return }
+        self.handle = nil
+        prepared = false
+        status = .idle
+        queue.async {
+            lb_llama_destroy(handle)
         }
     }
 
@@ -139,7 +155,9 @@ final class QwenLocalModel: ObservableObject {
     /// Returns nil for unavailable models, failures, empty output, or output
     /// that introduces a number not present in the deterministic source.
     func narrate(question: String, advice: FinanceAdvice) async -> String? {
-        guard let handle, status.isReady else { return nil }
+        guard let handle, status.isReady, !isGenerating else { return nil }
+        isGenerating = true
+        defer { isGenerating = false }
 
         let source = [
             question,
@@ -162,8 +180,8 @@ final class QwenLocalModel: ObservableObject {
                             lb_llama_generate(
                                 handle,
                                 promptPointer,
-                                160,
-                                0.15,
+                                96,
+                                0.10,
                                 outputBuffer.baseAddress,
                                 outputBuffer.count,
                                 errorBuffer.baseAddress,
@@ -174,6 +192,7 @@ final class QwenLocalModel: ObservableObject {
                 }
 
                 guard result == 0 else {
+                    LedgerLog.shared.error("qwen_generate_failed")
                     continuation.resume(returning: nil)
                     return
                 }
@@ -185,9 +204,11 @@ final class QwenLocalModel: ObservableObject {
                 let cleaned = Self.sanitize(raw)
                 guard !cleaned.isEmpty,
                       Self.numbers(in: cleaned).isSubset(of: Self.numbers(in: source)) else {
+                    LedgerLog.shared.warning("qwen_narration_rejected")
                     continuation.resume(returning: nil)
                     return
                 }
+                LedgerLog.shared.info("qwen_narration_ok", detail: "chars=\(cleaned.count)")
                 continuation.resume(returning: cleaned)
             }
         }

@@ -1,3 +1,4 @@
+import CoreGraphics
 import CryptoKit
 import Foundation
 
@@ -80,6 +81,238 @@ struct ReceiptFields: Equatable {
     /// amount and the minute-level date.
     var dedupeKey: String {
         ReceiptParser.dedupeKey(for: self)
+    }
+}
+
+/// One visually separated bill inside a screenshot. A screenshot may contain a
+/// list of transactions, so the parser must not receive all lines as one bill.
+struct ReceiptSegment: Identifiable, Equatable {
+    let id: UUID
+    let lines: [OCRLine]
+    let text: String
+    let averageConfidence: Double
+    let isLowConfidence: Bool
+
+    init(
+        id: UUID = UUID(),
+        lines: [OCRLine],
+        text: String,
+        averageConfidence: Double,
+        isLowConfidence: Bool
+    ) {
+        self.id = id
+        self.lines = lines
+        self.text = text
+        self.averageConfidence = averageConfidence
+        self.isLowConfidence = isLowConfidence
+    }
+
+    var ocrResult: OCRResult {
+        OCRResult(lines: lines, imageSize: .zero)
+    }
+}
+
+/// Splits OCR observations into bill-sized blocks.
+///
+/// This is deliberately geometry-first: Vision gives each observation a
+/// normalized bounding box, and transaction lists usually leave a larger
+/// vertical gap between cards than between labels inside one card. The
+/// text-only fallback exists for tests and for OCR engines that do not return
+/// boxes; it only trusts explicit separators or repeated order-number anchors.
+enum ReceiptSegmenter {
+
+    private static let maxSegments = 20
+
+    static func segments(from ocr: OCRResult) -> [ReceiptSegment] {
+        let lines = ocr.lines.filter {
+            !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+        guard !lines.isEmpty else {
+            return []
+        }
+
+        let hasGeometry = lines.contains {
+            $0.boundingBox.height > 0.0001 && $0.boundingBox.width > 0.0001
+        }
+        guard hasGeometry else {
+            return textSegments(from: lines)
+        }
+
+        let sorted = sortedTopToBottom(lines)
+        let heights = sorted.map { max($0.boundingBox.height, 0.001) }.sorted()
+        let medianHeight = heights[heights.count / 2]
+        let splitGap = max(0.012, medianHeight * 1.75)
+
+        var blocks: [[OCRLine]] = []
+        var current: [OCRLine] = []
+
+        for line in sorted {
+            if let previous = current.last {
+                let gap = previous.boundingBox.minY - line.boundingBox.maxY
+                if gap > splitGap {
+                    blocks.append(current)
+                    current = [line]
+                } else {
+                    current.append(line)
+                }
+            } else {
+                current = [line]
+            }
+        }
+        if !current.isEmpty {
+            blocks.append(current)
+        }
+
+        var segments = blocks.map(makeSegment)
+
+        // A header, a separator, or a "合计" row can become its own block. Merge
+        // any block that has no parseable amount into its closest neighbour until
+        // every remaining block can produce a draft.
+        var mergeGuard = 0
+        while segments.count > 1, mergeGuard < maxSegments * 2 {
+            mergeGuard += 1
+            guard let index = segments.firstIndex(where: {
+                ReceiptParser.parse($0.text).amount == nil
+            }) else {
+                break
+            }
+
+            let previousGap = index > 0
+                ? verticalGap(segments[index - 1].lines, segments[index].lines)
+                : CGFloat.greatestFiniteMagnitude
+            let nextGap = index + 1 < segments.count
+                ? verticalGap(segments[index].lines, segments[index + 1].lines)
+                : CGFloat.greatestFiniteMagnitude
+
+            if previousGap <= nextGap, index > 0 {
+                let merged = segments[index - 1].lines + segments[index].lines
+                segments[index - 1] = makeSegment(merged)
+                segments.remove(at: index)
+            } else if index + 1 < segments.count {
+                let merged = segments[index].lines + segments[index + 1].lines
+                segments[index] = makeSegment(merged)
+                segments.remove(at: index + 1)
+            } else {
+                break
+            }
+        }
+
+        let withAmount = segments.filter {
+            ReceiptParser.parse($0.text).amount != nil
+        }
+        if withAmount.isEmpty {
+            return [makeSegment(sorted)]
+        }
+
+        // Never let a pathological OCR page create an unbounded batch.
+        return Array(withAmount.prefix(maxSegments))
+    }
+
+    static func segments(from lines: [OCRLine]) -> [ReceiptSegment] {
+        segments(from: OCRResult(lines: lines))
+    }
+
+    // MARK: Geometry
+
+    private static func sortedTopToBottom(_ lines: [OCRLine]) -> [OCRLine] {
+        lines.sorted { lhs, rhs in
+            let verticalDistance = abs(
+                lhs.boundingBox.midY - rhs.boundingBox.midY
+            )
+            if verticalDistance > 0.015 {
+                // Vision's y origin is bottom-left.
+                return lhs.boundingBox.midY > rhs.boundingBox.midY
+            }
+            return lhs.boundingBox.minX < rhs.boundingBox.minX
+        }
+    }
+
+    private static func verticalGap(_ upper: [OCRLine], _ lower: [OCRLine]) -> CGFloat {
+        guard let last = upper.last, let first = lower.first else {
+            return .greatestFiniteMagnitude
+        }
+        return max(0, last.boundingBox.minY - first.boundingBox.maxY)
+    }
+
+    private static func makeSegment(_ lines: [OCRLine]) -> ReceiptSegment {
+        let text = lines.map(\.text).joined(separator: "\n")
+        let total = lines.reduce(0.0) { $0 + Double($1.confidence) }
+        let average = lines.isEmpty ? 0 : total / Double(lines.count)
+        let low = lines.isEmpty
+            || average < 0.55
+            || lines.contains { $0.confidence < 0.35 }
+        return ReceiptSegment(
+            lines: lines,
+            text: text,
+            averageConfidence: average,
+            isLowConfidence: low
+        )
+    }
+
+    // MARK: Text fallback
+
+    private static func textSegments(from lines: [OCRLine]) -> [ReceiptSegment] {
+        let texts = lines.map {
+            $0.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        }.filter { !$0.isEmpty }
+        guard !texts.isEmpty else {
+            return []
+        }
+
+        var groups: [[String]] = [[]]
+        for line in texts {
+            if line.range(
+                of: #"^[-=─_]{3,}$"#,
+                options: .regularExpression
+            ) != nil {
+                if !groups[groups.count - 1].isEmpty {
+                    groups.append([])
+                }
+                continue
+            }
+            groups[groups.count - 1].append(line)
+        }
+        groups = groups.filter { !$0.isEmpty }
+
+        if groups.count == 1 {
+            var split: [[String]] = []
+            var current: [String] = []
+            for line in texts {
+                let isOrderAnchor = line.contains("订单号")
+                    || line.contains("交易单号")
+                    || line.contains("商户单号")
+                    || line.contains("流水号")
+                let currentHasAmount = current.contains {
+                    $0.contains("¥") || $0.contains("元")
+                }
+                if isOrderAnchor, currentHasAmount, current.count >= 2 {
+                    split.append(current)
+                    current = []
+                }
+                current.append(line)
+            }
+            if !current.isEmpty {
+                split.append(current)
+            }
+            groups = split
+        }
+
+        let result = groups.map { group -> ReceiptSegment in
+            let groupLines = group.enumerated().map { index, text in
+                OCRLine(
+                    text: text,
+                    confidence: 1,
+                    boundingBox: CGRect(
+                        x: 0,
+                        y: 1 - CGFloat(index + 1) * 0.01,
+                        width: 1,
+                        height: 0.01
+                    )
+                )
+            }
+            return makeSegment(groupLines)
+        }
+        return Array(result.prefix(maxSegments))
     }
 }
 

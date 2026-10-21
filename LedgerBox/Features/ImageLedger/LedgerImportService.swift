@@ -93,6 +93,7 @@ struct ImportSession: Codable, Identifiable, Equatable {
 
 enum ImportError: LocalizedError, Equatable {
     case duplicate(existingID: UUID)
+    case duplicateInBatch
     case invalidAmount
     case accountUnavailable
     case transferRequiresDestinationAccount
@@ -103,6 +104,8 @@ enum ImportError: LocalizedError, Equatable {
         switch self {
         case .duplicate:
             return "这笔账单已经导入过，请勿重复记账。"
+        case .duplicateInBatch:
+            return "这张图里有两笔账单的识别结果完全相同，请先修改或删除其中一笔。"
         case .invalidAmount:
             return "导入金额无效。"
         case .accountUnavailable:
@@ -260,6 +263,49 @@ final class ImportHistoryStore {
 /// Turns OCR output into a reviewable draft, then writes through
 /// `LedgerService` only. No other Core Data mutation path is used here.
 enum ImportCommitService {
+
+    /// Segments one screenshot into independent bills, then builds one draft per
+    /// bill. A single-bill screenshot follows the same parser as before.
+    static func makeDrafts(
+        from ocr: OCRResult,
+        now: Date = Date(),
+        calendar: Calendar = .current
+    ) -> [ImportDraft] {
+        let segments = ReceiptSegmenter.segments(from: ocr)
+        var candidates: [ImportDraft] = []
+
+        if segments.count > 1 {
+            for segment in segments {
+                let segmentOCR = OCRResult(
+                    lines: segment.lines,
+                    imageSize: ocr.imageSize
+                )
+                if let draft = makeDraft(
+                    from: segmentOCR,
+                    now: now,
+                    calendar: calendar
+                ) {
+                    candidates.append(draft)
+                }
+            }
+        }
+
+        if candidates.isEmpty,
+           let whole = makeDraft(from: ocr, now: now, calendar: calendar) {
+            candidates = [whole]
+        }
+
+        // Only a shared order hash is strong proof that two blocks are the same
+        // bill. Two identical purchases without an order ID must remain two
+        // separate cards; the user can still delete one before committing.
+        var seenOrderHashes = Set<String>()
+        return candidates.filter { draft in
+            guard let orderHash = draft.orderIDHash else {
+                return true
+            }
+            return seenOrderHashes.insert(orderHash).inserted
+        }
+    }
 
     static func makeDraft(
         from ocr: OCRResult,
@@ -422,6 +468,94 @@ enum ImportCommitService {
         }
 
         return session
+    }
+
+    /// Commits several reviewed bills as one user action. Any failure rolls back
+    /// the sessions that were already committed, so the toast can offer one
+    /// all-or-nothing undo.
+    @discardableResult
+    static func commitBatch(
+        _ drafts: [ImportDraft],
+        account: Account,
+        toAccount: Account? = nil,
+        categoryFor: (ImportDraft) -> Category?,
+        context: NSManagedObjectContext,
+        history: ImportHistoryStore = .shared
+    ) throws -> [ImportSession] {
+        guard !drafts.isEmpty else {
+            return []
+        }
+
+        var seenOrderHashes = Set<String>()
+        var usedKeys = Set<String>()
+        var normalized: [ImportDraft] = []
+        for draft in drafts {
+            if let orderHash = draft.orderIDHash {
+                guard seenOrderHashes.insert(orderHash).inserted else {
+                    throw ImportError.duplicateInBatch
+                }
+            }
+
+            var key = draft.dedupeKey
+            // Identical merchant/amount/minute is common in a list of two real
+            // purchases. Only salt the fallback key; an order hash remains the
+            // hard identity and is never bypassed.
+            if draft.orderIDHash == nil {
+                while usedKeys.contains(key) {
+                    key += "#batch-" + UUID().uuidString
+                }
+            }
+            usedKeys.insert(key)
+            normalized.append(key == draft.dedupeKey ? draft : copying(draft, key: key))
+        }
+
+        var sessions: [ImportSession] = []
+        do {
+            for draft in normalized {
+                let session = try commit(
+                    draft,
+                    account: account,
+                    toAccount: draft.type == .transfer ? toAccount : nil,
+                    category: categoryFor(draft),
+                    context: context,
+                    history: history
+                )
+                sessions.append(session)
+            }
+        } catch {
+            for session in sessions.reversed() {
+                try? undo(
+                    sessionID: session.id,
+                    context: context,
+                    history: history
+                )
+            }
+            throw error
+        }
+        return sessions
+    }
+
+    private static func copying(_ draft: ImportDraft, key: String) -> ImportDraft {
+        ImportDraft(
+            id: draft.id,
+            source: draft.source,
+            rawText: draft.rawText,
+            cleanText: draft.cleanText,
+            merchant: draft.merchant,
+            amount: draft.amount,
+            fee: draft.fee,
+            date: draft.date,
+            category: draft.category,
+            type: draft.type,
+            accountID: draft.accountID,
+            note: draft.note,
+            orderIDHash: draft.orderIDHash,
+            dedupeKey: key,
+            warnings: draft.warnings,
+            modelConfidence: draft.modelConfidence,
+            needsReview: draft.needsReview,
+            transferSplit: draft.transferSplit
+        )
     }
 
     static func undo(

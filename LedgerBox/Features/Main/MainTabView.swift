@@ -91,10 +91,12 @@ struct MainTabView: View {
                     .environment(\.managedObjectContext, viewContext)
                     .environment(\.ledgerTheme, theme)
             case .image:
-                ImageLedgerFlowView { session in
+                ImageLedgerFlowView { sessions in
                     toastCenter.show(
-                        sessionID: session.id,
-                        count: session.transactionIDs.count
+                        sessionIDs: sessions.map(\.id),
+                        count: sessions.reduce(0) {
+                            $0 + $1.transactionIDs.count
+                        }
                     )
                 }
                 .environment(\.managedObjectContext, viewContext)
@@ -385,14 +387,23 @@ struct MainTabView: View {
     }
 
     private func undo(_ toast: ImportToast) {
-        do {
-            try ImportCommitService.undo(
-                sessionID: toast.sessionID,
-                context: viewContext
-            )
+        var firstError: Error?
+        for sessionID in toast.sessionIDs {
+            do {
+                try ImportCommitService.undo(
+                    sessionID: sessionID,
+                    context: viewContext
+                )
+            } catch {
+                if firstError == nil {
+                    firstError = error
+                }
+            }
+        }
+        if let firstError {
+            errorMessage = firstError.localizedDescription
+        } else {
             toastCenter.dismiss()
-        } catch {
-            errorMessage = error.localizedDescription
         }
     }
 

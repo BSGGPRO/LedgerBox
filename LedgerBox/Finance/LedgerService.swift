@@ -1,5 +1,6 @@
 import CoreData
 import Foundation
+import OSLog
 
 enum LedgerError: LocalizedError {
     case invalidAmount
@@ -239,5 +240,146 @@ enum LedgerService {
     private static func nsUUID(_ id: UUID) -> NSUUID {
         // uuidString always produces a valid UUID string.
         NSUUID(uuidString: id.uuidString)!
+    }
+}
+
+// MARK: - Diagnostics
+
+struct LedgerLogEntry: Codable, Identifiable, Equatable {
+    let id: UUID
+    let timestamp: Date
+    let level: String
+    let event: String
+    let detail: String
+
+    init(
+        id: UUID = UUID(),
+        timestamp: Date = Date(),
+        level: String,
+        event: String,
+        detail: String
+    ) {
+        self.id = id
+        self.timestamp = timestamp
+        self.level = level
+        self.event = event
+        self.detail = detail
+    }
+}
+
+/// Small, privacy-conscious diagnostic log. Callers must never pass raw
+/// screenshots, question text, merchant names, amounts, order IDs, or tokens.
+final class LedgerLog {
+
+    static let shared = LedgerLog()
+
+    private let fileURL: URL
+    private let lock = NSLock()
+    private let logger = Logger(
+        subsystem: "com.example.ledgerbox",
+        category: "diagnostics"
+    )
+    private var entries: [LedgerLogEntry]
+    private let maxEntries = 500
+
+    init(fileURL: URL? = nil) {
+        let resolved = fileURL ?? Self.defaultFileURL()
+        self.fileURL = resolved
+        try? FileManager.default.createDirectory(
+            at: resolved.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        self.entries = Self.load(from: resolved)
+    }
+
+    func info(_ event: String, detail: String = "") {
+        append(level: "info", event: event, detail: detail)
+    }
+
+    func warning(_ event: String, detail: String = "") {
+        append(level: "warning", event: event, detail: detail)
+    }
+
+    func error(_ event: String, detail: String = "") {
+        append(level: "error", event: event, detail: detail)
+    }
+
+    func exportText() -> String {
+        lock.lock()
+        defer { lock.unlock() }
+        let formatter = ISO8601DateFormatter()
+        return entries.map { entry in
+            let time = formatter.string(from: entry.timestamp)
+            let suffix = entry.detail.isEmpty ? "" : " | \(entry.detail)"
+            return "[\(time)] \(entry.level.uppercased()) \(entry.event)\(suffix)"
+        }.joined(separator: "\n")
+    }
+
+    func clear() {
+        lock.lock()
+        defer { lock.unlock() }
+        entries = []
+        try? FileManager.default.removeItem(at: fileURL)
+    }
+
+    private func append(level: String, event: String, detail: String) {
+        let safeEvent = String(event.prefix(80))
+        let safeDetail = String(detail.prefix(240))
+        let entry = LedgerLogEntry(
+            level: level,
+            event: safeEvent,
+            detail: safeDetail
+        )
+
+        switch level {
+        case "error":
+            logger.error("\(safeEvent, privacy: .public) \(safeDetail, privacy: .public)")
+        case "warning":
+            logger.warning("\(safeEvent, privacy: .public) \(safeDetail, privacy: .public)")
+        default:
+            logger.info("\(safeEvent, privacy: .public) \(safeDetail, privacy: .public)")
+        }
+
+        lock.lock()
+        entries.append(entry)
+        if entries.count > maxEntries {
+            entries.removeFirst(entries.count - maxEntries)
+        }
+        let snapshot = entries
+        lock.unlock()
+
+        do {
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            encoder.outputFormatting = [.sortedKeys]
+            let data = try encoder.encode(snapshot)
+            try data.write(to: fileURL, options: [.atomic])
+        } catch {
+            // Diagnostics must never break the ledger write path.
+            logger.error("log_persist_failed")
+        }
+    }
+
+    private static func defaultFileURL() -> URL {
+        let manager = FileManager.default
+        let base = manager.urls(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask
+        ).first ?? manager.temporaryDirectory
+        let directory = base.appendingPathComponent("LedgerBox", isDirectory: true)
+        try? manager.createDirectory(
+            at: directory,
+            withIntermediateDirectories: true
+        )
+        return directory.appendingPathComponent("Diagnostics.json")
+    }
+
+    private static func load(from url: URL) -> [LedgerLogEntry] {
+        guard let data = try? Data(contentsOf: url) else {
+            return []
+        }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return (try? decoder.decode([LedgerLogEntry].self, from: data)) ?? []
     }
 }

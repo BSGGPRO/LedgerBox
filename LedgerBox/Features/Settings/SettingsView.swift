@@ -41,9 +41,15 @@ struct SettingsView: View {
 
     @State private var pendingTemplateKind: TemplateKind?
     @State private var showingTemplateConfirmation = false
-    @State private var showingExporter = false
+    @State private var showingCSVExporter = false
     @State private var csvText = ""
-    @State private var exportFilename = "LedgerBox"
+    @State private var csvFilename = "LedgerBox"
+    @State private var showingJSONExporter = false
+    @State private var backupData = Data()
+    @State private var backupFilename = "LedgerBox-backup"
+    @State private var showingRestoreConfirmation = false
+    @State private var showingJSONImporter = false
+    @State private var lastRestoreSummary: String?
     @State private var alertTitle = ""
     @State private var alertMessage = ""
     @State private var showingAlert = false
@@ -130,16 +136,67 @@ struct SettingsView: View {
             Text(alertMessage)
         }
         .fileExporter(
-            isPresented: $showingExporter,
+            isPresented: $showingCSVExporter,
             document: CSVDocument(text: csvText),
             contentType: .commaSeparatedText,
-            defaultFilename: exportFilename
+            defaultFilename: csvFilename
         ) { result in
             switch result {
             case .success:
                 showAlert(title: "导出完成", message: "CSV 已保存到你选择的位置。")
             case .failure(let error):
                 showAlert(title: "导出失败", message: error.localizedDescription)
+            }
+        }
+        // JSON uses its own isPresented/document pair so it can never collide
+        // with the CSV exporter above.
+        .fileExporter(
+            isPresented: $showingJSONExporter,
+            document: JSONBackupDocument(data: backupData),
+            contentType: .json,
+            defaultFilename: backupFilename
+        ) { result in
+            switch result {
+            case .success:
+                showAlert(title: "备份已导出", message: "JSON 全量备份已保存到你选择的位置。")
+            case .failure(let error):
+                showAlert(title: "备份失败", message: error.localizedDescription)
+            }
+        }
+        .confirmationDialog(
+            "导入 JSON 备份？",
+            isPresented: $showingRestoreConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("替换并导入", role: .destructive) {
+                // Defer one run loop so the picker does not try to present while
+                // the confirmation dialog is still dismissing.
+                DispatchQueue.main.async {
+                    showingJSONImporter = true
+                }
+            }
+            Button("取消", role: .cancel) {
+            }
+        } message: {
+            Text("会替换本机全部账本数据：账户、分类、流水、预算、目标与设置都以备份为准，且无法撤销。")
+        }
+        .fileImporter(
+            isPresented: $showingJSONImporter,
+            allowedContentTypes: [.json],
+            allowsMultipleSelection: false
+        ) { result in
+            switch result {
+            case .success(let urls):
+                guard let url = urls.first else {
+                    return
+                }
+                // The view context is main-queue confined; restore on main even if
+                // the picker hands the URL back on another queue.
+                DispatchQueue.main.async {
+                    restoreBackup(from: url)
+                }
+            case .failure(let error):
+                showAlert(title: "导入失败", message: error.localizedDescription)
             }
         }
     }
@@ -457,7 +514,7 @@ struct SettingsView: View {
             LedgerCard(padding: 0) {
                 VStack(spacing: 0) {
                     Button {
-                        prepareExport()
+                        prepareCSVExport()
                     } label: {
                         SettingsRow(
                             theme: theme,
@@ -471,10 +528,59 @@ struct SettingsView: View {
                     .padding(.horizontal, theme.cardPadding)
                     .padding(.vertical, theme.tinySpacing)
 
-                    Rectangle()
-                        .fill(theme.separator)
-                        .frame(height: theme.hairline)
-                        .padding(.leading, theme.cardPadding)
+                    dataSeparator
+
+                    Button {
+                        prepareJSONExport()
+                    } label: {
+                        SettingsRow(
+                            theme: theme,
+                            icon: "archivebox",
+                            tint: theme.accentText,
+                            title: "导出 JSON 备份",
+                            subtitle: "账户、分类、流水、预算、目标、模板与设置"
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, theme.cardPadding)
+                    .padding(.vertical, theme.tinySpacing)
+
+                    dataSeparator
+
+                    Button {
+                        showingRestoreConfirmation = true
+                    } label: {
+                        SettingsRow(
+                            theme: theme,
+                            icon: "square.and.arrow.down",
+                            tint: theme.warning,
+                            title: "导入 JSON 备份",
+                            subtitle: "全量恢复 · 会替换本机全部数据"
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, theme.cardPadding)
+                    .padding(.vertical, theme.tinySpacing)
+
+                    dataSeparator
+
+                    if let lastRestoreSummary {
+                        HStack(alignment: .top, spacing: theme.smallSpacing) {
+                            Image(systemName: "checkmark.seal")
+                                .font(theme.controlIconFont)
+                                .foregroundStyle(theme.income)
+
+                            Text(lastRestoreSummary)
+                                .font(theme.captionFont)
+                                .foregroundStyle(theme.secondaryText)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, theme.cardPadding)
+                        .padding(.vertical, theme.cardSpacing)
+
+                        dataSeparator
+                    }
 
                     HStack(alignment: .top, spacing: theme.smallSpacing) {
                         Image(systemName: "lock.shield")
@@ -610,6 +716,13 @@ struct SettingsView: View {
             .frame(height: theme.hairline)
     }
 
+    private var dataSeparator: some View {
+        Rectangle()
+            .fill(theme.separator)
+            .frame(height: theme.hairline)
+            .padding(.leading, theme.cardPadding)
+    }
+
     // MARK: - Accent editing
 
     private var customColorBinding: Binding<Color> {
@@ -724,18 +837,62 @@ struct SettingsView: View {
         }
     }
 
-    private func prepareExport() {
+    private func prepareCSVExport() {
         csvText = CSVExporter.makeCSV(
             transactions: Array(transactions),
             accounts: Array(accounts),
             categories: Array(categories)
         )
 
+        csvFilename = "LedgerBox-\(exportTimestamp)"
+        showingCSVExporter = true
+    }
+
+    private func prepareJSONExport() {
+        do {
+            backupData = try LedgerBackupService.makeBackup(context: viewContext)
+            backupFilename = "LedgerBox-backup-\(exportTimestamp)"
+            showingJSONExporter = true
+        } catch {
+            showAlert(title: "备份失败", message: error.localizedDescription)
+        }
+    }
+
+    private func restoreBackup(from url: URL) {
+        let didStartAccessing = url.startAccessingSecurityScopedResource()
+        defer {
+            if didStartAccessing {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        lastRestoreSummary = nil
+
+        let data: Data
+        do {
+            data = try Data(contentsOf: url)
+        } catch {
+            showAlert(
+                title: "导入失败",
+                message: "无法读取所选文件：\(error.localizedDescription)"
+            )
+            return
+        }
+
+        do {
+            let summary = try LedgerBackupService.restore(data: data, context: viewContext)
+            lastRestoreSummary = summary.summaryText
+            showAlert(title: "导入完成", message: summary.summaryText)
+        } catch {
+            showAlert(title: "导入失败", message: error.localizedDescription)
+        }
+    }
+
+    private var exportTimestamp: String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyyMMdd-HHmm"
-        exportFilename = "LedgerBox-\(formatter.string(from: Date()))"
-        showingExporter = true
+        return formatter.string(from: Date())
     }
 
     private func showAlert(title: String, message: String) {

@@ -3,11 +3,11 @@ import SwiftUI
 
 struct ImportToast: Identifiable, Equatable {
     let id = UUID()
-    let sessionID: UUID
+    let sessionIDs: [UUID]
     let message: String
 }
 
-/// A short-lived undo affordance. The session is already persisted by
+/// A short-lived undo affordance. The sessions are already persisted by
 /// `ImportHistoryStore`; this object only owns presentation and the timer.
 @MainActor
 final class ImportToastCenter: ObservableObject {
@@ -15,10 +15,11 @@ final class ImportToastCenter: ObservableObject {
 
     private var dismissTask: Task<Void, Never>?
 
-    func show(sessionID: UUID, count: Int) {
+    func show(sessionIDs: [UUID], count: Int) {
+        guard !sessionIDs.isEmpty else { return }
         dismissTask?.cancel()
         toast = ImportToast(
-            sessionID: sessionID,
+            sessionIDs: sessionIDs,
             message: count == 1 ? "已入账 1 笔，可撤销" : "已入账 \(count) 笔，可撤销"
         )
 

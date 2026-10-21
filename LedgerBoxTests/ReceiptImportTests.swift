@@ -1,4 +1,5 @@
 import CoreData
+import CoreGraphics
 import XCTest
 @testable import LedgerBox
 
@@ -561,7 +562,115 @@ final class ReceiptImportTests: XCTestCase {
         XCTAssertEqual(draft.amount, decimal("20.00"))
     }
 
+    // MARK: - Multi-bill segmentation
+
+    func testSegmenterSplitsThreeVerticalBillCards() {
+        let lines = [
+            ocrLine("微信支付", y: 0.96),
+            ocrLine("商户：瑞幸咖啡", y: 0.925),
+            ocrLine("实付 ¥18.00", y: 0.89),
+            ocrLine("2026-10-20 09:12", y: 0.855),
+            ocrLine("微信支付", y: 0.70),
+            ocrLine("商户：地铁", y: 0.665),
+            ocrLine("实付 ¥4.00", y: 0.63),
+            ocrLine("2026-10-20 08:30", y: 0.595),
+            ocrLine("微信支付", y: 0.44),
+            ocrLine("商户：京东", y: 0.405),
+            ocrLine("实付 ¥299.00", y: 0.37),
+            ocrLine("2026-10-19 21:00", y: 0.335)
+        ]
+
+        let segments = ReceiptSegmenter.segments(from: lines)
+
+        XCTAssertEqual(segments.count, 3)
+        XCTAssertTrue(segments[0].text.contains("瑞幸"))
+        XCTAssertTrue(segments[1].text.contains("地铁"))
+        XCTAssertTrue(segments[2].text.contains("京东"))
+    }
+
+    func testSegmenterKeepsSingleReceiptTogether() {
+        let lines = [
+            ocrLine("微信支付", y: 0.96),
+            ocrLine("商户：瑞幸咖啡", y: 0.925),
+            ocrLine("实付 ¥18.00", y: 0.89),
+            ocrLine("2026-10-20 09:12", y: 0.855)
+        ]
+
+        let segments = ReceiptSegmenter.segments(from: lines)
+
+        XCTAssertEqual(segments.count, 1)
+        XCTAssertTrue(segments[0].text.contains("实付"))
+    }
+
+    func testMakeDraftsProducesOneDraftPerBill() {
+        let lines = [
+            ocrLine("微信支付", y: 0.96),
+            ocrLine("商户：瑞幸咖啡", y: 0.925),
+            ocrLine("实付 ¥18.00", y: 0.89),
+            ocrLine("2026-10-20 09:12", y: 0.855),
+            ocrLine("支付宝", y: 0.70),
+            ocrLine("商户：地铁", y: 0.665),
+            ocrLine("实付 ¥4.00", y: 0.63),
+            ocrLine("2026-10-20 08:30", y: 0.595),
+            ocrLine("微信支付", y: 0.44),
+            ocrLine("商户：京东", y: 0.405),
+            ocrLine("实付 ¥299.00", y: 0.37),
+            ocrLine("2026-10-19 21:00", y: 0.335)
+        ]
+        let drafts = ImportCommitService.makeDrafts(
+            from: OCRResult(lines: lines),
+            now: date(2026, 10, 21, 12, 0),
+            calendar: testCalendar
+        )
+
+        XCTAssertEqual(drafts.count, 3)
+        XCTAssertEqual(Set(drafts.map(\.amount)), Set([
+            decimal("18.00"),
+            decimal("4.00"),
+            decimal("299.00")
+        ]))
+        XCTAssertEqual(Set(drafts.map(\.dedupeKey)).count, 3)
+    }
+
+    func testMakeDraftsCollapsesDuplicateOrderHash() {
+        let sharedOrder = "订单号：420000ABC123"
+        let lines = [
+            ocrLine("微信支付", y: 0.96),
+            ocrLine("商户：瑞幸咖啡", y: 0.925),
+            ocrLine("实付 ¥18.00", y: 0.89),
+            ocrLine(sharedOrder, y: 0.855),
+            ocrLine("微信支付", y: 0.70),
+            ocrLine("商户：瑞幸咖啡", y: 0.665),
+            ocrLine("实付 ¥18.00", y: 0.63),
+            ocrLine(sharedOrder, y: 0.595)
+        ]
+        let drafts = ImportCommitService.makeDrafts(
+            from: OCRResult(lines: lines),
+            now: date(2026, 10, 21, 12, 0),
+            calendar: testCalendar
+        )
+
+        XCTAssertEqual(drafts.count, 1)
+    }
+
     // MARK: - Helpers
+
+    private func ocrLine(
+        _ text: String,
+        y: CGFloat,
+        height: CGFloat = 0.025
+    ) -> OCRLine {
+        OCRLine(
+            text: text,
+            confidence: 0.95,
+            boundingBox: CGRect(
+                x: 0.05,
+                y: y,
+                width: 0.90,
+                height: height
+            )
+        )
+    }
 
     private func date(
         _ year: Int,

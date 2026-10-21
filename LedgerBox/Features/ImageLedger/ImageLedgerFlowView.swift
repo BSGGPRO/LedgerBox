@@ -3,11 +3,39 @@ import PhotosUI
 import SwiftUI
 import UIKit
 
+/// Editable state for one card in a multi-bill batch. The original OCR draft is
+/// kept immutable so later edits cannot change the duplicate identity key.
+private struct MultiBillEdit: Identifiable {
+    let original: ImportDraft
+    var merchant: String
+    var amountText: String
+    var date: Date
+    var type: TransactionType
+    var category: LedgerCategory
+    var note: String
+    var include: Bool
+    let duplicate: ImportSession?
+
+    var id: UUID { original.id }
+
+    init(original: ImportDraft, duplicate: ImportSession?) {
+        self.original = original
+        self.merchant = original.merchant
+        self.amountText = MoneyFormat.editable(original.amount)
+        self.date = original.date
+        self.type = original.type
+        self.category = original.category
+        self.note = original.note ?? ""
+        self.include = duplicate == nil
+        self.duplicate = duplicate
+    }
+}
+
 /// Screenshot-to-draft flow. The only write happens after the user reviews this
 /// screen; OCR never writes a transaction directly.
 @MainActor
 struct ImageLedgerFlowView: View {
-    let onCommitted: (ImportSession) -> Void
+    let onCommitted: ([ImportSession]) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
@@ -33,6 +61,9 @@ struct ImageLedgerFlowView: View {
     @State private var selectedImage: UIImage?
     @State private var isProcessing = false
     @State private var draft: ImportDraft?
+    @State private var multiBills: [MultiBillEdit] = []
+    @State private var batchAccountID: UUID?
+    @State private var batchToAccountID: UUID?
     @State private var duplicateSession: ImportSession?
     @State private var allowFallbackDuplicate = false
     @State private var errorMessage: String?
@@ -61,6 +92,8 @@ struct ImageLedgerFlowView: View {
             VStack(alignment: .leading, spacing: theme.sectionSpacing) {
                 if isProcessing {
                     processingCard
+                } else if !multiBills.isEmpty {
+                    multiReviewContent
                 } else if let draft {
                     reviewContent(draft)
                 } else {
@@ -207,6 +240,344 @@ struct ImageLedgerFlowView: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("正在本机识别账单")
+    }
+
+    // MARK: - Multi-bill review
+
+    private var multiReviewContent: some View {
+        VStack(alignment: .leading, spacing: theme.sectionSpacing) {
+            LedgerCard(surface: .elevated) {
+                VStack(alignment: .leading, spacing: theme.cardSpacing) {
+                    HStack(spacing: theme.smallSpacing) {
+                        LedgerTag("一图多单", tint: theme.accentText)
+                        LedgerTag("\(multiBills.count) 笔", tint: theme.secondaryText)
+                        Spacer(minLength: 4)
+                        Text("逐笔核对")
+                            .font(theme.captionFont)
+                            .foregroundStyle(theme.tertiaryText)
+                    }
+
+                    Text("识别到 \(multiBills.count) 笔独立账单")
+                        .font(theme.sectionTitleFont)
+                        .foregroundStyle(theme.primaryText)
+
+                    if duplicateCount > 0 {
+                        Text("已自动排除 \(duplicateCount) 笔历史重复；重复卡片不能勾选。")
+                            .font(theme.captionFont)
+                            .foregroundStyle(theme.warning)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    Text("只有勾选且金额有效的卡片会入账。任何一笔失败，整批回滚。")
+                        .font(theme.captionFont)
+                        .foregroundStyle(theme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            LedgerCard {
+                VStack(alignment: .leading, spacing: theme.cardSpacing) {
+                    Text("本批账户")
+                        .font(theme.sectionTitleFont)
+                        .foregroundStyle(theme.primaryText)
+
+                    fieldRow("入账账户", required: true) {
+                        Picker("入账账户", selection: $batchAccountID) {
+                            Text("请选择").tag(UUID?.none)
+                            ForEach(accounts, id: \.objectID) { account in
+                                Text(account.name).tag(Optional(account.id))
+                            }
+                        }
+                        .labelsHidden()
+                        .tint(theme.accentText)
+                    }
+
+                    if multiBills.contains(where: { $0.type == .transfer }) {
+                        fieldRow("转入账户", required: true) {
+                            Picker("转入账户", selection: $batchToAccountID) {
+                                Text("请选择").tag(UUID?.none)
+                                ForEach(batchTransferTargets, id: \.objectID) { account in
+                                    Text(account.name).tag(Optional(account.id))
+                                }
+                            }
+                            .labelsHidden()
+                            .tint(theme.accentText)
+                        }
+                    }
+                }
+            }
+
+            ForEach($multiBills) { $bill in
+                multiBillCard($bill)
+            }
+
+            DisclosureGroup {
+                Text(batchOCRText)
+                    .font(.system(.caption2, design: .monospaced))
+                    .foregroundStyle(theme.secondaryText)
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, theme.smallSpacing)
+            } label: {
+                Label("查看本图 OCR 全文", systemImage: "doc.text.magnifyingglass")
+                    .font(theme.captionFont.weight(.semibold))
+                    .foregroundStyle(theme.secondaryText)
+            }
+            .padding(.horizontal, theme.smallSpacing)
+
+            Button {
+                confirmBatch()
+            } label: {
+                Text(includedBills.isEmpty
+                    ? "没有可入账账单"
+                    : "确认入账 \(includedBills.count) 笔")
+                    .frame(maxWidth: .infinity, minHeight: 50)
+            }
+            .buttonStyle(LedgerPrimaryButtonStyle(theme: theme, fullWidth: true))
+            .disabled(!canCommitBatch)
+            .opacity(canCommitBatch ? 1 : 0.55)
+
+            Button("重新选择图片") {
+                reset()
+            }
+            .font(theme.captionFont.weight(.semibold))
+            .foregroundStyle(theme.secondaryText)
+            .frame(maxWidth: .infinity, minHeight: 44)
+        }
+    }
+
+    private func multiBillCard(_ bill: Binding<MultiBillEdit>) -> some View {
+        let value = bill.wrappedValue
+        return LedgerCard {
+            VStack(alignment: .leading, spacing: theme.cardSpacing) {
+                HStack(spacing: theme.smallSpacing) {
+                    Toggle("计入本批", isOn: bill.include)
+                        .labelsHidden()
+                        .tint(theme.accentText)
+                        .disabled(value.duplicate != nil)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(value.merchant.isEmpty ? "未命名账单" : value.merchant)
+                            .font(theme.bodyFont.weight(.semibold))
+                            .foregroundStyle(theme.primaryText)
+                            .lineLimit(1)
+
+                        Text(sourceName(value.original.source) + " · " + value.type.displayName)
+                            .font(theme.badgeFont)
+                            .foregroundStyle(theme.tertiaryText)
+                    }
+
+                    Spacer(minLength: 4)
+
+                    if value.duplicate != nil {
+                        LedgerTag("已存在", tint: theme.warning)
+                    } else if value.original.needsReview {
+                        LedgerTag("需核对", tint: theme.warning)
+                    }
+                }
+
+                fieldRow("金额", required: true) {
+                    TextField("0.00", text: bill.amountText)
+                        .keyboardType(.decimalPad)
+                        .multilineTextAlignment(.trailing)
+                        .font(theme.bodyFont.weight(.semibold))
+                        .frame(maxWidth: 150)
+                }
+
+                fieldRow("商户") {
+                    TextField("商户名称", text: bill.merchant)
+                        .multilineTextAlignment(.trailing)
+                        .frame(maxWidth: 190)
+                }
+
+                fieldRow("类型") {
+                    Picker("类型", selection: bill.type) {
+                        ForEach(TransactionType.allCases) { item in
+                            Text(item.displayName).tag(item)
+                        }
+                    }
+                    .labelsHidden()
+                    .tint(theme.accentText)
+                }
+
+                fieldRow("分类") {
+                    Picker("分类", selection: bill.category) {
+                        ForEach(LedgerCategory.allCases) { item in
+                            Text(item.displayName).tag(item)
+                        }
+                    }
+                    .labelsHidden()
+                    .tint(theme.accentText)
+                }
+
+                fieldRow("时间") {
+                    DatePicker(
+                        "时间",
+                        selection: bill.date,
+                        displayedComponents: [.date, .hourAndMinute]
+                    )
+                    .labelsHidden()
+                    .tint(theme.accentText)
+                }
+
+                fieldRow("备注") {
+                    TextField("可选", text: bill.note)
+                        .multilineTextAlignment(.trailing)
+                        .frame(maxWidth: 190)
+                }
+
+                if value.duplicate != nil {
+                    Text("这张卡片与历史导入重复，已排除。请返回流水检查，避免重复记账。")
+                        .font(theme.captionFont)
+                        .foregroundStyle(theme.warning)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else if value.type == .transfer {
+                    Text("批量转账会使用上方“转入账户”；手续费模式请在单笔图片记账里核对。")
+                        .font(theme.captionFont)
+                        .foregroundStyle(theme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+        .opacity(value.include ? 1 : 0.58)
+    }
+
+    private var batchOCRText: String {
+        multiBills.map(\.original.rawText).joined(separator: "\n\n---\n\n")
+    }
+
+    private var duplicateCount: Int {
+        multiBills.filter { $0.duplicate != nil }.count
+    }
+
+    private var includedBills: [MultiBillEdit] {
+        multiBills.filter { $0.include && $0.duplicate == nil }
+    }
+
+    private var selectedBatchAccount: Account? {
+        accounts.first(where: { $0.id == batchAccountID })
+    }
+
+    private var batchTransferTargets: [Account] {
+        accounts.filter { $0.id != batchAccountID }
+    }
+
+    private var selectedBatchTarget: Account? {
+        accounts.first(where: { $0.id == batchToAccountID })
+    }
+
+    private var canCommitBatch: Bool {
+        guard !includedBills.isEmpty, selectedBatchAccount != nil else {
+            return false
+        }
+        guard includedBills.allSatisfy({
+            decimalAmount($0.amountText) != nil
+        }) else {
+            return false
+        }
+        if includedBills.contains(where: { $0.type == .transfer }) {
+            return selectedBatchTarget != nil
+        }
+        return true
+    }
+
+    private func confirmBatch() {
+        guard let account = selectedBatchAccount else {
+            errorMessage = "请选择一个入账账户。"
+            return
+        }
+        let bills = includedBills
+        guard !bills.isEmpty else {
+            errorMessage = "没有勾选任何账单。"
+            return
+        }
+
+        var drafts: [ImportDraft] = []
+        for bill in bills {
+            guard let amount = decimalAmount(bill.amountText) else {
+                errorMessage = "“\(bill.merchant)”的金额无效，请修改后再入账。"
+                return
+            }
+            let original = bill.original
+            drafts.append(
+                ImportDraft(
+                    id: original.id,
+                    source: original.source,
+                    rawText: original.rawText,
+                    cleanText: original.cleanText,
+                    merchant: bill.merchant.trimmingCharacters(in: .whitespacesAndNewlines),
+                    amount: amount,
+                    fee: original.fee,
+                    date: bill.date,
+                    category: bill.category,
+                    type: bill.type,
+                    accountID: account.id,
+                    note: bill.note.trimmingCharacters(in: .whitespacesAndNewlines),
+                    orderIDHash: original.orderIDHash,
+                    dedupeKey: original.dedupeKey,
+                    warnings: original.warnings,
+                    modelConfidence: original.modelConfidence,
+                    needsReview: original.needsReview,
+                    transferSplit: original.transferSplit
+                )
+            )
+        }
+
+        let target = drafts.contains(where: { $0.type == .transfer })
+            ? selectedBatchTarget
+            : nil
+        if drafts.contains(where: { $0.type == .transfer }), target == nil {
+            errorMessage = "批量转账需要选择另一个转入账户。"
+            return
+        }
+
+        do {
+            let sessions = try ImportCommitService.commitBatch(
+                drafts,
+                account: account,
+                toAccount: target,
+                categoryFor: { draft in
+                    category(for: draft.category, type: draft.type)
+                },
+                context: viewContext
+            )
+            onCommitted(sessions)
+            dismiss()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func decimalAmount(_ text: String) -> Decimal? {
+        let cleaned = text
+            .replacingOccurrences(of: ",", with: "")
+            .replacingOccurrences(of: "¥", with: "")
+            .replacingOccurrences(of: "￥", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleaned.isEmpty,
+              let value = Decimal(
+                string: cleaned,
+                locale: Locale(identifier: "en_US_POSIX")
+              ),
+              value > 0 else {
+            return nil
+        }
+        return value.roundedToCents()
+    }
+
+    private func category(
+        for ledgerCategory: LedgerCategory,
+        type: TransactionType
+    ) -> Category? {
+        guard type != .transfer else { return nil }
+        let kind = type == .income
+            ? CategoryKind.income.rawValue
+            : CategoryKind.expense.rawValue
+        return categories.first {
+            !$0.isSoftDeleted && $0.kind == kind && $0.name == ledgerCategory.rawValue
+        } ?? categories.first {
+            !$0.isSoftDeleted && $0.name == ledgerCategory.rawValue
+        }
     }
 
     // MARK: - Review
@@ -594,19 +965,36 @@ struct ImageLedgerFlowView: View {
         Task.detached(priority: .userInitiated) {
             do {
                 let ocr = try await VisionOCRService().recognize(cgImage: cgImage)
-                guard let newDraft = ImportCommitService.makeDraft(from: ocr) else {
+                let newDrafts = ImportCommitService.makeDrafts(from: ocr)
+                guard !newDrafts.isEmpty else {
                     await MainActor.run {
                         isProcessing = false
                         errorMessage = "没有识别到明确金额。请换一张更清晰的账单截图，或使用手动记账。"
                     }
                     return
                 }
-                let existing = ImportHistoryStore.shared.duplicate(
-                    for: newDraft.dedupeKey
-                )
-                await MainActor.run {
-                    apply(newDraft, duplicate: existing)
-                    isProcessing = false
+
+                if newDrafts.count > 1 {
+                    let edits = newDrafts.map { draft in
+                        MultiBillEdit(
+                            original: draft,
+                            duplicate: ImportHistoryStore.shared.duplicate(
+                                for: draft.dedupeKey
+                            )
+                        )
+                    }
+                    await MainActor.run {
+                        applyMulti(edits)
+                        isProcessing = false
+                    }
+                } else if let newDraft = newDrafts.first {
+                    let existing = ImportHistoryStore.shared.duplicate(
+                        for: newDraft.dedupeKey
+                    )
+                    await MainActor.run {
+                        apply(newDraft, duplicate: existing)
+                        isProcessing = false
+                    }
                 }
             } catch {
                 await MainActor.run {
@@ -617,7 +1005,19 @@ struct ImageLedgerFlowView: View {
         }
     }
 
+    private func applyMulti(_ edits: [MultiBillEdit]) {
+        draft = nil
+        duplicateSession = nil
+        multiBills = edits
+        batchAccountID = accounts.first(where: { !$0.locked })?.id
+            ?? accounts.first?.id
+        batchToAccountID = accounts.first(where: {
+            $0.id != batchAccountID
+        })?.id
+    }
+
     private func apply(_ newDraft: ImportDraft, duplicate: ImportSession?) {
+        multiBills = []
         draft = newDraft
         duplicateSession = duplicate
         allowFallbackDuplicate = false
@@ -708,7 +1108,7 @@ struct ImageLedgerFlowView: View {
                 category: selectedCategory,
                 context: viewContext
             )
-            onCommitted(session)
+            onCommitted([session])
             dismiss()
         } catch {
             errorMessage = error.localizedDescription
@@ -719,6 +1119,9 @@ struct ImageLedgerFlowView: View {
         selectedPhoto = nil
         selectedImage = nil
         draft = nil
+        multiBills = []
+        batchAccountID = nil
+        batchToAccountID = nil
         duplicateSession = nil
         allowFallbackDuplicate = false
         errorMessage = nil

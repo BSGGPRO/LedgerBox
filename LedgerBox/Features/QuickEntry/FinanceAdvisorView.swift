@@ -1,10 +1,30 @@
+import CoreData
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct FinanceExchange: Identifiable {
     let id = UUID()
     let question: String
     let advice: FinanceAdvice
     var localNarration: String?
+}
+
+/// Per-message action state. `confirmation` is the routing result plus the
+/// confirm/undo flags; `parsed` is the QuickEntryParser output for record
+/// actions and stays nil for export/backup/image.
+private struct FinanceActionCardState {
+    var confirmation: AIActionConfirmation
+    var parsed: QuickEntryParser.ParsedEntry?
+    var failure: String?
+    var notice: String?
+    var importSessionIDs: [UUID] = []
+}
+
+private enum FinanceAdvisorSheet: String, Identifiable {
+    case image
+    case settings
+
+    var id: String { rawValue }
 }
 
 struct FinanceAdvisorView: View {
@@ -37,9 +57,18 @@ struct FinanceAdvisorView: View {
         sortDescriptors: [NSSortDescriptor(keyPath: \SavingsGoal.createdAt, ascending: false)]
     ) private var goals: FetchedResults<SavingsGoal>
 
+    @Environment(\.managedObjectContext) private var viewContext
+
     @State private var input = ""
     @State private var exchanges: [FinanceExchange] = []
     @State private var errorMessage: String?
+    @State private var actionCards: [UUID: FinanceActionCardState] = [:]
+    @State private var activeSheet: FinanceAdvisorSheet?
+    @State private var showingExporter = false
+    @State private var csvText = ""
+    @State private var exportFilename = "LedgerBox"
+    @State private var exportExchangeID: UUID?
+    @State private var imageFlowExchangeID: UUID?
     @FocusState private var inputFocused: Bool
 
     private let prompts = [
@@ -113,6 +142,32 @@ struct FinanceAdvisorView: View {
             Button("好", role: .cancel) {}
         } message: {
             Text(errorMessage ?? "")
+        }
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .image:
+                ImageLedgerFlowView { sessions in
+                    imageImportDidCommit(sessions)
+                }
+                .environment(\.managedObjectContext, viewContext)
+                .environment(\.ledgerTheme, theme)
+            case .settings:
+                SettingsView()
+                    .environment(\.managedObjectContext, viewContext)
+            }
+        }
+        .fileExporter(
+            isPresented: $showingExporter,
+            document: CSVDocument(text: csvText),
+            contentType: .commaSeparatedText,
+            defaultFilename: exportFilename
+        ) { result in
+            switch result {
+            case .success:
+                finishExport(error: nil)
+            case .failure(let error):
+                finishExport(error: error)
+            }
         }
     }
 
@@ -297,6 +352,10 @@ struct FinanceAdvisorView: View {
                         .foregroundStyle(theme.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
 
+                    if let card = actionCards[exchange.id] {
+                        actionSection(exchangeID: exchange.id, card: card)
+                    }
+
                     if let narration = exchange.localNarration {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("0.5B 本地解释")
@@ -392,10 +451,26 @@ struct FinanceAdvisorView: View {
 
         input = ""
         inputFocused = false
-        let advice = FinanceAdvisor.answer(to: question, snapshot: snapshot)
-        let exchange = FinanceExchange(question: question, advice: advice)
-        exchanges.append(exchange)
+        let routed = AIActionRouter.route(question)
 
+        switch routed.intent {
+        case .query, .unknown:
+            // Existing behaviour: the deterministic advisor answers and the
+            // 0.5B model only narrates. Nothing is written.
+            let advice = FinanceAdvisor.answer(to: question, snapshot: snapshot)
+            let exchange = FinanceExchange(question: question, advice: advice)
+            exchanges.append(exchange)
+            narrate(question: question, advice: advice, exchangeID: exchange.id)
+
+        case .record:
+            presentRecordAction(question: question, routed: routed)
+
+        case .exportCSV, .backupJSON, .imageImport:
+            presentConfirmedAction(question: question, routed: routed)
+        }
+    }
+
+    private func narrate(question: String, advice: FinanceAdvice, exchangeID: UUID) {
         guard localModel.isReady else { return }
         Task {
             guard let narration = await localModel.narrate(
@@ -404,11 +479,517 @@ struct FinanceAdvisorView: View {
             ) else {
                 return
             }
-            guard let index = exchanges.firstIndex(where: { $0.id == exchange.id }) else {
+            guard let index = exchanges.firstIndex(where: { $0.id == exchangeID }) else {
                 return
             }
             exchanges[index].localNarration = narration
         }
+    }
+
+    // MARK: - Action routing
+
+    private var parserCategoryOptions: [QuickEntryParser.CategoryOption] {
+        categories
+            .filter { $0.isSelectable }
+            .map {
+                QuickEntryParser.CategoryOption(
+                    id: $0.id,
+                    name: $0.name,
+                    kind: $0.categoryKind
+                )
+            }
+    }
+
+    private var parserAccountOptions: [QuickEntryParser.AccountOption] {
+        accounts.map {
+            QuickEntryParser.AccountOption(id: $0.id, name: $0.name)
+        }
+    }
+
+    private func presentRecordAction(question: String, routed: AIRoutedAction) {
+        let source = routed.recordText ?? question
+        let parsed = QuickEntryParser().parse(
+            source,
+            categories: parserCategoryOptions,
+            accounts: parserAccountOptions
+        )
+        let exchange = FinanceExchange(
+            question: question,
+            advice: recordAdvice(for: parsed)
+        )
+        exchanges.append(exchange)
+        actionCards[exchange.id] = FinanceActionCardState(
+            confirmation: AIActionConfirmation(action: routed),
+            parsed: parsed,
+            failure: nil,
+            notice: nil
+        )
+    }
+
+    private func recordAdvice(for parsed: QuickEntryParser.ParsedEntry) -> FinanceAdvice {
+        guard parsed.isReadyToSave else {
+            let missing = missingLabels(for: parsed)
+            let detail = missing.isEmpty
+                ? "解析结果不完整，先不写账。可以补充金额、分类或账户后再试。"
+                : "还缺：\(missing.joined(separator: "、"))。补全后才会写账，现在没有保存任何内容。"
+            return FinanceAdvice(title: "这笔还差信息", body: detail, tag: "未入账")
+        }
+
+        return FinanceAdvice(
+            title: "准备记一笔",
+            body: "已在本机解析出金额、收支、分类和账户。点“确认入账”才会写账；写入后可以撤销。",
+            tag: "待确认"
+        )
+    }
+
+    private func missingLabels(for parsed: QuickEntryParser.ParsedEntry) -> [String] {
+        var missing: [String] = []
+        if parsed.amount == nil { missing.append("金额") }
+        if parsed.type == nil { missing.append("收支") }
+        if parsed.category == nil { missing.append("分类") }
+        if parsed.account == nil { missing.append("账户") }
+        if parsed.issues.contains(.multipleAmounts) { missing.append("确认用哪一笔金额") }
+        if parsed.issues.contains(.inputTooLong) { missing.append("缩短输入") }
+        return missing
+    }
+
+    private func presentConfirmedAction(question: String, routed: AIRoutedAction) {
+        let advice: FinanceAdvice
+        switch routed.intent {
+        case .exportCSV:
+            advice = FinanceAdvice(
+                title: "这个动作需要你确认",
+                body: "会把本机账本导出成 CSV。点下面的按钮后由系统文件面板选择保存位置；数据不会离开这台设备。",
+                tag: "待确认"
+            )
+        case .backupJSON:
+            advice = FinanceAdvice(
+                title: "这个动作需要你确认",
+                body: "全量 JSON 备份入口在设置里（设置 → 数据 → 导出 JSON 备份），这里只帮你跳过去，不重复实现第二套备份逻辑。",
+                tag: "待确认"
+            )
+        case .imageImport:
+            advice = FinanceAdvice(
+                title: "这个动作需要你确认",
+                body: "图片记账要先选图或拍照，识别结果还要逐笔确认才会入账。也可以从首页的「+」进入图片记账。",
+                tag: "待确认"
+            )
+        default:
+            advice = FinanceAdvice(
+                title: "这个动作需要你确认",
+                body: "这个动作还没有实现。",
+                tag: "待确认"
+            )
+        }
+
+        let exchange = FinanceExchange(question: question, advice: advice)
+        exchanges.append(exchange)
+        actionCards[exchange.id] = FinanceActionCardState(
+            confirmation: AIActionConfirmation(action: routed),
+            parsed: nil,
+            failure: nil,
+            notice: nil
+        )
+    }
+
+    // MARK: - Action cards
+
+    @ViewBuilder
+    private func actionSection(exchangeID: UUID, card: FinanceActionCardState) -> some View {
+        switch card.confirmation.intent {
+        case .record:
+            recordActionCard(exchangeID: exchangeID, card: card)
+        case .exportCSV, .backupJSON, .imageImport:
+            confirmedActionCard(exchangeID: exchangeID, card: card)
+        case .query, .unknown:
+            EmptyView()
+        }
+    }
+
+    private func recordActionCard(exchangeID: UUID, card: FinanceActionCardState) -> some View {
+        let isReady = card.parsed?.isReadyToSave == true
+
+        return VStack(alignment: .leading, spacing: 8) {
+            Rectangle()
+                .fill(theme.separator)
+                .frame(height: 1)
+
+            HStack(spacing: 6) {
+                Image(
+                    systemName: card.confirmation.isUndoable
+                        ? "checkmark.seal.fill"
+                        : "checkmark.circle"
+                )
+                .font(theme.badgeFont)
+                .foregroundStyle(
+                    card.confirmation.isUndoable ? theme.income : theme.accentText
+                )
+
+                Text(
+                    card.confirmation.isUndoable
+                        ? "已入账，可撤销"
+                        : (isReady ? "准备记一笔" : "还差信息")
+                )
+                    .font(theme.badgeFont.weight(.semibold))
+                    .foregroundStyle(
+                        card.confirmation.isUndoable ? theme.income : theme.accentText
+                    )
+
+                Spacer(minLength: 4)
+
+                Text(
+                    card.confirmation.isUndoable
+                        ? "已写入"
+                        : (isReady ? "待确认" : "未入账")
+                )
+                    .font(theme.badgeFont)
+                    .foregroundStyle(theme.secondaryText)
+            }
+
+            if let parsed = card.parsed {
+                if parsed.isReadyToSave {
+                    recordRow("金额", MoneyFormat.currency(parsed.amount ?? 0))
+                    recordRow("类型", parsed.type?.displayName ?? "—")
+                    recordRow("分类", parsed.category?.name ?? "—")
+                    recordRow("账户", parsed.account?.name ?? "—")
+                    recordRow("备注", parsed.remark.isEmpty ? "—" : parsed.remark)
+                } else {
+                    let missing = missingLabels(for: parsed)
+                    Text(
+                        missing.isEmpty
+                            ? "解析结果不完整，先不写账。"
+                            : "还缺：\(missing.joined(separator: "、"))。"
+                    )
+                    .font(theme.captionFont)
+                    .foregroundStyle(theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                    if let issue = parsed.issues.first {
+                        Text(issue.message)
+                            .font(theme.badgeFont)
+                            .foregroundStyle(theme.warning)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+
+            if let failure = card.failure {
+                Text(failure)
+                    .font(theme.captionFont)
+                    .foregroundStyle(theme.expense)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if let notice = card.notice {
+                Text(notice)
+                    .font(theme.badgeFont)
+                    .foregroundStyle(theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if card.confirmation.isUndoable {
+                actionButton(title: "撤销这笔", systemImage: "arrow.uturn.backward") {
+                    undoRecord(exchangeID: exchangeID)
+                }
+            } else if isReady {
+                actionButton(title: "确认入账", systemImage: "checkmark") {
+                    confirmRecord(exchangeID: exchangeID)
+                }
+            }
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            theme.accent.opacity(0.08),
+            in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+        )
+    }
+
+    private func confirmedActionCard(
+        exchangeID: UUID,
+        card: FinanceActionCardState
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Rectangle()
+                .fill(theme.separator)
+                .frame(height: 1)
+
+            HStack(spacing: 6) {
+                Image(systemName: "hand.raised")
+                    .font(theme.badgeFont)
+                    .foregroundStyle(theme.accentText)
+
+                Text(card.importSessionIDs.isEmpty ? "这个动作需要你确认" : "已完成，可撤销")
+                    .font(theme.badgeFont.weight(.semibold))
+                    .foregroundStyle(theme.accentText)
+
+                Spacer(minLength: 4)
+
+                Text(card.confirmation.intent.displayName)
+                    .font(theme.badgeFont)
+                    .foregroundStyle(theme.secondaryText)
+            }
+
+            Text(actionDetail(for: card.confirmation.intent))
+                .font(theme.captionFont)
+                .foregroundStyle(theme.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if let failure = card.failure {
+                Text(failure)
+                    .font(theme.captionFont)
+                    .foregroundStyle(theme.expense)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if let notice = card.notice {
+                Text(notice)
+                    .font(theme.badgeFont)
+                    .foregroundStyle(theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if !card.importSessionIDs.isEmpty {
+                actionButton(title: "撤销这次导入", systemImage: "arrow.uturn.backward") {
+                    undoImageImport(exchangeID: exchangeID)
+                }
+            } else {
+                switch card.confirmation.intent {
+                case .exportCSV:
+                    actionButton(title: "导出 CSV", systemImage: "square.and.arrow.up") {
+                        prepareExport(exchangeID: exchangeID)
+                    }
+                case .backupJSON:
+                    actionButton(title: "打开设置里的备份", systemImage: "gearshape") {
+                        activeSheet = .settings
+                    }
+                case .imageImport:
+                    actionButton(title: "打开图片记账", systemImage: "photo") {
+                        imageFlowExchangeID = exchangeID
+                        activeSheet = .image
+                    }
+                default:
+                    EmptyView()
+                }
+            }
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            theme.accent.opacity(0.08),
+            in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+        )
+    }
+
+    private func actionDetail(for intent: AIActionIntent) -> String {
+        switch intent {
+        case .exportCSV:
+            return "会读取本机账本并生成 CSV，然后由系统文件面板选择保存位置。"
+        case .backupJSON:
+            return "JSON 备份由设置的「数据」区域提供；点下面的按钮打开设置，导出后由系统文件面板保存。"
+        case .imageImport:
+            return "选图或拍照后本地 OCR 识别，核对并确认才会入账。也可以从首页的「+」进入图片记账。"
+        default:
+            return "这个动作还没有实现。"
+        }
+    }
+
+    private func recordRow(_ title: String, _ value: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text(title)
+                .font(theme.badgeFont)
+                .foregroundStyle(theme.secondaryText)
+                .frame(width: 34, alignment: .leading)
+
+            Text(value)
+                .font(theme.captionFont)
+                .foregroundStyle(theme.primaryText)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer(minLength: 0)
+        }
+    }
+
+    private func actionButton(
+        title: String,
+        systemImage: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: systemImage)
+                    .font(theme.badgeFont)
+                Text(title)
+                    .font(theme.buttonLabelFont)
+            }
+            .foregroundStyle(theme.onAccent)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 9)
+            .background(theme.accent, in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title)
+    }
+
+    // MARK: - Action execution
+
+    private func confirmRecord(exchangeID: UUID) {
+        guard var card = actionCards[exchangeID] else { return }
+
+        guard let parsed = card.parsed,
+              let amount = parsed.amount,
+              amount > 0,
+              let type = parsed.type,
+              let accountOption = parsed.account,
+              let account = accounts.first(where: { $0.id == accountOption.id }) else {
+            card.failure = "这笔记录还不完整，请重新输入这句话。"
+            actionCards[exchangeID] = card
+            return
+        }
+
+        let expectedKind: CategoryKind = type == .income ? .income : .expense
+        guard let categoryOption = parsed.category,
+              let category = categories.first(where: {
+                  $0.id == categoryOption.id
+                      && $0.isSelectable
+                      && $0.categoryKind == expectedKind
+              }) else {
+            card.failure = "分类对不上，请重新输入这句话。"
+            actionCards[exchangeID] = card
+            return
+        }
+
+        do {
+            let transaction = try LedgerService.record(
+                type: type,
+                amount: amount,
+                date: Date(),
+                note: parsed.remark,
+                account: account,
+                category: category,
+                in: viewContext
+            )
+            card.confirmation.markCompleted(transactionID: transaction.id)
+            card.failure = nil
+            card.notice = "已入账。金额、分类和账户都来自你确认过的解析结果。"
+            actionCards[exchangeID] = card
+        } catch {
+            card.failure = error.localizedDescription
+            actionCards[exchangeID] = card
+        }
+    }
+
+    private func undoRecord(exchangeID: UUID) {
+        guard var card = actionCards[exchangeID],
+              let transactionID = card.confirmation.completedTransactionID else {
+            return
+        }
+
+        guard let transaction = transactions.first(where: { $0.id == transactionID }) else {
+            card.confirmation.revokeCompletion()
+            card.failure = "找不到这笔交易，可能已在别处删除。"
+            actionCards[exchangeID] = card
+            return
+        }
+
+        do {
+            try LedgerService.delete(transaction, in: viewContext)
+            card.confirmation.revokeCompletion()
+            card.failure = nil
+            card.notice = "已撤销：这笔交易已删除，账户余额已恢复。"
+        } catch {
+            card.failure = error.localizedDescription
+        }
+        actionCards[exchangeID] = card
+    }
+
+    private func prepareExport(exchangeID: UUID) {
+        guard var card = actionCards[exchangeID] else { return }
+
+        csvText = CSVExporter.makeCSV(
+            transactions: Array(transactions),
+            accounts: Array(accounts),
+            categories: Array(categories)
+        )
+
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyyMMdd-HHmm"
+        exportFilename = "LedgerBox-\(formatter.string(from: Date()))"
+
+        card.confirmation.confirm()
+        card.failure = nil
+        card.notice = "已生成 CSV，等待你选择保存位置。"
+        actionCards[exchangeID] = card
+
+        exportExchangeID = exchangeID
+        showingExporter = true
+    }
+
+    private func finishExport(error: Error?) {
+        guard let exchangeID = exportExchangeID,
+              var card = actionCards[exchangeID] else {
+            exportExchangeID = nil
+            return
+        }
+
+        if let error {
+            let nsError = error as NSError
+            if nsError.domain == NSCocoaErrorDomain,
+               nsError.code == CocoaError.userCancelled.rawValue {
+                card.failure = nil
+                card.notice = "已取消导出，没有写入任何文件。"
+            } else {
+                card.failure = "导出失败：\(error.localizedDescription)"
+            }
+        } else {
+            card.failure = nil
+            card.notice = "CSV 已导出到你选择的位置。"
+        }
+        actionCards[exchangeID] = card
+        exportExchangeID = nil
+    }
+
+    private func imageImportDidCommit(_ sessions: [ImportSession]) {
+        guard let exchangeID = imageFlowExchangeID,
+              var card = actionCards[exchangeID] else {
+            imageFlowExchangeID = nil
+            return
+        }
+
+        card.confirmation.confirm()
+        card.failure = nil
+        card.notice = "图片记账已完成，导入了 \(sessions.reduce(0) { $0 + $1.transactionIDs.count }) 笔。"
+        card.importSessionIDs = sessions.map(\.id)
+        actionCards[exchangeID] = card
+        imageFlowExchangeID = nil
+    }
+
+    private func undoImageImport(exchangeID: UUID) {
+        guard var card = actionCards[exchangeID], !card.importSessionIDs.isEmpty else {
+            return
+        }
+
+        var firstError: Error?
+        for sessionID in card.importSessionIDs {
+            do {
+                try ImportCommitService.undo(sessionID: sessionID, context: viewContext)
+            } catch {
+                if firstError == nil {
+                    firstError = error
+                }
+            }
+        }
+
+        if let firstError {
+            card.failure = firstError.localizedDescription
+        } else {
+            card.failure = nil
+            card.notice = "已撤销图片导入：相关交易已删除，余额已恢复。"
+            card.importSessionIDs = []
+            card.confirmation.revokeCompletion()
+        }
+        actionCards[exchangeID] = card
     }
 
     private var snapshot: FinanceSnapshot {
