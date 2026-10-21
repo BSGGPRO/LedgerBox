@@ -15,13 +15,13 @@
 
 | 项目 | 结论 |
 |---|---|
-| 静态源码 | 30 个 Swift 文件（26 个 App + 2 个 Widget + 2 个测试） |
+| 静态源码 | 33 个 Swift 文件（29 个 App + 2 个 Widget + 2 个测试） |
 | 文档 | README、LICENSE、.gitignore、CONTRIBUTING、核心 Docs、开源调研与 10 项目清单 |
 | 静态语法 | tree-sitter-swift 解析通过 |
 | 工程结构 | pbxproj / XML / plist 解析通过；App + Widget Extension 两个 Target，Widget 默认不嵌入 |
-| 实际编译 | GitHub Actions `macos-15` archive 成功（run `39573057512`，commit `3ec0fde`） |
+| 实际编译 | GitHub Actions `macos-15` archive 成功（run `39579640282`，commit `c59e677`） |
 | 实际运行 | **未执行**（无模拟器/真机） |
-| 签名/IPA | `LedgerBox-unsigned-0.2.2-OnlineAI.ipa` 已生成；未签名、未真机安装 |
+| 签名/IPA | `LedgerBox-unsigned-0.3.0-FinanceMind.ipa` 已生成；未签名、未真机安装 |
 | Assets/AppIcon | 已随 archive 编译；未做视觉/真机验证 |
 | GitHub Actions | 已实际运行，结论 success |
 | 测试 Target | 已加入，未运行 |
@@ -34,23 +34,23 @@
 最后一次静态检查结果：
 
 ```text
-SWIFT SYNTAX OK 30
-XML/PLIST/PBX OK 38 34
+SWIFT SYNTAX OK 33
+XML/PLIST/PBX OK 41 37
 NO BOM
 ```
 
 解释：
 
-- `SWIFT SYNTAX OK 30`：30 个 `.swift` 文件（26 个 App + 2 个 Widget + 2 个测试）均可被 tree-sitter-swift 解析，根节点无错误。
-- `38`：`PBXFileReference` 数量（26 个 App Swift + 2 个 Widget Swift + 2 个测试 Swift + 图标/框架/产品/Info.plist 等）。
-- `33`：`PBXBuildFile` 数量（App 源文件 + Widget 源文件 + 测试源文件 + 模型/资源/框架；Widget 不再嵌入，因此没有 appex 嵌入项）。
+- `SWIFT SYNTAX OK 33`：33 个 `.swift` 文件（29 个 App + 2 个 Widget + 2 个测试）均可被 tree-sitter-swift 解析，根节点无错误。
+- `41`：`PBXFileReference` 数量（29 个 App Swift + 2 个 Widget Swift + 2 个测试 Swift + 图标/框架/产品/Info.plist 等）。
+- `37`：`PBXBuildFile` 数量（App 源文件 + Widget 源文件 + 测试源文件 + 模型/资源/框架；Widget 不再嵌入，因此没有 appex 嵌入项）。
 - `NO BOM`：`project.pbxproj` 为 UTF-8 无 BOM。
 
 其他静态检查：
 
 | 检查 | 结果 |
 |---|---|
-| `URLSession` / `import Network` / CloudKit / Firebase / Supabase | 未发现 |
+| `URLSession` | 仅 `OnlineAIClient` 使用；无 CloudKit / Firebase / Supabase / 自建后端 |
 | `@NSManaged var ... Double` | 未发现 |
 | `Podfile` / `Package.swift` / `Package.resolved` / `.xcworkspace` | 未发现 |
 | `#Preview` | 13 个 Swift 文件包含 |
@@ -60,7 +60,7 @@ NO BOM
 | AppIcon | 1024×1024、RGB、无 alpha；未做视觉审查 |
 | Asset Catalog JSON | `Contents.json` 可解析；已随 archive 编译 |
 | Assets 工程引用 | 文件引用 + Resources build phase 已存在 |
-| GitHub Actions | `.github/workflows/ios-unsigned.yml` 已实际运行成功（run `39573057512`） |
+| GitHub Actions | `.github/workflows/ios-unsigned.yml` 已实际运行成功（run `39579640282`） |
 | 测试 Target | `LedgerBoxTests` 已加入；2 个测试源文件；未运行 |
 | Scheme Test Action | 已加入 `TestableReference` 与 `MacroExpansion`；未运行 |
 
@@ -93,7 +93,7 @@ NO BOM
 | P0-12 | README / LICENSE / .gitignore / CONTRIBUTING | 源码具备 | 均已创建 |
 | P0-13 | Docs 核心文档 | 源码具备 | COMPONENTS / FINANCE_RULES / BUILD_STEPS / WINDOWS_BUILD_SIGN / ACCEPTANCE / THEMING；另有 GITHUB_RESEARCH、OPEN_SOURCE_10、CHANGELOG |
 | P0-14 | Assets.xcassets / AppIcon | 源码具备（占位） | 1024×1024 PNG + Contents.json；已随 archive 编译，未做视觉检查 |
-| P0-15 | GitHub Actions 无签名归档 | 已运行成功 | `.github/workflows/ios-unsigned.yml`；run `39573057512` |
+| P0-15 | GitHub Actions 无签名归档 | 已运行成功 | `.github/workflows/ios-unsigned.yml`；run `39579640282` |
 | P0-16 | 测试 Target | 源码具备（未运行） | `LedgerBoxTests` 已加入；覆盖财务汇总/退款/预算/分账；未执行 |
 | P0-17 | 实际编译/运行/签名 | **部分** | 远程 archive 成功；运行/签名/真机未验证 |
 | P0-18 | 不虚假宣称已编译/已签名 | 文档具备 | README 与 Docs 明确标注未编译 |
@@ -135,6 +135,7 @@ NO BOM
 | P1-27 | WidgetKit 小组件 | 源码保留；当前默认不嵌入 appex，避免自签失败 | 未运行 |
 | P1-28 | 更新日志/作者入口 | 设置页可打开 Changelog 与 Beausoleil Bilibili | 未运行 |
 | P1-29 | 可选联网 AI | OpenAI 兼容接口；Keychain；默认关闭；只发送用户输入 | 未运行 |
+| P1-30 | 财务大脑 | 15,380 参数、20 意图；本机账本快照 + 固定规则；不联网、不写账、不生成数字 | 未运行；合成集准确率不代表真实 |
 
 ---
 
@@ -147,14 +148,14 @@ NO BOM
 | P5-3 | .gitignore 覆盖 Xcode/证书/构建产物 | 具备 |
 | P5-4 | CONTRIBUTING 说明硬规则与 PR 清单 | 具备 |
 | P5-5 | Docs 核心文档 + 调研/10 项目清单 | 具备 |
-| P5-6 | 版本号 0.2.2 / Bundle ID 占位 | 具备 |
+| P5-6 | 版本号 0.3.0 / Bundle ID 占位 | 具备 |
 | P5-7 | 无 DEVELOPMENT_TEAM | 具备 |
 | P5-8 | Assets/AppIcon | 已有占位，已随 archive 编译，未视觉验证 |
-| P5-9 | GitHub Actions workflow | 已实际运行，run `39573057512` success |
+| P5-9 | GitHub Actions workflow | 已实际运行，run `39579640282` success |
 | P5-10 | 测试 Target | 已加入（2 个测试源文件），未运行 |
-| P5-11 | 实际 Xcode 编译 | GitHub Actions archive 成功（commit `3ec0fde`） |
+| P5-11 | 实际 Xcode 编译 | GitHub Actions archive 成功（commit `c59e677`） |
 | P5-12 | 实际运行 | 未验证（无模拟器/真机） |
-| P5-13 | 未签名 IPA | `LedgerBox-unsigned-0.2.2-OnlineAI.ipa`（803,142 字节，无 PlugIns、无麦克风/语音/Siri 权限，适合 lcsign）；run `39573057512` |
+| P5-13 | 未签名 IPA | `LedgerBox-unsigned-0.3.0-FinanceMind.ipa`（883,045 字节，无 PlugIns、无麦克风/语音/Siri 权限，适合 lcsign）；run `39579640282` |
 | P5-14 | 自签验证 | 未执行 |
 | P5-15 | 截图/视觉回归 | 缺失 |
 | P5-16 | 本地化 | 缺失（仅中文） |
@@ -170,7 +171,7 @@ NO BOM
 ### 6.1 必须先补的交付物
 
 1. `Assets.xcassets` 与 AppIcon 已随 archive 编译；仍需真机/视觉检查。
-2. GitHub Actions workflow 已实际触发，run `39573057512` 成功。
+2. GitHub Actions workflow 已实际触发，run `39579640282` 成功。
 3. `LedgerBoxTests` 已加入，但尚未在 Xcode 中运行。
 4. 已有远程 archive 记录；仍缺真机运行记录。
 5. 未签名 IPA 已生成并通过结构校验；签名与安装未验证。
@@ -241,7 +242,7 @@ NO BOM
 
 ### 8.1 已完成
 
-- 30 个 Swift 文件（26 个 App + 2 个 Widget + 2 个测试）。
+- 33 个 Swift 文件（29 个 App + 2 个 Widget + 2 个测试）。
 - Xcode 工程、共享 scheme、App target、`LedgerBoxTests` target。
 - Core Data 模型、持久化、主题、财务引擎、全部主页面。
 - 小 AI 文本记账：纯 Foundation 解析器、`QuickEntryAI` 本地解释、字段完整度、示例/分类/账户建议、5,643 参数金钱分类器。
@@ -264,7 +265,7 @@ NO BOM
 - 真机安装、签名、TestFlight、App Store。
 - Widget 读取真实账本数据：当前未配置 App Group，小组件是静态 UI。
 - 小组件在真机主屏幕上的视觉回归；当前 IPA 默认不包含小组件。
-- 网络/隐私的运行时验证（代码层已静态检查无网络 API）。
+- 网络/隐私的运行时验证（联网 AI 只在用户点发送时调用 `URLSession`，未做真实网络测试）。
 
 ### 8.3 已知功能缺口
 
@@ -278,7 +279,7 @@ NO BOM
 - `AppSettings` 主题字段与 `ThemeManager` 未同步。
 - 无多币种换算。
 - iOS 不允许读取其他 App 的通知内容；已取消 Siri/快捷指令，不能“监听银行/微信通知”后完美复刻商业记账 App。
-- 本地小 AI 是规则 + 5,643 参数分类器，不是生成式模型；联网 AI 需要用户自备 API Key，未做真实账号与网络环境验证。
+- 本地小 AI 是规则 + 5,643 参数分类器 + 15,380 参数财务意图模型，不是生成式模型；财务大脑未做真实账本准确率测试；联网 AI 需要用户自备 API Key，未做真实账号与网络环境验证。
 
 这些缺口不阻塞“静态源码 + 文档”交付，但阻塞“生产可用/已验证”结论。
 
@@ -288,7 +289,7 @@ NO BOM
 > **按“可编译、可测试、可安装”目标：未验证。**  
 > 本项目不声称已编译、已通过测试、已签名或已生成可安装 IPA。
 
-最终源码包：`LedgerBox-source-0.2.2-OnlineAI.zip`。旧版源码包不含联网 AI，不再作为最新交付；实际大小与 SHA-256 以交付文件为准。
+最终源码包：`LedgerBox-source-0.3.0-FinanceMind.zip`（大小与 SHA-256 见交付说明）。旧版源码包不含财务大脑，不再作为最新交付。
 
 ---
 
@@ -300,5 +301,7 @@ NO BOM
 - [`WINDOWS_BUILD_SIGN.md`](WINDOWS_BUILD_SIGN.md)
 - [`THEMING.md`](THEMING.md)
 - [`GITHUB_RESEARCH.md`](GITHUB_RESEARCH.md)
+- [`FINANCE_MIND.md`](FINANCE_MIND.md)
+- [`MONEY_BRAIN.md`](MONEY_BRAIN.md)
 - [`../README.md`](../README.md)
 - [`../CONTRIBUTING.md`](../CONTRIBUTING.md)

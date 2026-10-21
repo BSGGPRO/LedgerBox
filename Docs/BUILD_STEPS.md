@@ -304,7 +304,7 @@ The model configuration used to open the store is incompatible with the one that
 
 ### 7.12 快捷指令里找不到 LedgerBox
 
-这是预期行为。0.2.2 已取消 Siri、快捷指令和 App Intents；不要再添加 `NSSiriUsageDescription`，也不要把 `LedgerIntents.swift` 加回 target。
+这是预期行为。0.2.2 起已取消 Siri、快捷指令和 App Intents；0.3.0 继续不添加。不要再添加 `NSSiriUsageDescription`，也不要把 `LedgerIntents.swift` 加回 target。
 
 ---
 
@@ -312,8 +312,8 @@ The model configuration used to open the store is incompatible with the one that
 
 - `Assets.xcassets` 与 AppIcon 已随 archive 编译；仍未做真机/视觉检查。
 - `LedgerBoxTests` 已加入，但尚未实际运行。
-- `.github/workflows/ios-unsigned.yml` 已实际运行：run `39573057512`，结论 success。
-- 新版未签名 IPA 已生成：`LedgerBox-unsigned-0.2.2-OnlineAI.ipa`（803,142 字节，含本地小 AI、5,643 参数金钱模型、可选联网 AI、更新日志，无语音/Siri 权限，无 `PlugIns`）。
+- `.github/workflows/ios-unsigned.yml` 已实际运行：run `39579640282`，结论 success。
+- 新版未签名 IPA 已生成：`LedgerBox-unsigned-0.3.0-FinanceMind.ipa`（883,045 字节，含 15,380 参数财务意图模型、本地小 AI、5,643 参数金钱模型、可选联网 AI、更新日志，无语音/Siri 权限，无 `PlugIns`）。
 - Widget Extension 源码保留，但当前**不嵌入** `Payload/LedgerBox.app/PlugIns/`；这是为了兼容只签主 App 的 `lcsign`。需要小组件时再恢复 Embed 阶段并签 appex。
 - Widget 未配置 App Group，因此即使重新嵌入也不读取真实账本。
 - 没有证书、描述文件、Team ID。

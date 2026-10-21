@@ -63,7 +63,7 @@ LedgerBox 是一个 iOS 17+ 的本地记账本：
 
 - `QuickEntryParser` 只依赖 Foundation + NaturalLanguage，不依赖 SwiftUI/Core Data。
 - 解析结果缺金额、收支、分类、账户时，必须让用户补全，不能静默猜测后保存。
-- 不再添加语音识别、麦克风、Siri、快捷指令或 App Intents；这些入口已在 0.2.2 删除。
+- 不再添加语音识别、麦克风、Siri、快捷指令或 App Intents；这些入口已在 0.2.2 删除，0.3.0 继续禁用。
 - 联网 AI 默认关闭，只能由用户主动点发送触发；不得后台同步账本。
 - API Key 只能存 Keychain，不得写入 UserDefaults、源码、日志或仓库。
 - 联网回答只作建议，不能绕过 `LedgerService` 自动写账。
