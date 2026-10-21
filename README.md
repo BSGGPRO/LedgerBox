@@ -90,7 +90,7 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 
 首次启动没有交易，首页会显示空状态。点击右下角 FAB，选择“📝 记一笔”记录第一笔收入或支出，或选择“⚡ 极速记账”拍照/选图；手动极速文本输入仍在小 AI 入口，不需要麦克风或语音权限。
 
-工程包含 `LedgerBoxTests` Target，可在 Mac 上通过 `Cmd+U` 或 `xcodebuild test` 运行。当前 57 个测试已在 GitHub Actions 的 iPhone 16 / iOS 26.2 模拟器通过（run `39615172460`）；真机仍需你本地验证。
+工程包含 `LedgerBoxTests` Target，可在 Mac 上通过 `Cmd+U` 或 `xcodebuild test` 运行。当前 57 个测试已在 GitHub Actions 的 iPhone 16 / iOS 26.2 模拟器通过（run `39618077988`）；真机仍需你本地验证。
 
 ---
 
