@@ -224,9 +224,9 @@ final class QwenLocalModel: ObservableObject {
                 guard result == 0 else {
                     LedgerLog.shared.error("qwen_generate_failed")
                     DispatchQueue.main.async {
-                        self?.rejectedGenerations += 1
-                        self?.lastFailure = "llama 生成失败"
-                        self?.lastRunAt = Date()
+                        self.rejectedGenerations += 1
+                        self.lastFailure = "llama 生成失败"
+                        self.lastRunAt = Date()
                     }
                     continuation.resume(returning: nil)
                     return
@@ -241,19 +241,19 @@ final class QwenLocalModel: ObservableObject {
                       Self.numbers(in: cleaned).isSubset(of: Self.numbers(in: source)) else {
                     LedgerLog.shared.warning("qwen_narration_rejected")
                     DispatchQueue.main.async {
-                        self?.rejectedGenerations += 1
-                        self?.lastFailure = "解释没有通过数字校验，已回退"
-                        self?.lastRunAt = Date()
+                        self.rejectedGenerations += 1
+                        self.lastFailure = "解释没有通过数字校验，已回退"
+                        self.lastRunAt = Date()
                     }
                     continuation.resume(returning: nil)
                     return
                 }
                 LedgerLog.shared.info("qwen_narration_ok", detail: "chars=\(cleaned.count)")
                 DispatchQueue.main.async {
-                    self?.completedGenerations += 1
-                    self?.lastNarration = cleaned
-                    self?.lastFailure = nil
-                    self?.lastRunAt = Date()
+                    self.completedGenerations += 1
+                    self.lastNarration = cleaned
+                    self.lastFailure = nil
+                    self.lastRunAt = Date()
                 }
                 continuation.resume(returning: cleaned)
             }
