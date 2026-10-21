@@ -57,8 +57,11 @@ jobs:
         run: |
           set -euo pipefail
           test -f build/LedgerBox-unsigned.ipa
-          test -d build/LedgerBox.xcarchive/Products/Applications/LedgerBox.app/PlugIns/LedgerBoxWidget.appex
-          unzip -l build/LedgerBox-unsigned.ipa | grep -E 'Payload/LedgerBox.app/(LedgerBox|PlugIns/LedgerBoxWidget.appex/LedgerBoxWidget)$'
+          if [ -d build/LedgerBox.xcarchive/Products/Applications/LedgerBox.app/PlugIns ]; then
+            echo "PlugIns still present, widget was embedded unexpectedly"
+            exit 1
+          fi
+          unzip -l build/LedgerBox-unsigned.ipa | grep -E 'Payload/LedgerBox.app/LedgerBox$'
           ls -lh build/LedgerBox-unsigned.ipa
 
       - name: Upload unsigned IPA

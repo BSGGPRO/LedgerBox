@@ -33,7 +33,6 @@
 		BB0000000000000000000018 /* QuickEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000018 /* QuickEntryView.swift */; };
 		BB0000000000000000000019 /* LedgerIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000019 /* LedgerIntents.swift */; };
 		BB000000000000000000001A /* ChangelogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000001A /* ChangelogView.swift */; };
-		BB0000000000000000000020 /* LedgerBoxWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000031 /* LedgerBoxWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		BB0000000000000000000021 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA000000000000000000003C /* WidgetKit.framework */; };
 		BB0000000000000000000022 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA000000000000000000003D /* SwiftUI.framework */; };
 		BB0000000000000000000023 /* LedgerBoxWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000020 /* LedgerBoxWidgetBundle.swift */; };
@@ -101,7 +100,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				BB0000000000000000000020 /* LedgerBoxWidget.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
