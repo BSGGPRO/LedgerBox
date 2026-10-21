@@ -7,7 +7,7 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 开源地址：**[github.com/BSGGPRO/LedgerBox](https://github.com/BSGGPRO/LedgerBox)**
 
 > **当前状态**  
-> 0.11.0 已完成一张图多账单、批量入账/撤销、JSON 全量备份/恢复、财务大脑动作路由和本地诊断日志；68 个模拟器测试通过。最新未签名 IPA 的大小与 SHA-256 见 GitHub Release。**尚未做真机安装、真机 0.5B 生成、内存峰值或截图级验收**。IPA 需要你自己的证书自签，且自签工具必须重签嵌套的 `Frameworks/llama.framework`。
+> 0.11.0 已完成一张图多账单、批量入账/撤销、JSON 全量备份/恢复、财务大脑动作路由和本地诊断日志；68 个模拟器测试通过。未签名 IPA 为 **482,469,078 字节**，SHA-256 `6A34A040239BD2D9D2A829309878BD058F8DC4CA0C85332B4131265C700DDE07`，[下载 v0.11.0](https://github.com/BSGGPRO/LedgerBox/releases/tag/v0.11.0)。**尚未做真机安装、真机 0.5B 生成、内存峰值或截图级验收**。IPA 需要你自己的证书自签，且自签工具必须重签嵌套的 `Frameworks/llama.framework`。
 
 ---
 
@@ -239,7 +239,7 @@ CONTRIBUTING.md
 - 当前 68 个测试覆盖财务汇总、退款、预算进度、副业分账、结余优先级、金额分位存储、极速记账解析、财务大脑模型/计算路由、本地教练、图片解析/商户词库/去重/转账手续费/写入撤销、多账单切分、AI 动作路由，以及 JSON 备份往返和 schema 拒绝；已在 iPhone 16 / iOS 26.2 模拟器全部通过。
 - 已取消 Siri、快捷指令和 App Intents，不能监听银行/微信通知，也没有系统自动化写账入口。
 - 小 AI 是本地规则 + `NaturalLanguage` + 5,643 参数金钱分类器 + 41,943,080 参数财务意图模型，不是生成式大模型；新模型合成验证集 98.3% 只代表合成语料回归，真实短句、方言和错别字仍需你自己考。
-- 0.11.0 未签名 IPA 的大小与 SHA-256 见 GitHub Release；无 `PlugIns`、无麦克风/语音/Siri 权限，含相机/相册用途说明，需自签后安装。自签工具必须同时重签嵌套的 `Frameworks/llama.framework/llama`。
+- 0.11.0 未签名 IPA：482,469,078 字节，SHA-256 `6A34A040239BD2D9D2A829309878BD058F8DC4CA0C85332B4131265C700DDE07`；[GitHub Release](https://github.com/BSGGPRO/LedgerBox/releases/tag/v0.11.0)。无 `PlugIns`、无麦克风/语音/Siri 权限，含相机/相册用途说明，需自签后安装。自签工具必须同时重签嵌套的 `Frameworks/llama.framework/llama`。
 - 权重文件 SHA-256：`6F5E92B17EC300D7A0C69AB79324903AE4407FB992393140BB2F783B7355F380`，41,943,200 字节。
 - 源码直接从 [`github.com/BSGGPRO/LedgerBox`](https://github.com/BSGGPRO/LedgerBox) 的 `master` 获取；Release 只提供 IPA，不重复打包源码。
 - 多账单切分是启发式规则：按 OCR 行距和分隔符拆分，无法解析金额的块会合并到邻近账单；票据旋转、表格跨行或行距过密时，仍需在核对页手动修正。
