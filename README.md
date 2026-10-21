@@ -5,7 +5,7 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 作者：**Beausoleil** · [Bilibili 个人空间](https://space.bilibili.com/1477283849)
 
 > **当前状态**  
-> 静态源码与文档已完成；GitHub Actions `macos-15` 已成功归档未签名 IPA（run `39585632223`，commit `9c78f90`），版本 `0.3.1`，包含物品/金额识别、15,380 参数财务专用小模型、5,643 参数金钱分类器、可选联网 AI、更新日志和作者入口；已取消 Siri/快捷指令，移除语音与 Siri 权限，默认不嵌入 Widget，方便自签。23 个 XCTest 已在 iPhone 16 / iOS 26.2 模拟器通过（run `39585640730`）；IPA 未签名，需要你用自己的证书自签；尚未做真机运行验证。
+> 0.4.0 源码已完成。GitHub Actions `macos-15` 已成功归档未签名 IPA（run `39590280640`，commit `a8872c3`），产物约 **1.24 MB**，内含 **10,485,800 参数**本地财务大脑和 `FinanceMindWeights.bin`（原始权重 10,485,920 字节）。29 个 XCTest 已在 iPhone 16 / iOS 26.2 模拟器通过（run `39590486710`：29 passed / 0 failed / 0 skipped）。尚未做真机安装、截图级视觉验收或真实账本准确率测试；IPA 未签名，需要你用自己的证书自签。
 
 ---
 
@@ -21,8 +21,9 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 - **小 AI 文本记账**：首页“极速”入口；输入“微信买奶茶 15 元”，本地拆出金额/收支/分类/账户/物品/备注；会跳过 `M5200`、`9号`、`2台` 等型号和数量，不把它们当金额。
 - **物品与价格识别**：“我买了一台电动车，9号M5200花费22000”提取物品“电动车”、金额 22000、支出；“这个物品是口红，但是口红价格是1000元”提取“口红”、1000、支出，并给出价格偏高软提醒。
 - **金钱小模型**：5,643 参数，字符 n-gram + 逻辑回归，给餐饮/交通/购物/工资/理财等语义排序；只做提示，不覆盖解析器结果。
-- **财务大脑**：15,380 参数，20 个财务意图；用本机账本快照回答支出、预算、结余、储蓄、负债、保险、税务等问题，不编数字、不写账、不联网。
-- **可选联网 AI**：OpenAI 兼容接口，默认关闭；接口地址、模型和 API Key 自己填，Key 只存钥匙串；只有点发送才联网，不自动上传账本。
+- **本地财务大脑**：**10,485,800 参数**，40 个财务/会计意图，262,144 个字符 1–3 gram 哈希桶；用本机账本快照回答支出、预算、结余、储蓄、负债、现金流、对账、发票、报销、工资、存货、折旧、摊销、增值税、应收应付、借款、房贷、房租、水电、医疗、教育、公益等问题。
+- **大脑可视化**：财务大脑页顶部“对话 / 大脑”切换；大脑页包含意图激活图、模型体检、实时探针、top 6 概率、特征数、推理延迟和 40 类覆盖。
+- **完全离线**：0.4.0 已删除联网 AI、API Key、Keychain 和全部网络请求；账本与输入文本都不离开设备。
 - **已取消 Siri**：删除 App Intents / 快捷指令入口和 `NSSiriUsageDescription`，不再暴露 Siri 记账。
 - **小组件源码**：保留 WidgetKit 小 / 中尺寸源码；当前默认不嵌入 App，避免 `PlugIns` 嵌套签名导致自签安装失败。需要时可在 Xcode 中重新加入 Embed 阶段。
 - **作者入口**：设置页可打开 Beausoleil 的 Bilibili 个人空间。
@@ -39,8 +40,10 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 | 持久化 | Core Data，`NSPersistentContainer`，本地 SQLite |
 | 金额 | `Decimal` + `NSDecimalNumber` 持久化桥接 |
 | 主题 | 自定义 `Theme`、`ThemeManager`、`EnvironmentKey` |
-| 小 AI | 本地规则 + `NaturalLanguage` + 5,643 参数金钱分类器 + 15,380 参数财务意图模型；可选 OpenAI 兼容联网问答 |
+| 小 AI | 本地规则 + `NaturalLanguage` + 5,643 参数金钱分类器 + 10,485,800 参数财务意图模型 |
+| 权重 | Int8 二进制资源，`Data` 映射读取；无 Core ML、无第三方运行时 |
 | 自动化 | 无 Siri、无 App Intents、无快捷指令 |
+| 网络 | 无（0.4.0 已删除联网 AI） |
 | 图标 | SF Symbols |
 | 依赖 | 无 CocoaPods、无第三方 SPM 包 |
 
@@ -57,7 +60,7 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 
 - Target：`LedgerBox`
 - Bundle ID：`com.example.ledgerbox`
-- Marketing Version：`0.3.1`
+- Marketing Version：`0.4.0`
 - Deployment Target：`17.0`
 - 设备族：iPhone + iPad
 - 无 `DEVELOPMENT_TEAM`、无证书、无描述文件
@@ -76,7 +79,7 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 
 首次启动没有交易，首页会显示空状态。点击“记一笔”记录第一笔收入或支出；点击“极速”进入小 AI 文本记账，输入一句话即可解析，不需要麦克风或语音权限。
 
-工程包含 `LedgerBoxTests` Target，可在 Mac 上通过 `Cmd+U` 或 `xcodebuild test` 运行。当前 23 个测试已在 GitHub Actions 的 iPhone 16 / iOS 26.2 模拟器通过（run `39585640730`）；真机仍需你本地验证。
+工程包含 `LedgerBoxTests` Target，可在 Mac 上通过 `Cmd+U` 或 `xcodebuild test` 运行。当前 29 个测试已在 GitHub Actions 的 iPhone 16 / iOS 26.2 模拟器通过（run `39590486710`）；真机仍需你本地验证。
 
 ---
 
@@ -118,14 +121,15 @@ LedgerBox/
     Statistics/                      统计图表
     Budget/                          预算
     Goals/                           储蓄目标、买车场景
-    Settings/                        设置、模板、CSV、联网 AI
+    Settings/                        设置、模板、CSV、更新日志
     Main/                            五 Tab 容器
-    QuickEntry/                      一句话解析、小 AI、金钱小模型、财务大脑
+    QuickEntry/                      一句话解析、小 AI、金钱小模型、财务大脑、大脑可视化
   Resources/
     LedgerBox.xcdatamodeld/          Core Data 模型
     Assets.xcassets/                 AppIcon 占位
-LedgerBoxTests/                      XCTest：财务规则、买车规则、极速记账解析
-.github/workflows/                   无签名 iOS 归档工作流
+    FinanceMindWeights.bin           10,485,920 字节 Int8 权重 + Float32 bias
+LedgerBoxTests/                      XCTest：财务规则、极速记账解析、财务大脑
+.github/workflows/                   无签名 iOS 归档、模拟器测试
 Docs/                                架构、规则、构建、签名、验收、主题文档
 README.md
 LICENSE
@@ -153,7 +157,8 @@ CONTRIBUTING.md
 
 ### 本地优先
 
-- 无登录、无账号、无云同步、无广告、无内购；账本默认只在本机，联网 AI 默认关闭，只有你点发送时才请求你自己配置的接口。
+- 无登录、无账号、无云同步、无广告、无内购；账本只在本机。
+- 0.4.0 不含联网 AI，不含 `URLSession` 请求，不上传账本或输入文本。
 - 数据只写入本机 Core Data SQLite。
 - CSV 只通过系统文件导出器保存到用户选择的位置。
 
@@ -161,10 +166,9 @@ CONTRIBUTING.md
 
 - `QuickEntryParser` 只依赖 Foundation + `NaturalLanguage`，不依赖 UI/Core Data。
 - 解析“微信买奶茶 15 元”得到金额、分类、账户与备注；无法唯一匹配时要求手动补全，不静默猜测。
-- `QuickEntryAI` 做本地解释、字段完整度、示例和建议；本地解析不联网，输入文本不会自动离开设备。
+- `QuickEntryAI` 做本地解释、字段完整度、示例和建议；本地解析不联网，输入文本不会离开设备。
 - 已移除语音识别、麦克风和语音识别权限；App 不再请求麦克风。
 - 已删除 App Intents、快捷指令和 Siri 入口；不再注册系统自动化，也不会后台写账。
-- 联网 AI 只在用户主动点发送时请求用户配置的 HTTPS 接口；API Key 存钥匙串，不写入仓库，不上传账本。
 
 ---
 
@@ -186,9 +190,9 @@ CONTRIBUTING.md
 
 ## 已知限制
 
-- GitHub Actions 已实际 archive，23 个 XCTest 已在模拟器通过；但未签名、未真机安装、未 TestFlight/App Store 验证。
-- 已有 `Assets.xcassets` 与本地生成的 1024×1024 AppIcon 占位；未在 Xcode 中验证 Asset Catalog 编译，也未做上架截图/视觉审查。
-- `.github/workflows/ios-unsigned.yml` 已实际运行成功（run `39585632223`）；`.github/workflows/ios-tests.yml` 已实际运行 23 个测试并全部通过（run `39585640730`）。
+- GitHub Actions 已实际 archive，29 个 XCTest 已在模拟器通过；但未签名、未真机安装、未 TestFlight/App Store 验证。
+- 没有在真机或模拟器里做截图级视觉验收；“大脑”页面的动画、Canvas 和自适应布局只经过编译和静态检查。
+- 已有 `Assets.xcassets` 与 1024×1024 AppIcon 占位；未做上架截图/视觉审查。
 - 无账户管理 UI、无分类管理 UI；默认账户与分类由 Persistence 种子和模板创建。
 - 无周期记账 UI；需求中的“补记本期”尚未接入页面。
 - `SavingsGoal` 与 `Account` 没有 Core Data 关系或 `accountId` 外键；买车页通过 `templateTag` + 专户名称同步。
@@ -196,12 +200,12 @@ CONTRIBUTING.md
 - 本月结余只允许结转一次；结转后又新增收入，不能再次结转。
 - `AppSettings.themeMode` / `accentColorHex` 字段存在，但当前主题实际由 `ThemeManager` + UserDefaults 驱动，两者未双向同步。
 - 无多币种换算；`currencyCode` 默认 CNY，v1 只按 CNY 展示。
-- 已有 `LedgerBoxTests` Target，共 23 个测试，覆盖财务汇总、退款、预算进度、副业分账、结余优先级、金额分位存储与 14 个极速记账解析用例；已在 iPhone 16 / iOS 26.2 模拟器全部通过。
+- 当前 29 个测试覆盖财务汇总、退款、预算进度、副业分账、结余优先级、金额分位存储、14 个极速记账解析用例和 6 个财务大脑模型用例；已在 iPhone 16 / iOS 26.2 模拟器全部通过。
 - 已取消 Siri、快捷指令和 App Intents，不能监听银行/微信通知，也没有系统自动化写账入口。
-- 小 AI 是本地规则 + `NaturalLanguage` + 5,643 参数金钱分类器 + 15,380 参数财务意图模型，不是生成式大模型；联网 AI 默认关闭，开启后也只发送你手动输入的文本。
-- 新版未签名 IPA 已由 GitHub Actions 生成：`LedgerBox-unsigned-0.3.1-Parser.ipa`，890,029 字节，SHA-256 `AE04D8FBF03B9B14AF4C382D573DCA5D12F7A1065CA8DF901F204EDEE364976C`；无 `PlugIns`、无麦克风/语音/Siri 权限，需自签后安装。
-- 源码包：`LedgerBox-source-0.3.1-Parser.zip`（大小与 SHA-256 见交付说明）。
-- 当前默认是单 target：不再嵌入 `PlugIns/LedgerBoxWidget.appex`，所以 `lcsign` 只需签主 App。Widget 源码仍在仓库中，但不会进入 IPA。
+- 小 AI 是本地规则 + `NaturalLanguage` + 5,643 参数金钱分类器 + 10,485,800 参数财务意图模型，不是生成式大模型；合成验证集 99.1% 不代表真实世界准确率，真实短句、方言和错别字仍需你自己考。
+- 新版未签名 IPA：`LedgerBox-unsigned-0.4.0-FinanceBrain.ipa`，1,240,946 字节，SHA-256 `797944418CEAA05A9EC3C244DCF41BB4428DC78C383A792EE68DC73029C85537`；无 `PlugIns`、无麦克风/语音/Siri 权限，需自签后安装。
+- 权重文件 SHA-256：`FBAE921A209BAF880481E10B91ACADEEE3B324182063CDDDDA7CFE9FB4C7CF74`，10,485,920 字节。
+- 当前默认是单 target：不嵌入 `PlugIns/LedgerBoxWidget.appex`，所以 `lcsign` 只需签主 App。Widget 源码仍在仓库中，但不会进入 IPA。
 - 如果要重新启用小组件，必须在 Xcode 中恢复 Embed 阶段，并同时签主 App 与 appex；否则会出现图标有、点不开的安装失败。
 
 ---
@@ -216,9 +220,8 @@ CONTRIBUTING.md
 - [`Docs/THEMING.md`](Docs/THEMING.md)：主题令牌、明暗配色、扩展方式
 - [`Docs/GITHUB_RESEARCH.md`](Docs/GITHUB_RESEARCH.md)：开源 iOS 记账项目调研与可借鉴项
 - [`Docs/QUICK_ENTRY_PARSER.md`](Docs/QUICK_ENTRY_PARSER.md)：物品/金额识别、型号与数量过滤、价格软提醒
-- [`Docs/MONEY_BRAIN.md`](Docs/MONEY_BRAIN.md)：5,643 参数金钱小模型、训练边界、0.5B 模型选项
-- [`Docs/FINANCE_MIND.md`](Docs/FINANCE_MIND.md)：15,380 参数财务意图模型、20 个意图、规则边界
-- [`Docs/ONLINE_AI.md`](Docs/ONLINE_AI.md)：可选联网 AI、OpenAI 兼容配置、Keychain 与隐私边界
+- [`Docs/MONEY_BRAIN.md`](Docs/MONEY_BRAIN.md)：5,643 参数金钱小模型、训练边界
+- [`Docs/FINANCE_MIND.md`](Docs/FINANCE_MIND.md)：10,485,800 参数财务意图模型、40 个意图、可视化与规则边界
 - [`Docs/OPEN_SOURCE_10.md`](Docs/OPEN_SOURCE_10.md)：10 个开源记账项目的许可证与取舍
 - [`CHANGELOG.md`](CHANGELOG.md)：面向用户的版本更新记录
 - [`CONTRIBUTING.md`](CONTRIBUTING.md)：贡献流程与硬规则

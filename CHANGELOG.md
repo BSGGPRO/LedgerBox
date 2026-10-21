@@ -3,6 +3,26 @@
 All user-visible changes to LedgerBox are recorded here and in the in-app
 **设置 → 更新日志** page.
 
+## 0.4.0 — 2026-10-22
+
+### Added
+
+- 财务意图模型扩展到 **10,485,800 参数**：40 个意图 × 262,144 个字符 n-gram 哈希桶 + 40 个 bias。
+- 新增基础会计意图：现金流、对账、发票、报销、工资核算、存货、折旧、摊销、增值税、权责发生、备用金、应收账款、应付账款、借款、房贷、房租、水电、医疗、教育、公益。
+- 财务大脑新增“大脑”视图：Canvas 意图激活图、模型体检、实时探针、top 6 概率、特征数、延迟、40 类覆盖。
+- 权重改为 Int8 二进制资源 `FinanceMindWeights.bin`（10,485,920 字节），Swift 端直接映射读取，约 10MB。
+
+### Removed
+
+- 删除联网 AI、`OnlineAI.swift`、`OnlineAIView.swift`、API Key/Keychain 配置和设置入口。
+- App 不再包含 `URLSession` 网络请求；账本和输入文本都不离开本机。
+
+### Notes
+
+- 训练数据仍是合成财务/会计短语；最近一次合成验证集约 99.1%，仅用于回归自测，不代表真实世界准确率。
+- 已通过 GitHub Actions 未签名归档和 29 个模拟器 XCTest；没有真机安装、没有截图级视觉验收。
+- 这不是 Qwen 裁层或生成式模型，只做意图分类 + 固定规则回答。
+
 ## 0.3.1 — 2026-10-21
 
 ### Added
@@ -34,11 +54,11 @@ All user-visible changes to LedgerBox are recorded here and in the in-app
 - 训练数据是合成财务短语，合成验证集准确率不代表真实场景。
 - 没有真机运行，也没有用真实账本做准确率评估。
 
-## 0.2.2 — 2026-10-21
+## 0.2.2 — 2026-10-21（联网 AI 已在 0.4.0 移除）
 
 ### Added
 
-- 可选联网 AI：OpenAI 兼容 `/chat/completions`，接口地址、模型和 API Key 由用户填写。
+- 历史版本曾提供可选联网 AI：OpenAI 兼容 `/chat/completions`，接口地址、模型和 API Key 由用户填写。0.4.0 已删除该功能及全部网络代码。
 - API Key 只存本机钥匙串；默认关闭，只有点“发送”时才请求，不自动上传账本。
 - 联网问答页：聊天气泡、建议问题、连接状态、发送中状态和错误提示。
 - 设置新增 AI 分区：开关、接口、模型、密钥、连接测试和隐私边界说明。

@@ -1,59 +1,82 @@
-# 财务专用小模型（0.3.0 引入，0.3.1 继续保留）
+# 本地财务大脑（0.4.0）
 
 ## 1. 它是什么
 
-`FinanceMind` 是一个 **财务任务专用分类器 + 规则引擎**，不是 Qwen2.5-0.5B 裁层，也不是生成式语言模型。
+`FinanceMind` 是一个 **40 类财务意图分类器 + 固定规则引擎**，不是 Qwen 裁层，也不是生成式聊天模型。
 
 ```text
-20 个财务意图 × 768 个字符 n-gram 哈希桶 + 20 个 bias
-= 15,380 个参数
+40 个意图 × 262,144 个字符 n-gram 哈希桶 + 40 个 bias
+= 10,485,800 个参数
 ```
+
+权重以 Int8 存在 `LedgerBox/Resources/FinanceMindWeights.bin`，文件 **10,485,920 字节**（160 字节 Float32 bias + 10,485,760 字节 Int8 权重）。Swift 用 `Data` 映射读取，推理在本机 CPU 完成。
 
 它做的是：
 
-- 判断一句话属于哪类财务问题。
+- 判断一句话属于哪类财务/记账问题。
 - 用本机账本快照和固定规则生成回答。
 - 对预算、结余、储蓄率、应急金、目标进度做算术。
-- 对负债、投资、保险、税务只给风险提示，不给具体买卖/申报结论。
+- 覆盖个人记账和基础会计：现金流、对账、发票、报销、工资、存货、折旧、摊销、增值税、权责发生、备用金、应收应付、借款、房贷、房租、水电、医疗、教育、公益等。
+- 在“财务大脑 → 大脑”里显示意图激活图、模型体检、实时探针和前 6 个概率。
 
 它不做的是：
 
 - 不生成自由文本小说。
 - 不预测股票/基金涨跌。
 - 不自动写账。
-- 不联网。
+- 不联网；0.4.0 已删除全部联网 AI 代码。
 - 不冒充 Qwen 或任何大语言模型。
 
-## 2. 20 个意图
+## 2. 40 个意图
 
 ```text
-record_expense      记支出
-record_income       记收入
-spending_query      查支出
-balance_query       查结余/余额
-budget_status       预算
-category_question   分类
-saving_advice       储蓄
-debt_advice         负债
-investment_risk     投资风险
-emergency_fund      应急金
-financial_goal      目标
-bill_reminder       账单
-subscription        订阅
-impulse_spending    冲动消费
-refund              退款
-transfer            转账
-split_bill          分账
-insurance           保险
-tax                 税务
-other               其他
+record_expense       记支出
+record_income        记收入
+spending_query       查支出
+balance_query        查结余/余额
+budget_status        预算
+category_question    分类
+saving_advice        储蓄
+debt_advice          负债
+investment_risk      投资风险
+emergency_fund       应急金
+financial_goal       目标
+bill_reminder        账单
+subscription         订阅
+impulse_spending     冲动消费
+refund               退款
+transfer             转账
+split_bill           分账
+insurance            保险
+tax                  税务
+cashflow             现金流
+reconciliation       对账
+invoice              发票
+reimbursement        报销
+payroll              工资核算
+inventory            存货
+depreciation         折旧
+amortization         摊销
+vat                  增值税
+accrual              权责发生
+petty_cash           备用金
+accounts_receivable  应收账款
+accounts_payable     应付账款
+loan                 借款
+mortgage             房贷
+rent                 房租
+utilities            水电
+medical              医疗
+education            教育
+charity              公益
+other                其他
 ```
 
 ## 3. 回答怎么来
 
 ```text
 输入文本
-→ FinanceMind 意图分类
+→ FinanceMind 40 类意图分类
 → FinanceSnapshot（本月收入/支出/结余/余额/分类/预算/目标）
 → FinanceAdvisor 固定模板 + Decimal 计算
 → 回答卡
@@ -66,7 +89,19 @@ other               其他
 - 回答不自动写账；写账仍走 AI 记账 / `LedgerService`。
 - 回答只作记账参考，不构成投资、税务或保险建议。
 
-## 4. 训练
+## 4. 可视化
+
+`FinanceAdvisorView` 顶部有“对话 / 大脑”分段控件。切到“大脑”后：
+
+- 中心显示 10,485,800 参数。
+- 外圈是 40 个意图节点；当前 top 意图用强调色，其余节点按激活值着色。
+- “模型体检”显示参数量、意图数、哈希桶、权重体积、加载状态。
+- “实时探针”可输入任意短句，显示前 6 个意图概率、特征数、哈希桶数和推理耗时。
+- “训练覆盖”列出全部 40 类。
+
+激活图是 **意图激活可视化**，不是神经元级可解释性；节点大小/颜色由 Softmax 概率驱动。
+
+## 5. 训练
 
 脚本：
 
@@ -74,32 +109,25 @@ other               其他
 python Tools/train_finance_mind.py
 ```
 
-- 语料：合成中文财务短语，按 20 个意图模板生成。
-- 模型：字符 unigram + bigram，FNV-1a 哈希到 768 桶，多项逻辑回归。
-- 导出：Int16 量化 + base64 内嵌 `FinanceMindWeights.swift`。
-- 验证：合成验证集约 99.9%，**这个数字没有现实意义**；真实短信、方言、错别字仍需测试。
+- 语料：合成中文财务/会计短语，按 40 个意图模板生成；包含金额、账户、前缀/后缀变体。
+- 特征：字符 unigram + bigram + trigram，FNV-1a 哈希到 262,144 桶。
+- 模型：多项逻辑回归，40 × 262,144 权重 + 40 bias；稀疏 SGD，10 epochs。
+- 量化：Int8 权重（scale 64）+ Float32 bias；导出二进制，不再把大数组塞进 Swift 源码。
+- 验证：最近一次合成验证集约 **99.1%**；这是合成语料的回归指标，**没有现实意义**。真实短信、方言、错别字、长句仍需你自己考。
 
-## 5. 为什么不是 Qwen2.5-0.5B
+## 6. 为什么不是 Qwen2.5-0.5B
 
 | 方案 | 体积 | 运行 | 风险 |
 |---|---:|---|---|
-| FinanceMind | 约 42KB 源码/权重 | 纯 Swift，毫秒级 | 只能做意图+规则，不会聊天 |
+| FinanceMind 0.4.0 | 约 10MB 权重 | 纯 Swift，毫秒级 | 只能做意图+规则，不会聊天 |
 | Qwen2.5-0.5B 4-bit | 300–400MB | Core ML/llama.cpp + tokenizer + KV cache | 当前无 Mac/真机验证，首 token 慢，可能被杀 |
-| 远程 Qwen API | 0MB | 需要 API Key + 网络 | 不是本地，依赖第三方 |
+| 远程 API | 0MB | 需要 Key + 网络 | 不是本地，0.4.0 已移除 |
 
-真正“把 Qwen 压成只懂财务”需要：
+真正“把 Qwen 压成只懂财务”需要教师模型蒸馏、结构化剪枝、Core ML 转换和真机性能验证；当前环境做不了这些可靠验证，所以选择 **任务专用分类器 + 规则引擎**，把“财务理解”落在可审计的代码和可检查的权重上。
 
-1. 教师模型推理，生成财务指令数据。
-2. 结构化剪枝/蒸馏到更小学生模型。
-3. 量化、Core ML 转换。
-4. Mac + 真机测 tokens/s、内存、崩溃。
-5. 许可证/NOTICE 处理。
+## 7. 未验证
 
-当前环境做不了 1–4 的可靠验证，所以选择 **任务专用分类器 + 规则引擎**，把“财务理解”落在可审计的代码上。
-
-## 6. 未验证
-
-- 没有真机运行。
+- 没有真机运行，也没有截图级视觉验收；只有 GitHub Actions 编译、归档和模拟器 XCTest。
 - 没有用真实账本做意图准确率评估。
 - 没有多语言/方言测试。
 - 没有税务/保险专业审校。

@@ -1,6 +1,6 @@
-# LedgerBox 组件与架构
+﻿# LedgerBox 组件与架构
 
-本文描述当前源码的分层、关键类型、数据流和扩展点。GitHub Actions 已成功 archive，23 个 XCTest 已在 iPhone 16 / iOS 26.2 模拟器通过；但本文不代表真机运行、签名安装或人工 UI 验收。
+本文描述当前源码的分层、关键类型、数据流和扩展点。GitHub Actions 已成功 archive，29 个 XCTest 已在 iPhone 16 / iOS 26.2 模拟器通过；但本文不代表真机运行、签名安装或人工 UI 验收。
 
 ---
 
@@ -33,7 +33,7 @@ LedgerBoxWidgetBundle
 2. **场景规则可插拔**：日常、学生、买车模板只提供种子与规则，不污染 `FinanceEngine`。
 3. **写入边界单一**：所有余额变更经过 `LedgerService`。
 4. **视觉集中**：颜色、字体、圆角、间距集中在 `Theme`。
-5. **本地优先**：默认离线、无登录、无云同步；联网 AI 可选且默认关闭。
+5. **本地优先**：完全离线、无登录、无云同步；0.4.0 已删除联网 AI。
 
 ---
 
@@ -140,10 +140,10 @@ protocol TransactionProviding {
 | `Features/Statistics` | `StatisticsView` | 6 个月柱状图、分类环图、累计趋势 |
 | `Features/Budget` | `BudgetView`、`BudgetEditorView` | 总/分类预算、月/周、启停用、空状态 |
 | `Features/Goals` | `GoalsView`、`GoalEditorView`、`BuyCarPlanView` | 目标进度/倒计时；买车场景 |
-| `Features/Settings` | `SettingsView`、`ChangelogView`、`OnlineAI`、`OnlineAIView` | 主题、模板、CSV、可选联网 AI、更新日志、作者入口 |
+| `Features/Settings` | `SettingsView`、`ChangelogView` | 主题、模板、CSV、更新日志、作者入口 |
 | `LedgerBoxWidget` | `LedgerBoxWidget`、`LedgerBoxWidgetBundle` | WidgetKit 源码保留；默认不嵌入 App，避免自签失败 |
 | `Features/Main` | `MainTabView` | 五 Tab 容器 |
-| `Features/QuickEntry` | `QuickEntryParser`、`QuickEntryAI`、`MoneyBrain`、`FinanceMind`、`FinanceAdvisorView`、`QuickEntryView` | 一句话解析、本地文本小 AI、5,643 参数金钱分类器、15,380 参数财务意图模型 |
+| `Features/QuickEntry` | `QuickEntryParser`、`QuickEntryAI`、`MoneyBrain`、`FinanceMind`、`FinanceAdvisorView`、`FinanceBrainMapView`、`QuickEntryView` | 一句话解析、本地文本小 AI、5,643 参数金钱分类器、10,485,800 参数财务意图模型、大脑可视化 |
 
 ### 2.7 QuickEntry 层
 
@@ -153,22 +153,21 @@ protocol TransactionProviding {
 | `QuickEntryAI.swift` | 本地解释层；输出状态、字段完整度、缺失字段和示例；不调用模型/网络 |
 | `MoneyBrain.swift` | 5,643 参数多项逻辑回归；字符 n-gram 哈希；输出语义类别与置信度 |
 | `MoneyBrainWeights.swift` | 由 `Tools/train_money_brain.py` 生成的 Int16 量化权重 |
-| `FinanceMind.swift` | 15,380 参数财务意图分类器 + 账本快照 + 固定规则回答；不生成数字、不写账、不联网 |
-| `FinanceMindWeights.swift` | 由 `Tools/train_finance_mind.py` 生成：20 意图 × 768 桶 + 20 bias，Int16 量化 |
-| `FinanceAdvisorView.swift` | 财务大脑页；本月收支/结余/余额、预算/目标快照、财务问答和提示胶囊 |
-| `QuickEntryView.swift` | AI 记账面板；示例胶囊、小 AI 状态卡、金钱小模型提示、财务大脑入口、联网入口、分类/账户建议；不请求麦克风 |
-| `OnlineAI.swift` | 可选 OpenAI 兼容客户端；Keychain 存 Key；默认关闭；只发送用户输入 |
-| `OnlineAIView.swift` | 联网 AI 聊天页与配置页；连接测试、错误提示、隐私边界 |
+| `FinanceMind.swift` | 10,485,800 参数财务意图分类器 + 账本快照 + 固定规则回答；不生成数字、不写账、不联网 |
+| `FinanceMindWeights.swift` | 模型元数据：40 意图 × 262,144 桶 + 40 bias，scale 64；大权重在 `Resources/FinanceMindWeights.bin` |
+| `FinanceAdvisorView.swift` | 财务大脑页；“对话 / 大脑”分段；本月收支/结余/余额、预算/目标快照、财务问答和提示胶囊 |
+| `FinanceBrainMapView.swift` | 本地模型可视化：意图激活图、模型体检、实时探针、延迟与 40 类覆盖 |
+| `QuickEntryView.swift` | AI 记账面板；示例胶囊、小 AI 状态卡、金钱小模型提示、财务大脑入口、分类/账户建议；不请求麦克风 |
 
 边界：
 
 - Parser 只接收 `CategoryOption` / `AccountOption` 快照，不直接持有 `NSManagedObject`。
 - 小 AI 只做本地规则解释和字段完整度，不生成不存在的金额/分类。
 - MoneyBrain 只给建议排序/提示，不覆盖解析器明确结果；置信度低于 0.42 不显示。
-- FinanceMind 只做 20 类财务意图路由；回答数字来自本机 Core Data，不由模型生成，不自动写账。
+- FinanceMind 只做 40 类财务/会计意图路由；回答数字来自本机 Core Data，不由模型生成，不自动写账。
 - FinanceMind 不是 Qwen2.5-0.5B 裁层，不是生成式模型；合成训练集准确率不代表真实准确率。
 - 已取消 Siri、快捷指令和 App Intents；没有系统自动化写账入口。
-- 联网 AI 默认关闭；只有用户点发送时才请求配置的 HTTPS 接口，不自动上传账本，不自动写账。
+- 0.4.0 已删除联网 AI、Keychain 和 URLSession；App 不发起网络请求。
 
 ---
 
@@ -190,7 +189,7 @@ AddTransactionView
   → @FetchRequest 刷新首页/流水/统计/预算
 ```
 
-### 3.1.1 极速记账 / 联网问答
+### 3.1.1 极速记账 / 财务大脑
 
 ```text
 QuickEntryView
@@ -200,15 +199,15 @@ QuickEntryView
   → LedgerService.record(...)
   → 首页 @FetchRequest 刷新
 
-FinanceAdvisorView
-  → FinanceMind.predict(text)（20 意图，15,380 参数）
+FinanceAdvisorView（对话）
+  → FinanceMind.predict(text)（40 意图，10,485,800 参数）
   → FinanceSnapshot（本机账本/预算/目标）
   → FinanceAdvisor.answer（固定模板 + Decimal）
 
-OnlineAIView
-  → OnlineAIClient.send(messages)
-  → HTTPS /chat/completions（用户配置）
-  → 只显示回答，不写账
+FinanceAdvisorView（大脑）
+  → FinanceMind.probe(text, limit: 8)
+  → FinanceBrainProbe（top 意图/置信度/特征数/延迟）
+  → FinanceBrainMapView（Canvas 激活图 + 探针列表）
 ```
 
 ### 3.2 批量分账
@@ -341,8 +340,7 @@ CSV 字段：
 | `QuickEntryParser.ParsedEntry` | `QuickEntryParser.swift` | 一句话解析快照与问题列表 |
 | `QuickEntryAI.Insight` | `AIAssistant.swift` | 小 AI 状态、完整度、缺失字段 |
 | `MoneyBrainPrediction` | `MoneyBrain.swift` | 语义类别、置信度、建议收支类型 |
-| `OnlineAIMessage` | `OnlineAI.swift` | 联网问答消息 |
-| `OnlineAIClient` | `OnlineAI.swift` | OpenAI 兼容 HTTPS 请求与错误映射 |
+| `FinanceBrainProbe` | `FinanceMind.swift` | top 意图、置信度、特征数、哈希桶、参数量、推理延迟 |
 
 ---
 
@@ -407,11 +405,11 @@ CSV 字段：
 - 无账户管理 UI、无分类管理 UI。
 - 无周期记账页面；“补记本期”尚未接入。
 - `AppSettings.themeMode` 与 `ThemeManager` 未双向同步。
-- 测试 Target 已运行：23 个测试在 iPhone 16 / iOS 26.2 模拟器通过（run `39585640730`）。
+- 测试 Target 已运行：29 个测试在 iPhone 16 / iOS 26.2 模拟器通过（run `39590486710`）。
 - AppIcon 与 Asset Catalog 已随 GitHub Actions archive 编译；未做真机视觉检查。
-- 已通过 GitHub Actions `macos-15` 归档（run `39585632223`）；未在本地 Xcode 运行，也未做真机验证。
+- 已通过 GitHub Actions `macos-15` 归档（run `39590280640`）；未在本地 Xcode 运行，也未做真机验证。
 - iOS 不能读取其他 App 的通知内容；已取消快捷指令/Siri，没有系统自动化写账入口。
-- 本地小 AI 是规则 + 5,643 参数金钱分类器 + 15,380 参数财务意图模型；财务大脑未做真实账本准确率测试；联网 AI 需用户自配接口，未做真实网络验证。
+- 本地小 AI 是规则 + 5,643 参数金钱分类器 + 10,485,800 参数财务意图模型；财务大脑未做真实账本准确率测试，也未做真机视觉验收；0.4.0 不含联网 AI。
 
 ---
 
@@ -444,8 +442,7 @@ LedgerBox/
     QuickEntry/QuickEntryView.swift
     Settings/SettingsView.swift
     Settings/ChangelogView.swift
-    Settings/OnlineAI.swift
-    Settings/OnlineAIView.swift
+    QuickEntry/FinanceBrainMapView.swift
     Main/MainTabView.swift
   LedgerBoxWidget/
     LedgerBoxWidgetBundle.swift

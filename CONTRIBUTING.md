@@ -13,7 +13,7 @@ LedgerBox 是一个 iOS 17+ 的本地记账本：
 - SwiftUI + Core Data
 - 账本仅本地存储
 - 无登录、无账号、无云同步
-- 默认离线；可选联网 AI 由用户自配接口，默认关闭
+- 完全离线；0.4.0 已删除联网 AI，不包含网络请求代码
 - 无广告、无内购、无付费 SDK
 - 无 CocoaPods、无第三方运行时依赖
 - 金额使用 `Decimal`，禁止用 `Double` 存储金额
@@ -59,14 +59,14 @@ LedgerBox 是一个 iOS 17+ 的本地记账本：
 - 新增颜色先加 Theme 令牌，再在页面使用
 - 主要页面必须有浅色/深色 `#Preview`
 
-### QuickEntry / 联网 AI
+### QuickEntry / 本地财务大脑
 
 - `QuickEntryParser` 只依赖 Foundation + NaturalLanguage，不依赖 SwiftUI/Core Data。
 - 解析结果缺金额、收支、分类、账户时，必须让用户补全，不能静默猜测后保存。
-- 不再添加语音识别、麦克风、Siri、快捷指令或 App Intents；这些入口已在 0.2.2 删除，0.3.0 继续禁用。
-- 联网 AI 默认关闭，只能由用户主动点发送触发；不得后台同步账本。
-- API Key 只能存 Keychain，不得写入 UserDefaults、源码、日志或仓库。
-- 联网回答只作建议，不能绕过 `LedgerService` 自动写账。
+- 不再添加语音识别、麦克风、Siri、快捷指令或 App Intents；这些入口已在 0.2.2 删除，0.4.0 继续禁用。
+- 不得重新引入联网 AI、远程 API Key、云端同步或埋点。
+- `FinanceMind` 只做本地意图分类；回答不能绕过 `LedgerService` 自动写账。
+- 10MB 权重是打包资源，不要改回巨型 Swift 数组；修改模型必须同时更新 `Tools/train_finance_mind.py` 和 `FinanceMindWeights.bin`。
 
 ### 页面
 
@@ -181,7 +181,7 @@ xcodebuild \
 - [ ] 新增颜色/字体/圆角来自 Theme。
 - [ ] 新增主页面有空状态和 `#Preview`。
 - [ ] 删除/转账/模板切换有确认。
-- [ ] 极速记账/小模型/联网 AI 仍遵守本地优先与 `LedgerService` 写入边界。
+- [ ] 极速记账/小模型/财务大脑仍遵守本地优先与 `LedgerService` 写入边界。
 - [ ] 没有提交 `.p12`、`.mobileprovision`、Team ID、真实个人信息或 API Key。
 - [ ] 文档同步更新。
 - [ ] 没有声称“已编译/已测试”，除非附上实际命令与结果。
