@@ -167,7 +167,9 @@ struct QuickEntryParser {
             issues.append(.missingAccount)
         }
 
-        let item = extractItem(from: text)
+        // Use the original case for the note; matching itself is case-insensitive
+        // where it matters, so "9号M5200" stays readable instead of "9号m5200".
+        let item = extractItem(from: sanitized.text)
         let remark = item.detail ?? makeRemark(
             from: text,
             amountRanges: amountResult.ranges,

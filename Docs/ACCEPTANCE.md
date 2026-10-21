@@ -1,13 +1,13 @@
 # LedgerBox 验收清单
 
-本文是当前静态交付的验收记录。它区分三类结论：
+本文是当前交付的验收记录。它区分三类结论：
 
 - **源码具备**：文件与结构存在，可通过静态检查。
 - **部分**：规则或 UI 只实现了一部分。
 - **未验证**：需要 macOS/Xcode 实际编译、运行或签名。
 - **缺失**：当前仓库没有该产物。
 
-> 当前没有执行 `swiftc`、`xcodebuild`、`simctl`、`codesign`。不要把“静态语法通过”写成“编译通过”。
+> 已在 GitHub Actions 执行 `xcodebuild archive` 和 `xcodebuild test`；没有在本地 Mac 上执行 `codesign`，也没有真机安装。不要把“模拟器测试通过”写成“真机已验证”。
 
 ---
 
@@ -19,13 +19,13 @@
 | 文档 | README、LICENSE、.gitignore、CONTRIBUTING、核心 Docs、开源调研与 10 项目清单 |
 | 静态语法 | tree-sitter-swift 解析通过 |
 | 工程结构 | pbxproj / XML / plist 解析通过；App + Widget Extension 两个 Target，Widget 默认不嵌入 |
-| 实际编译 | GitHub Actions `macos-15` archive 成功（run `39580367114`，commit `954cdff`） |
-| 实际运行 | **未执行**（无模拟器/真机） |
-| 签名/IPA | `LedgerBox-unsigned-0.3.0-FinanceMind.ipa` 已生成；未签名、未真机安装 |
+| 实际编译 | GitHub Actions `macos-15` archive 成功（run `39584745878`，commit `08762d1`） |
+| 实际运行 | 23 个 XCTest 在 iPhone 16 / iOS 26.2 模拟器通过（run `39584757968`）；App UI 未人工逐页验收 |
+| 签名/IPA | `LedgerBox-unsigned-0.3.1-Parser.ipa` 已生成；未签名、未真机安装 |
 | Assets/AppIcon | 已随 archive 编译；未做视觉/真机验证 |
 | GitHub Actions | 已实际运行，结论 success |
-| 测试 Target | 已加入，未运行 |
-| 最终交付 | 静态源码、文档、未签名 IPA；运行/签名验证未执行 |
+| 测试 Target | 已加入；23 个测试在模拟器全部通过 |
+| 最终交付 | 源码、文档、未签名 IPA；模拟器测试通过，签名/真机未执行 |
 
 ---
 
@@ -60,18 +60,16 @@ NO BOM
 | AppIcon | 1024×1024、RGB、无 alpha；未做视觉审查 |
 | Asset Catalog JSON | `Contents.json` 可解析；已随 archive 编译 |
 | Assets 工程引用 | 文件引用 + Resources build phase 已存在 |
-| GitHub Actions | `.github/workflows/ios-unsigned.yml` 已实际运行成功（run `39580367114`） |
-| 测试 Target | `LedgerBoxTests` 已加入；2 个测试源文件；未运行 |
-| Scheme Test Action | 已加入 `TestableReference` 与 `MacroExpansion`；未运行 |
+| GitHub Actions | `.github/workflows/ios-unsigned.yml` 已实际运行成功（run `39584745878`） |
+| 测试 Target | `LedgerBoxTests` 已加入；2 个测试源文件；23 个测试通过 |
+| Scheme Test Action | 已加入 `TestableReference` 与 `MacroExpansion`；`xcodebuild test` 已实际执行 |
 
 这些检查不能替代：
 
-- Swift 类型检查
-- SwiftUI 宏展开
-- Core Data 模型加载
-- 链接
-- 运行时行为
-- 真机安装
+- 真机安装、签名、TestFlight/App Store
+- 人工逐页 UI/深色模式/无障碍验收
+- 真实账本、真实网络与弱网环境
+- 长时间运行和性能/内存测试
 
 ---
 
@@ -93,16 +91,16 @@ NO BOM
 | P0-12 | README / LICENSE / .gitignore / CONTRIBUTING | 源码具备 | 均已创建 |
 | P0-13 | Docs 核心文档 | 源码具备 | COMPONENTS / FINANCE_RULES / BUILD_STEPS / WINDOWS_BUILD_SIGN / ACCEPTANCE / THEMING；另有 GITHUB_RESEARCH、OPEN_SOURCE_10、CHANGELOG |
 | P0-14 | Assets.xcassets / AppIcon | 源码具备（占位） | 1024×1024 PNG + Contents.json；已随 archive 编译，未做视觉检查 |
-| P0-15 | GitHub Actions 无签名归档 | 已运行成功 | `.github/workflows/ios-unsigned.yml`；run `39580367114` |
-| P0-16 | 测试 Target | 源码具备（未运行） | `LedgerBoxTests` 已加入；覆盖财务汇总/退款/预算/分账；未执行 |
-| P0-17 | 实际编译/运行/签名 | **部分** | 远程 archive 成功；运行/签名/真机未验证 |
-| P0-18 | 不虚假宣称已编译/已签名 | 文档具备 | README 与 Docs 明确标注未编译 |
+| P0-15 | GitHub Actions 无签名归档 | 已运行成功 | `.github/workflows/ios-unsigned.yml`；run `39584745878` |
+| P0-16 | 测试 Target | 已运行通过 | `LedgerBoxTests`；23 个测试在模拟器通过（run `39584757968`） |
+| P0-17 | 实际编译/运行/签名 | **部分** | 远程 archive 成功；模拟器测试通过；签名/真机未验证 |
+| P0-18 | 不虚假宣称已编译/已签名 | 文档具备 | README 与 Docs 区分模拟器测试、签名与真机 |
 
 ---
 
 ## 4. P1 功能验收矩阵
 
-以下全部为 **未运行**，需要在 macOS/Xcode 中逐项验证。
+以下除特别标注外均为 **未人工运行**，需要在 macOS/Xcode 或真机中逐项验证；表格中的“解析器单元测试通过”仅指对应 XCTest，不代表 UI 自动化。
 
 | # | 场景 | 预期 | 状态 |
 |---|---|---|---|
@@ -129,7 +127,7 @@ NO BOM
 | P1-21 | 奶茶预算 | 150/月、2 杯/周告警 | 未运行 |
 | P1-22 | 目标专户警告 | 支出/转出提醒 | 未运行 |
 | P1-23 | Preview | 各页面浅色/深色可渲染 | 未运行 |
-| P1-24 | 小 AI 文本解析 | 一句话识别金额/收支/分类/账户；字段完整度、示例、分类/账户建议；5,643 参数模型只做提示 | 未运行 |
+| P1-24 | 小 AI 文本解析 | 一句话识别金额/收支/分类/账户/物品；跳过型号与数量；价格软提醒 | 解析器单元测试通过；UI 未人工验收 |
 | P1-25 | 权限收敛 | 已移除麦克风/语音识别/Siri 权限；不再请求这些权限 | 未运行 |
 | P1-26 | Siri / App Intents | 已取消 Siri、快捷指令和 App Intents；不再注册系统自动化 | 静态具备 |
 | P1-27 | WidgetKit 小组件 | 源码保留；当前默认不嵌入 appex，避免自签失败 | 未运行 |
@@ -148,14 +146,14 @@ NO BOM
 | P5-3 | .gitignore 覆盖 Xcode/证书/构建产物 | 具备 |
 | P5-4 | CONTRIBUTING 说明硬规则与 PR 清单 | 具备 |
 | P5-5 | Docs 核心文档 + 调研/10 项目清单 | 具备 |
-| P5-6 | 版本号 0.3.0 / Bundle ID 占位 | 具备 |
+| P5-6 | 版本号 0.3.1 / Bundle ID 占位 | 具备 |
 | P5-7 | 无 DEVELOPMENT_TEAM | 具备 |
 | P5-8 | Assets/AppIcon | 已有占位，已随 archive 编译，未视觉验证 |
-| P5-9 | GitHub Actions workflow | 已实际运行，run `39580367114` success |
-| P5-10 | 测试 Target | 已加入（2 个测试源文件），未运行 |
-| P5-11 | 实际 Xcode 编译 | GitHub Actions archive 成功（commit `954cdff`） |
-| P5-12 | 实际运行 | 未验证（无模拟器/真机） |
-| P5-13 | 未签名 IPA | `LedgerBox-unsigned-0.3.0-FinanceMind.ipa`（883,050 字节，无 PlugIns、无麦克风/语音/Siri 权限，适合 lcsign）；run `39580367114` |
+| P5-9 | GitHub Actions workflow | 已实际运行，run `39584745878` success |
+| P5-10 | 测试 Target | 已加入（2 个测试源文件），23 个测试通过 |
+| P5-11 | 实际 Xcode 编译 | GitHub Actions archive 成功（commit `08762d1`） |
+| P5-12 | 实际运行 | 23 个 XCTest 在 iOS 26.2 模拟器通过；App UI 未人工验收 |
+| P5-13 | 未签名 IPA | `LedgerBox-unsigned-0.3.1-Parser.ipa`（890,146 字节，无 PlugIns、无麦克风/语音/Siri 权限，适合 lcsign）；run `39584745878` |
 | P5-14 | 自签验证 | 未执行 |
 | P5-15 | 截图/视觉回归 | 缺失 |
 | P5-16 | 本地化 | 缺失（仅中文） |
@@ -171,9 +169,9 @@ NO BOM
 ### 6.1 必须先补的交付物
 
 1. `Assets.xcassets` 与 AppIcon 已随 archive 编译；仍需真机/视觉检查。
-2. GitHub Actions workflow 已实际触发，run `39580367114` 成功。
-3. `LedgerBoxTests` 已加入，但尚未在 Xcode 中运行。
-4. 已有远程 archive 记录；仍缺真机运行记录。
+2. GitHub Actions workflow 已实际触发，run `39584745878` 成功。
+3. `LedgerBoxTests` 的 23 个测试已在 iPhone 16 / iOS 26.2 模拟器通过（run `39584757968`）。
+4. 已有远程 archive 与模拟器测试记录；仍缺真机运行、签名和安装记录。
 5. 未签名 IPA 已生成并通过结构校验；签名与安装未验证。
 
 ### 6.2 功能缺口
@@ -192,14 +190,14 @@ NO BOM
 
 ### 6.3 工程缺口
 
-1. 测试 Target 已加入，但未实际运行。
+1. 测试 Target 已运行：23 个测试在 iOS 26.2 模拟器通过。
 2. CI 工作流已实际运行并 archive 成功；仍需真机运行。
 3. Assets/AppIcon 已随 archive 编译；未做视觉/真机检查。
 4. 无截图。
 5. 无迁移版本。
 6. 无本地化文件。
 7. 固定字号，未接入 Dynamic Type。
-8. 本地未运行 Xcode；远程 archive 成功不代表运行时无崩溃。
+8. 本地未运行 Xcode；模拟器测试通过不代表真机无崩溃或 UI 无布局问题。
 
 ---
 
@@ -246,6 +244,7 @@ NO BOM
 - Xcode 工程、共享 scheme、App target、`LedgerBoxTests` target。
 - Core Data 模型、持久化、主题、财务引擎、全部主页面。
 - 小 AI 文本记账：纯 Foundation 解析器、`QuickEntryAI` 本地解释、字段完整度、示例/分类/账户建议、5,643 参数金钱分类器。
+- 物品/金额识别：电动车、口红两个示例；跳过型号/数量；口红高价软提醒；新增 3 个解析测试。
 - 可选联网 AI：OpenAI 兼容接口、Keychain、默认关闭、连接测试、聊天页。
 - 已移除语音识别、麦克风、语音识别权限与 Siri；App Intents / 快捷指令已删除。
 - 设置页更新日志入口、`ChangelogView`、根目录 `CHANGELOG.md`。
@@ -255,13 +254,12 @@ NO BOM
 - Docs 核心文档 + GitHub 开源调研 + `OPEN_SOURCE_10.md` 10 项目清单。
 - Assets.xcassets 与 1024×1024 AppIcon 占位。
 - `.github/workflows/ios-unsigned.yml`。
-- `LedgerBoxTests` 的 20 个测试（9 个财务规则与存储 + 11 个极速记账解析）。
+- `LedgerBoxTests` 的 23 个测试（9 个财务规则与存储 + 14 个极速记账解析）。
 - 静态检查：Swift 语法、pbxproj、scheme、XML、plist、JSON、文档链接、BOM。
 
 ### 8.2 未执行，不能声称
 
-- 本地 Xcode 编译与模拟器运行（本会话没有 Mac/Xcode）。
-- `xcodebuild test` 实际运行；20 个测试仍只是源码。
+- 本地 Mac/Xcode 手工运行；已在 GitHub Actions 的 iPhone 16 / iOS 26.2 模拟器运行。
 - 真机安装、签名、TestFlight、App Store。
 - Widget 读取真实账本数据：当前未配置 App Group，小组件是静态 UI。
 - 小组件在真机主屏幕上的视觉回归；当前 IPA 默认不包含小组件。
@@ -285,11 +283,11 @@ NO BOM
 
 ### 8.4 结论
 
-> **按“静态源码与文档”目标：完成。**  
-> **按“可编译、可测试、可安装”目标：未验证。**  
-> 本项目不声称已编译、已通过测试、已签名或已生成可安装 IPA。
+> **按“源码、archive 与模拟器测试”目标：完成。**  
+> **按“已签名、可真机安装、生产可用”目标：未验证。**  
+> 本项目不声称已签名、已真机安装或已通过 App Store 验证；未签名 IPA 不能直接安装。
 
-最终源码包：`LedgerBox-source-0.3.0-FinanceMind.zip`（大小与 SHA-256 见交付说明）。旧版源码包不含财务大脑，不再作为最新交付。
+最终源码包：`LedgerBox-source-0.3.1-Parser.zip`（大小与 SHA-256 见交付说明）。旧版源码包不含物品/金额识别与 0.3.1 测试，不再作为最新交付。
 
 ---
 

@@ -1,6 +1,6 @@
 # LedgerBox 组件与架构
 
-本文描述当前源码的分层、关键类型、数据流和扩展点。GitHub Actions 已成功 archive，但本文不代表真机运行或测试通过。
+本文描述当前源码的分层、关键类型、数据流和扩展点。GitHub Actions 已成功 archive，23 个 XCTest 已在 iPhone 16 / iOS 26.2 模拟器通过；但本文不代表真机运行、签名安装或人工 UI 验收。
 
 ---
 
@@ -149,7 +149,7 @@ protocol TransactionProviding {
 
 | 文件 | 职责 |
 |---|---|
-| `QuickEntryParser.swift` | 纯 Foundation + NaturalLanguage；把“微信买奶茶 15 元”解析为金额、收支、分类、账户、备注；不依赖 SwiftUI/Core Data |
+| `QuickEntryParser.swift` | 纯 Foundation + NaturalLanguage；把“微信买奶茶 15 元”解析为金额、收支、分类、账户、物品、备注；跳过 `M5200`/`2台` 等型号与数量；不依赖 SwiftUI/Core Data |
 | `QuickEntryAI.swift` | 本地解释层；输出状态、字段完整度、缺失字段和示例；不调用模型/网络 |
 | `MoneyBrain.swift` | 5,643 参数多项逻辑回归；字符 n-gram 哈希；输出语义类别与置信度 |
 | `MoneyBrainWeights.swift` | 由 `Tools/train_money_brain.py` 生成的 Int16 量化权重 |
@@ -195,7 +195,7 @@ AddTransactionView
 ```text
 QuickEntryView
   → QuickEntryParser.parse(text, categories, accounts)
-  → 展示金额/收支/分类/账户/备注
+  → 展示金额/收支/分类/账户/物品/备注与价格软提醒
   → 未匹配字段由用户选择
   → LedgerService.record(...)
   → 首页 @FetchRequest 刷新
@@ -407,9 +407,9 @@ CSV 字段：
 - 无账户管理 UI、无分类管理 UI。
 - 无周期记账页面；“补记本期”尚未接入。
 - `AppSettings.themeMode` 与 `ThemeManager` 未双向同步。
-- 测试 Target 已加入，但尚未实际运行。
+- 测试 Target 已运行：23 个测试在 iPhone 16 / iOS 26.2 模拟器通过（run `39584757968`）。
 - AppIcon 与 Asset Catalog 已随 GitHub Actions archive 编译；未做真机视觉检查。
-- 已通过 GitHub Actions `macos-15` 归档；未在本地 Xcode 运行，也未做真机验证。
+- 已通过 GitHub Actions `macos-15` 归档（run `39584745878`）；未在本地 Xcode 运行，也未做真机验证。
 - iOS 不能读取其他 App 的通知内容；已取消快捷指令/Siri，没有系统自动化写账入口。
 - 本地小 AI 是规则 + 5,643 参数金钱分类器 + 15,380 参数财务意图模型；财务大脑未做真实账本准确率测试；联网 AI 需用户自配接口，未做真实网络验证。
 

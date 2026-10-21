@@ -5,7 +5,7 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 作者：**Beausoleil** · [Bilibili 个人空间](https://space.bilibili.com/1477283849)
 
 > **当前状态**  
-> 静态源码与文档已完成；GitHub Actions `macos-15` 已成功归档未签名 IPA（run `39580367114`，commit `954cdff`），版本 `0.3.0`，包含 15,380 参数财务专用小模型、5,643 参数金钱分类器、可选联网 AI、更新日志和作者入口；已取消 Siri/快捷指令，移除语音与 Siri 权限，默认不嵌入 Widget，方便自签。测试尚未运行，IPA 未签名，需要你用自己的证书自签；尚未做真机运行验证。
+> 静态源码与文档已完成；GitHub Actions `macos-15` 已成功归档未签名 IPA（run `39584745878`，commit `08762d1`），版本 `0.3.1`，包含物品/金额识别、15,380 参数财务专用小模型、5,643 参数金钱分类器、可选联网 AI、更新日志和作者入口；已取消 Siri/快捷指令，移除语音与 Siri 权限，默认不嵌入 Widget，方便自签。23 个 XCTest 已在 iPhone 16 / iOS 26.2 模拟器通过（run `39584757968`）；IPA 未签名，需要你用自己的证书自签；尚未做真机运行验证。
 
 ---
 
@@ -18,7 +18,8 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 - **预算**：总预算/分类预算、月/周周期、进度、超预算提示、新增/编辑/删除、启停用。
 - **目标**：储蓄目标、进度环、30 天平均净结余倒计时、达成/冻结状态、新增/编辑/删除。
 - **设置**：浅色/深色/跟随系统、五种强调色、模板应用、CSV 本地导出、隐私说明、更新日志。
-- **小 AI 文本记账**：首页“极速”入口；输入“微信买奶茶 15 元”，本地拆出金额/收支/分类/账户/备注；显示字段完整度、示例胶囊、分类建议和常用账户建议。
+- **小 AI 文本记账**：首页“极速”入口；输入“微信买奶茶 15 元”，本地拆出金额/收支/分类/账户/物品/备注；会跳过 `M5200`、`9号`、`2台` 等型号和数量，不把它们当金额。
+- **物品与价格识别**：“我买了一台电动车，9号M5200花费22000”提取物品“电动车”、金额 22000、支出；“这个物品是口红，但是口红价格是1000元”提取“口红”、1000、支出，并给出价格偏高软提醒。
 - **金钱小模型**：5,643 参数，字符 n-gram + 逻辑回归，给餐饮/交通/购物/工资/理财等语义排序；只做提示，不覆盖解析器结果。
 - **财务大脑**：15,380 参数，20 个财务意图；用本机账本快照回答支出、预算、结余、储蓄、负债、保险、税务等问题，不编数字、不写账、不联网。
 - **可选联网 AI**：OpenAI 兼容接口，默认关闭；接口地址、模型和 API Key 自己填，Key 只存钥匙串；只有点发送才联网，不自动上传账本。
@@ -56,7 +57,7 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 
 - Target：`LedgerBox`
 - Bundle ID：`com.example.ledgerbox`
-- Marketing Version：`0.3.0`
+- Marketing Version：`0.3.1`
 - Deployment Target：`17.0`
 - 设备族：iPhone + iPad
 - 无 `DEVELOPMENT_TEAM`、无证书、无描述文件
@@ -75,7 +76,7 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 
 首次启动没有交易，首页会显示空状态。点击“记一笔”记录第一笔收入或支出；点击“极速”进入小 AI 文本记账，输入一句话即可解析，不需要麦克风或语音权限。
 
-工程包含 `LedgerBoxTests` Target，可在 Mac 上通过 `Cmd+U` 或 `xcodebuild test` 运行；当前尚未实际执行。
+工程包含 `LedgerBoxTests` Target，可在 Mac 上通过 `Cmd+U` 或 `xcodebuild test` 运行。当前 23 个测试已在 GitHub Actions 的 iPhone 16 / iOS 26.2 模拟器通过（run `39584757968`）；真机仍需你本地验证。
 
 ---
 
@@ -185,9 +186,9 @@ CONTRIBUTING.md
 
 ## 已知限制
 
-- 未实际编译、未运行测试、未签名。
+- GitHub Actions 已实际 archive，23 个 XCTest 已在模拟器通过；但未签名、未真机安装、未 TestFlight/App Store 验证。
 - 已有 `Assets.xcassets` 与本地生成的 1024×1024 AppIcon 占位；未在 Xcode 中验证 Asset Catalog 编译，也未做上架截图/视觉审查。
-- 已加入 `.github/workflows/ios-unsigned.yml`；尚未在 GitHub Actions 实际运行。
+- `.github/workflows/ios-unsigned.yml` 已实际运行成功（run `39584745878`）；`.github/workflows/ios-tests.yml` 已实际运行 23 个测试并全部通过（run `39584757968`）。
 - 无账户管理 UI、无分类管理 UI；默认账户与分类由 Persistence 种子和模板创建。
 - 无周期记账 UI；需求中的“补记本期”尚未接入页面。
 - `SavingsGoal` 与 `Account` 没有 Core Data 关系或 `accountId` 外键；买车页通过 `templateTag` + 专户名称同步。
@@ -195,11 +196,11 @@ CONTRIBUTING.md
 - 本月结余只允许结转一次；结转后又新增收入，不能再次结转。
 - `AppSettings.themeMode` / `accentColorHex` 字段存在，但当前主题实际由 `ThemeManager` + UserDefaults 驱动，两者未双向同步。
 - 无多币种换算；`currencyCode` 默认 CNY，v1 只按 CNY 展示。
-- 已有 `LedgerBoxTests` Target，共 20 个测试，覆盖财务汇总、退款、预算进度、副业分账、结余优先级、金额分位存储与 11 个极速记账解析用例；尚未实际运行。
+- 已有 `LedgerBoxTests` Target，共 23 个测试，覆盖财务汇总、退款、预算进度、副业分账、结余优先级、金额分位存储与 14 个极速记账解析用例；已在 iPhone 16 / iOS 26.2 模拟器全部通过。
 - 已取消 Siri、快捷指令和 App Intents，不能监听银行/微信通知，也没有系统自动化写账入口。
 - 小 AI 是本地规则 + `NaturalLanguage` + 5,643 参数金钱分类器 + 15,380 参数财务意图模型，不是生成式大模型；联网 AI 默认关闭，开启后也只发送你手动输入的文本。
-- 新版未签名 IPA 已由 GitHub Actions 生成：`LedgerBox-unsigned-0.3.0-FinanceMind.ipa`，883,050 字节，SHA-256 `41C5575D5A87A998BF759DEAC684A4E6E7F7F48DEA045FC9222DD0BDBAE4FFBF`；无 `PlugIns`、无麦克风/语音/Siri 权限，需自签后安装。
-- 源码包：`LedgerBox-source-0.3.0-FinanceMind.zip`（大小与 SHA-256 见交付说明）。
+- 新版未签名 IPA 已由 GitHub Actions 生成：`LedgerBox-unsigned-0.3.1-Parser.ipa`，890,146 字节，SHA-256 `1938763E0108C3F006F61BA1B89C6B6BDAB3A8999C1ACFB1C720A703CACA3CB7`；无 `PlugIns`、无麦克风/语音/Siri 权限，需自签后安装。
+- 源码包：`LedgerBox-source-0.3.1-Parser.zip`（大小与 SHA-256 见交付说明）。
 - 当前默认是单 target：不再嵌入 `PlugIns/LedgerBoxWidget.appex`，所以 `lcsign` 只需签主 App。Widget 源码仍在仓库中，但不会进入 IPA。
 - 如果要重新启用小组件，必须在 Xcode 中恢复 Embed 阶段，并同时签主 App 与 appex；否则会出现图标有、点不开的安装失败。
 
@@ -214,6 +215,7 @@ CONTRIBUTING.md
 - [`Docs/ACCEPTANCE.md`](Docs/ACCEPTANCE.md)：P0/P1/P5 验收清单、静态证据、已知缺口
 - [`Docs/THEMING.md`](Docs/THEMING.md)：主题令牌、明暗配色、扩展方式
 - [`Docs/GITHUB_RESEARCH.md`](Docs/GITHUB_RESEARCH.md)：开源 iOS 记账项目调研与可借鉴项
+- [`Docs/QUICK_ENTRY_PARSER.md`](Docs/QUICK_ENTRY_PARSER.md)：物品/金额识别、型号与数量过滤、价格软提醒
 - [`Docs/MONEY_BRAIN.md`](Docs/MONEY_BRAIN.md)：5,643 参数金钱小模型、训练边界、0.5B 模型选项
 - [`Docs/FINANCE_MIND.md`](Docs/FINANCE_MIND.md)：15,380 参数财务意图模型、20 个意图、规则边界
 - [`Docs/ONLINE_AI.md`](Docs/ONLINE_AI.md)：可选联网 AI、OpenAI 兼容配置、Keychain 与隐私边界

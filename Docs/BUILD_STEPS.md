@@ -128,7 +128,7 @@ xcodebuild \
   -project LedgerBox.xcodeproj \
   -scheme LedgerBox \
   -configuration Debug \
-  -destination 'platform=iOS Simulator,name=iPhone 15' \
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
   build
 ```
 
@@ -189,11 +189,11 @@ xcodebuild \
   -project LedgerBox.xcodeproj \
   -scheme LedgerBox \
   -configuration Debug \
-  -destination 'platform=iOS Simulator,name=iPhone 15' \
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
   test
 ```
 
-测试目标当前包含 20 个测试：
+测试目标当前包含 23 个测试：
 
 - 收入/支出/退款/转账汇总
 - 账户过滤
@@ -204,8 +204,9 @@ xcodebuild \
 - 金额保留两位小数（15.5 / 15.555 / 15.554）
 - 内存 store 保存 1234.56 元后读回仍为 1234.56，删除后余额回滚为 0
 - 极速记账：金额/别名/收支推断/负金额/多金额/全角数字/超长输入/未匹配分类与账户
+- 物品识别：电动车型号 `M5200` 不被当金额；口红价格 1000 识别为支出并给出软提醒；`2台` 数量不压过价格
 
-> 这些测试尚未实际运行。命令模板不代表已经通过。
+> 已在 GitHub Actions 的 iPhone 16 / iOS 26.2 模拟器实际运行：23 passed / 0 failed（run `39584757968`）。本机命令模板仍可能因 Xcode 版本和模拟器名称不同而需要调整。
 
 ---
 
@@ -311,13 +312,13 @@ The model configuration used to open the store is incompatible with the one that
 ## 8. 本仓库当前仍缺的东西
 
 - `Assets.xcassets` 与 AppIcon 已随 archive 编译；仍未做真机/视觉检查。
-- `LedgerBoxTests` 已加入，但尚未实际运行。
-- `.github/workflows/ios-unsigned.yml` 已实际运行：run `39580367114`，结论 success。
-- 新版未签名 IPA 已生成：`LedgerBox-unsigned-0.3.0-FinanceMind.ipa`（883,050 字节，含 15,380 参数财务意图模型、本地小 AI、5,643 参数金钱模型、可选联网 AI、更新日志，无语音/Siri 权限，无 `PlugIns`）。
+- `LedgerBoxTests` 已加入并实际运行：23 个测试通过（iPhone 16 / iOS 26.2 模拟器，run `39584757968`）。
+- `.github/workflows/ios-unsigned.yml` 已实际运行：run `39584745878`，结论 success。
+- 新版未签名 IPA 已生成：`LedgerBox-unsigned-0.3.1-Parser.ipa`（890,146 字节，含物品/金额识别、15,380 参数财务意图模型、本地小 AI、5,643 参数金钱模型、可选联网 AI、更新日志，无语音/Siri 权限，无 `PlugIns`）。
 - Widget Extension 源码保留，但当前**不嵌入** `Payload/LedgerBox.app/PlugIns/`；这是为了兼容只签主 App 的 `lcsign`。需要小组件时再恢复 Embed 阶段并签 appex。
 - Widget 未配置 App Group，因此即使重新嵌入也不读取真实账本。
 - 没有证书、描述文件、Team ID。
-- 已有远程 archive 记录；仍缺真机运行记录。
+- 已有远程 archive 与模拟器测试记录；仍缺真机运行、签名和安装记录。
 
 ---
 
