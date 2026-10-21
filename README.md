@@ -7,7 +7,7 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 开源地址：**[github.com/BSGGPRO/LedgerBox](https://github.com/BSGGPRO/LedgerBox)**
 
 > **当前状态**  
-> 0.11.0 已完成一张图多账单、批量入账/撤销、JSON 全量备份/恢复、财务大脑动作路由和本地诊断日志；68 个模拟器测试通过。未签名 IPA 为 **482,469,078 字节**，SHA-256 `6A34A040239BD2D9D2A829309878BD058F8DC4CA0C85332B4131265C700DDE07`，[下载 v0.11.0](https://github.com/BSGGPRO/LedgerBox/releases/tag/v0.11.0)。**尚未做真机安装、真机 0.5B 生成、内存峰值或截图级验收**。IPA 需要你自己的证书自签，且自签工具必须重签嵌套的 `Frameworks/llama.framework`。
+> 0.11.1 已收口浅色/白色主题，并在财务大脑加入 Qwen2.5-0.5B 的真实自检、加载状态、完成/拒绝计数和最近一次输出；68 个模拟器测试通过。未签名 IPA 为 **482,494,164 字节**，SHA-256 `80e520eefcdd78ae8b75404dda6c9520227554410b197d2d5eff3c5c54b5a837`，[下载 v0.11.1](https://github.com/BSGGPRO/LedgerBox/releases/tag/v0.11.1)。**尚未做真机安装、真机 0.5B 生成、内存峰值或截图级验收**。IPA 需要你自己的证书自签，且自签工具必须重签嵌套的 `Frameworks/llama.framework`。
 
 ---
 
