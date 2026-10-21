@@ -7,7 +7,7 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 开源地址：**[github.com/BSGGPRO/LedgerBox](https://github.com/BSGGPRO/LedgerBox)**
 
 > **当前状态**  
-> 0.8.0 源码已完成。GitHub Actions `macos-15` 已成功归档未签名 IPA（run `39608260003`，commit `2e98c3c`），52 个 XCTest 已在 iPhone 16 / iOS 26.2 模拟器通过（run `39608314694`：52 passed / 0 failed / 0 skipped）。尚未做真机安装、截图级视觉验收或真实账本准确率测试；IPA 未签名，需要你用自己的证书自签。
+> 0.8.0 源码已完成。GitHub Actions `macos-15` 已成功归档未签名 IPA（run `39609649230`，commit `f4d6f7a`），产物 **1,706,356 字节**，SHA-256 `56F808C59F21E52A515F8FA6B944BA125828E0B6C6DD5010CAB029CC4B73D93B`；52 个 XCTest 已在 iPhone 16 / iOS 26.2 模拟器通过（run `39609659199`：52 passed / 0 failed / 0 skipped）。尚未做真机安装、截图级视觉验收或真实账本准确率测试；IPA 未签名，需要你用自己的证书自签。
 
 ---
 
@@ -87,9 +87,9 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 
 模拟器运行不需要开发者账号。真机运行需要你在本地 Xcode 中选择自己的 Team；**不要把 Team ID、证书或描述文件提交到仓库**。
 
-首次启动没有交易，首页会显示空状态。点击“记一笔”记录第一笔收入或支出；点击“极速”进入小 AI 文本记账，输入一句话即可解析，不需要麦克风或语音权限。
+首次启动没有交易，首页会显示空状态。点击右下角 FAB，选择“📝 记一笔”记录第一笔收入或支出，或选择“⚡ 极速记账”拍照/选图；手动极速文本输入仍在小 AI 入口，不需要麦克风或语音权限。
 
-工程包含 `LedgerBoxTests` Target，可在 Mac 上通过 `Cmd+U` 或 `xcodebuild test` 运行。当前 33 个测试已在 GitHub Actions 的 iPhone 16 / iOS 26.2 模拟器通过（run `39602690412`）；真机仍需你本地验证。
+工程包含 `LedgerBoxTests` Target，可在 Mac 上通过 `Cmd+U` 或 `xcodebuild test` 运行。当前 52 个测试已在 GitHub Actions 的 iPhone 16 / iOS 26.2 模拟器通过（run `39609659199`）；真机仍需你本地验证。
 
 ---
 
@@ -200,7 +200,7 @@ CONTRIBUTING.md
 
 ## 已知限制
 
-- GitHub Actions 已实际 archive，33 个 XCTest 已在模拟器通过；但未签名、未真机安装、未 TestFlight/App Store 验证。
+- GitHub Actions 已实际 archive，52 个 XCTest 已在模拟器通过；但未签名、未真机安装、未 TestFlight/App Store 验证。
 - 没有在真机或模拟器里做截图级视觉验收；“大脑”页面的动画、Canvas 和自适应布局只经过编译和静态检查。
 - 已有 `Assets.xcassets` 与 1024×1024 AppIcon 占位；未做上架截图/视觉审查。
 - 无账户管理 UI、无分类管理 UI；默认账户与分类由 Persistence 种子和模板创建。
@@ -210,12 +210,12 @@ CONTRIBUTING.md
 - 本月结余只允许结转一次；结转后又新增收入，不能再次结转。
 - `AppSettings.themeMode` / `accentColorHex` 字段存在，但当前主题实际由 `ThemeManager` + UserDefaults 驱动，两者未双向同步。
 - 无多币种换算；`currencyCode` 默认 CNY，v1 只按 CNY 展示。
-- 当前 33 个测试覆盖财务汇总、退款、预算进度、副业分账、结余优先级、金额分位存储、14 个极速记账解析用例、6 个财务大脑模型用例和 4 个本地教练用例；已在 iPhone 16 / iOS 26.2 模拟器全部通过。
+- 当前 52 个测试覆盖财务汇总、退款、预算进度、副业分账、结余优先级、金额分位存储、14 个极速记账解析用例、6 个财务大脑模型用例、4 个本地教练用例，以及 19 个图片解析/商户词库/去重/转账手续费/写入撤销用例；已在 iPhone 16 / iOS 26.2 模拟器全部通过。
 - 已取消 Siri、快捷指令和 App Intents，不能监听银行/微信通知，也没有系统自动化写账入口。
 - 小 AI 是本地规则 + `NaturalLanguage` + 5,643 参数金钱分类器 + 20,971,560 参数财务意图模型，不是生成式大模型；合成验证集 98.5% 不代表真实世界准确率，真实短句、方言和错别字仍需你自己考。
-- 新版未签名 IPA：`LedgerBox-unsigned-0.7.0-KeyboardUI.ipa`，1,462,132 字节，SHA-256 `5BC51F9FB95CBDADD0E336FC006B0421AB0FC9D1CEBECEA92EF812A38223A240`；无 `PlugIns`、无麦克风/语音/Siri 权限，需自签后安装。
+- 新版未签名 IPA：`LedgerBox-unsigned-0.8.0-ImageLedger.ipa`，1,706,356 字节，SHA-256 `56F808C59F21E52A515F8FA6B944BA125828E0B6C6DD5010CAB029CC4B73D93B`；无 `PlugIns`、无麦克风/语音/Siri 权限，含相机/相册用途说明，需自签后安装。
 - 权重文件 SHA-256：`506931280D71A7FC13AB7F38CEDF8CB5916D85F2BE22D3FCB4BDF3D003A320BC`，20,971,680 字节。
-- 源码包：`LedgerBox-source-0.7.0-KeyboardUI.zip`；大小与 SHA-256 见同目录 `LedgerBox-0.7.0-SHA256.txt`，源码包不包含自身哈希。
+- 源码包：`LedgerBox-source-0.8.0-ImageLedger.zip`；大小与 SHA-256 见同目录 `LedgerBox-0.8.0-SHA256.txt`，源码包不包含自身哈希。
 - 当前默认是单 target：不嵌入 `PlugIns/LedgerBoxWidget.appex`，所以 `lcsign` 只需签主 App。Widget 源码仍在仓库中，但不会进入 IPA。
 - 如果要重新启用小组件，必须在 Xcode 中恢复 Embed 阶段，并同时签主 App 与 appex；否则会出现图标有、点不开的安装失败。
 

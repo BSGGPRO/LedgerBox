@@ -1,0 +1,20 @@
+LedgerBox 0.8.0 — SHA-256
+Generated: 2026-10-21
+
+LedgerBox-unsigned-0.8.0-ImageLedger.ipa
+Size: 1,706,356 bytes
+SHA-256: 56F808C59F21E52A515F8FA6B944BA125828E0B6C6DD5010CAB029CC4B73D93B
+
+LedgerBox-source-0.8.0-ImageLedger.zip
+Size: 836,618 bytes
+SHA-256: 186EBC8AA3348DB00748AC6A12951047DE13A5E88D8B944B8274D1B84C2BB611
+
+Embedded FinanceMindWeights.bin
+Size: 20,971,680 bytes
+SHA-256: 506931280D71A7FC13AB7F38CEDF8CB5916D85F2BE22D3FCB4BDF3D003A320BC
+
+Verification notes:
+- IPA built by GitHub Actions run 39609649230, commit f4d6f7a.
+- Tests: GitHub Actions run 39609659199, 52 passed / 0 failed / 0 skipped.
+- IPA is unsigned, has no PlugIns directory, and requires your own certificate to install.
+- No physical-device install, screenshot-level visual acceptance, or real receipt accuracy test was performed.

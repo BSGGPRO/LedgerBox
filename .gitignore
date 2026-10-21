@@ -13,6 +13,7 @@ Desktop.ini
 # Xcode
 DerivedData/
 build/
+build-*/
 Build/
 *.xcarchive
 *.xcresult
@@ -64,3 +65,4 @@ fastlane/test_output/
 *.bak
 *.orig
 *.rej
+LedgerBox-source-*.zip
