@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23094" systemVersion="23A344" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="NO" userDefinedModelVersionIdentifier="">
+    <entity name="Account" representedClassName="Account" syncable="YES">
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" optional="NO" attributeType="String"/>
+        <attribute name="type" optional="NO" attributeType="String" defaultValueString="cash"/>
+        <attribute name="balance" optional="NO" attributeType="Decimal" defaultValueString="0" usesScalarValueType="NO"/>
+        <attribute name="currencyCode" optional="NO" attributeType="String" defaultValueString="CNY"/>
+        <attribute name="locked" optional="NO" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="sortOrder" optional="NO" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="createdAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="updatedAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+    </entity>
+    <entity name="Transaction" representedClassName="LedgerTransaction" syncable="YES">
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="type" optional="NO" attributeType="String" defaultValueString="expense"/>
+        <attribute name="categoryId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="accountId" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="toAccountId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="amount" optional="NO" attributeType="Decimal" defaultValueString="0" usesScalarValueType="NO"/>
+        <attribute name="date" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="note" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="templateTag" optional="YES" attributeType="String"/>
+    </entity>
+    <entity name="Category" representedClassName="Category" syncable="YES">
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" optional="NO" attributeType="String"/>
+        <attribute name="icon" optional="NO" attributeType="String" defaultValueString="circle.fill"/>
+        <attribute name="kind" optional="NO" attributeType="String" defaultValueString="expense"/>
+        <attribute name="colorHex" optional="NO" attributeType="String" defaultValueString="2F6FED"/>
+        <attribute name="isSoftDeleted" optional="NO" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="sortOrder" optional="NO" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+    </entity>
+    <entity name="Budget" representedClassName="Budget" syncable="YES">
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="categoryId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="period" optional="NO" attributeType="String" defaultValueString="monthly"/>
+        <attribute name="limitAmount" optional="NO" attributeType="Decimal" defaultValueString="0" usesScalarValueType="NO"/>
+        <attribute name="startDate" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="enabled" optional="NO" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+    </entity>
+    <entity name="SavingsGoal" representedClassName="SavingsGoal" syncable="YES">
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" optional="NO" attributeType="String"/>
+        <attribute name="targetAmount" optional="NO" attributeType="Decimal" defaultValueString="0" usesScalarValueType="NO"/>
+        <attribute name="currentAmount" optional="NO" attributeType="Decimal" defaultValueString="0" usesScalarValueType="NO"/>
+        <attribute name="priority" optional="NO" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="status" optional="NO" attributeType="String" defaultValueString="active"/>
+        <attribute name="templateTag" optional="YES" attributeType="String"/>
+        <attribute name="deadline" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="createdAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+    </entity>
+    <entity name="TemplateRules" representedClassName="TemplateRules" syncable="YES">
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" optional="NO" attributeType="String"/>
+        <attribute name="type" optional="NO" attributeType="String" defaultValueString="custom"/>
+        <attribute name="configJSON" optional="NO" attributeType="String" defaultValueString="{}"/>
+        <attribute name="active" optional="NO" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="createdAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+    </entity>
+    <entity name="AppSettings" representedClassName="AppSettings" syncable="YES">
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="themeMode" optional="NO" attributeType="String" defaultValueString="system"/>
+        <attribute name="accentColorHex" optional="NO" attributeType="String" defaultValueString="2F6FED"/>
+        <attribute name="activeTemplateId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="sideHustleSplitRatio" optional="NO" attributeType="Decimal" defaultValueString="0.7" usesScalarValueType="NO"/>
+        <attribute name="updatedAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+    </entity>
+    <elements>
+        <element name="Account" positionX="-360" positionY="-180" width="128" height="209"/>
+        <element name="Transaction" positionX="-72" positionY="-180" width="128" height="239"/>
+        <element name="Category" positionX="216" positionY="-180" width="128" height="164"/>
+        <element name="Budget" positionX="-360" positionY="108" width="128" height="149"/>
+        <element name="SavingsGoal" positionX="-72" positionY="108" width="128" height="194"/>
+        <element name="TemplateRules" positionX="216" positionY="108" width="128" height="134"/>
+        <element name="AppSettings" positionX="504" positionY="-180" width="128" height="149"/>
+    </elements>
+</model>

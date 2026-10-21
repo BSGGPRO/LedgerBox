@@ -1,0 +1,842 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		BB0000000000000000000001 /* LedgerBoxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000001 /* LedgerBoxApp.swift */; };
+		BB0000000000000000000002 /* PersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000002 /* PersistenceController.swift */; };
+		BB0000000000000000000003 /* ManagedObjects.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000003 /* ManagedObjects.swift */; };
+		BB0000000000000000000004 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000004 /* Theme.swift */; };
+		BB0000000000000000000005 /* FinanceEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000005 /* FinanceEngine.swift */; };
+		BB0000000000000000000006 /* LedgerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000006 /* LedgerService.swift */; };
+		BB0000000000000000000007 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000007 /* HomeView.swift */; };
+		BB0000000000000000000008 /* AddTransactionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000008 /* AddTransactionView.swift */; };
+		BB000000000000000000000A /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000000A /* MainTabView.swift */; };
+		BB000000000000000000000B /* StatisticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000000B /* StatisticsView.swift */; };
+		BB000000000000000000000C /* BudgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000000C /* BudgetView.swift */; };
+		BB000000000000000000000D /* TransactionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000000D /* TransactionsView.swift */; };
+		BB000000000000000000000E /* GoalsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000000E /* GoalsView.swift */; };
+		BB0000000000000000000013 /* BuyCarPlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000013 /* BuyCarPlanView.swift */; };
+		BB000000000000000000000F /* TemplateRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000000F /* TemplateRules.swift */; };
+		BB0000000000000000000010 /* TemplateInstaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000010 /* TemplateInstaller.swift */; };
+		BB0000000000000000000011 /* CSVExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000011 /* CSVExporter.swift */; };
+		BB0000000000000000000012 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000012 /* SettingsView.swift */; };
+		BB0000000000000000000009 /* LedgerBox.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000001 /* LedgerBox.xcdatamodeld */; };
+		BB0000000000000000000014 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000014 /* Assets.xcassets */; };
+		BB0000000000000000000015 /* FinanceEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000015 /* FinanceEngineTests.swift */; };
+		BB0000000000000000000016 /* QuickEntryParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000016 /* QuickEntryParser.swift */; };
+		BB0000000000000000000017 /* QuickEntryParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000017 /* QuickEntryParserTests.swift */; };
+		BB0000000000000000000018 /* QuickEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000018 /* QuickEntryView.swift */; };
+		BB0000000000000000000019 /* LedgerIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000019 /* LedgerIntents.swift */; };
+		BB000000000000000000001A /* ChangelogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000000000000000000001A /* ChangelogView.swift */; };
+		BB0000000000000000000020 /* LedgerBoxWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000031 /* LedgerBoxWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		BB0000000000000000000021 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA000000000000000000003C /* WidgetKit.framework */; };
+		BB0000000000000000000022 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA000000000000000000003D /* SwiftUI.framework */; };
+		BB0000000000000000000023 /* LedgerBoxWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000020 /* LedgerBoxWidgetBundle.swift */; };
+		BB0000000000000000000024 /* LedgerBoxWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000021 /* LedgerBoxWidget.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		AA0000000000000000000018 /* LedgerBox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LedgerBox.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CC0000000000000000000001 /* LedgerBoxApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LedgerBoxApp.swift; sourceTree = "<group>"; };
+		CC0000000000000000000002 /* PersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceController.swift; sourceTree = "<group>"; };
+		CC0000000000000000000003 /* ManagedObjects.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagedObjects.swift; sourceTree = "<group>"; };
+		CC0000000000000000000004 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		CC0000000000000000000005 /* FinanceEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinanceEngine.swift; sourceTree = "<group>"; };
+		CC0000000000000000000006 /* LedgerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LedgerService.swift; sourceTree = "<group>"; };
+		CC0000000000000000000007 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		CC0000000000000000000008 /* AddTransactionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddTransactionView.swift; sourceTree = "<group>"; };
+		CC000000000000000000000A /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		CC000000000000000000000B /* StatisticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsView.swift; sourceTree = "<group>"; };
+		CC000000000000000000000C /* BudgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgetView.swift; sourceTree = "<group>"; };
+		CC000000000000000000000D /* TransactionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionsView.swift; sourceTree = "<group>"; };
+		CC000000000000000000000E /* GoalsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalsView.swift; sourceTree = "<group>"; };
+		CC0000000000000000000013 /* BuyCarPlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuyCarPlanView.swift; sourceTree = "<group>"; };
+		CC000000000000000000000F /* TemplateRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateRules.swift; sourceTree = "<group>"; };
+		CC0000000000000000000010 /* TemplateInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateInstaller.swift; sourceTree = "<group>"; };
+		CC0000000000000000000011 /* CSVExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVExporter.swift; sourceTree = "<group>"; };
+		CC0000000000000000000012 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		CC0000000000000000000009 /* LedgerBox.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = LedgerBox.xcdatamodel; sourceTree = "<group>"; };
+		CC0000000000000000000014 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		CC0000000000000000000015 /* FinanceEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinanceEngineTests.swift; sourceTree = "<group>"; };
+		CC0000000000000000000016 /* QuickEntryParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickEntryParser.swift; sourceTree = "<group>"; };
+		CC0000000000000000000017 /* QuickEntryParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickEntryParserTests.swift; sourceTree = "<group>"; };
+		CC0000000000000000000018 /* QuickEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickEntryView.swift; sourceTree = "<group>"; };
+		CC0000000000000000000019 /* LedgerIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LedgerIntents.swift; sourceTree = "<group>"; };
+		CC000000000000000000001A /* ChangelogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangelogView.swift; sourceTree = "<group>"; };
+		AA000000000000000000001F /* LedgerBoxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LedgerBoxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA0000000000000000000031 /* LedgerBoxWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LedgerBoxWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA000000000000000000003C /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		AA000000000000000000003D /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		CC0000000000000000000020 /* LedgerBoxWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LedgerBoxWidgetBundle.swift; sourceTree = "<group>"; };
+		CC0000000000000000000021 /* LedgerBoxWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LedgerBoxWidget.swift; sourceTree = "<group>"; };
+		CC0000000000000000000022 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXContainerItemProxy section */
+		AA0000000000000000000027 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA0000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA000000000000000000000E;
+			remoteInfo = LedgerBox;
+		};
+		AA000000000000000000003B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA0000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA0000000000000000000030;
+			remoteInfo = LedgerBoxWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AA0000000000000000000036 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				BB0000000000000000000020 /* LedgerBoxWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AA0000000000000000000016 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA0000000000000000000021 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA0000000000000000000034 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BB0000000000000000000021 /* WidgetKit.framework in Frameworks */,
+				BB0000000000000000000022 /* SwiftUI.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		AA0000000000000000000002 = {
+			isa = PBXGroup;
+			children = (
+				AA000000000000000000000D /* LedgerBox */,
+				AA0000000000000000000026 /* LedgerBoxTests */,
+				AA0000000000000000000032 /* LedgerBoxWidget */,
+				AA0000000000000000000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		AA0000000000000000000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AA0000000000000000000018 /* LedgerBox.app */,
+				AA0000000000000000000031 /* LedgerBoxWidget.appex */,
+				AA000000000000000000001F /* LedgerBoxTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		AA0000000000000000000004 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				CC0000000000000000000001 /* LedgerBoxApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		AA0000000000000000000005 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				CC0000000000000000000003 /* ManagedObjects.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		AA0000000000000000000006 /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				CC0000000000000000000002 /* PersistenceController.swift */,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		AA0000000000000000000007 /* Design */ = {
+			isa = PBXGroup;
+			children = (
+				CC0000000000000000000004 /* Theme.swift */,
+			);
+			path = Design;
+			sourceTree = "<group>";
+		};
+		AA0000000000000000000008 /* Finance */ = {
+			isa = PBXGroup;
+			children = (
+				CC0000000000000000000005 /* FinanceEngine.swift */,
+				CC0000000000000000000006 /* LedgerService.swift */,
+				CC000000000000000000000F /* TemplateRules.swift */,
+				CC0000000000000000000010 /* TemplateInstaller.swift */,
+				CC0000000000000000000011 /* CSVExporter.swift */,
+			);
+			path = Finance;
+			sourceTree = "<group>";
+		};
+		AA0000000000000000000009 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				AA000000000000000000000A /* Home */,
+				AA000000000000000000000B /* Transactions */,
+				AA0000000000000000000029 /* QuickEntry */,
+				AA0000000000000000000019 /* Main */,
+				AA000000000000000000001A /* Statistics */,
+				AA000000000000000000001B /* Budget */,
+				AA000000000000000000001C /* Goals */,
+				AA000000000000000000001D /* Settings */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		AA0000000000000000000029 /* QuickEntry */ = {
+			isa = PBXGroup;
+			children = (
+				CC0000000000000000000016 /* QuickEntryParser.swift */,
+				CC0000000000000000000018 /* QuickEntryView.swift */,
+				CC0000000000000000000019 /* LedgerIntents.swift */,
+			);
+			path = QuickEntry;
+			sourceTree = "<group>";
+		};
+		AA000000000000000000000A /* Home */ = {
+			isa = PBXGroup;
+			children = (
+				CC0000000000000000000007 /* HomeView.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
+		AA000000000000000000000B /* Transactions */ = {
+			isa = PBXGroup;
+			children = (
+				CC0000000000000000000008 /* AddTransactionView.swift */,
+				CC000000000000000000000D /* TransactionsView.swift */,
+			);
+			path = Transactions;
+			sourceTree = "<group>";
+		};
+		AA0000000000000000000019 /* Main */ = {
+			isa = PBXGroup;
+			children = (
+				CC000000000000000000000A /* MainTabView.swift */,
+			);
+			path = Main;
+			sourceTree = "<group>";
+		};
+		AA000000000000000000001A /* Statistics */ = {
+			isa = PBXGroup;
+			children = (
+				CC000000000000000000000B /* StatisticsView.swift */,
+			);
+			path = Statistics;
+			sourceTree = "<group>";
+		};
+		AA000000000000000000001D /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				CC0000000000000000000012 /* SettingsView.swift */,
+				CC000000000000000000001A /* ChangelogView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		AA000000000000000000001C /* Goals */ = {
+			isa = PBXGroup;
+			children = (
+				CC000000000000000000000E /* GoalsView.swift */,
+				CC0000000000000000000013 /* BuyCarPlanView.swift */,
+			);
+			path = Goals;
+			sourceTree = "<group>";
+		};
+		AA000000000000000000001B /* Budget */ = {
+			isa = PBXGroup;
+			children = (
+				CC000000000000000000000C /* BudgetView.swift */,
+			);
+			path = Budget;
+			sourceTree = "<group>";
+		};
+		AA000000000000000000000C /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				DD0000000000000000000001 /* LedgerBox.xcdatamodeld */,
+				CC0000000000000000000014 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		AA0000000000000000000026 /* LedgerBoxTests */ = {
+			isa = PBXGroup;
+			children = (
+				CC0000000000000000000015 /* FinanceEngineTests.swift */,
+				CC0000000000000000000017 /* QuickEntryParserTests.swift */,
+			);
+			path = LedgerBoxTests;
+			sourceTree = "<group>";
+		};
+		AA000000000000000000000D /* LedgerBox */ = {
+			isa = PBXGroup;
+			children = (
+				AA0000000000000000000004 /* App */,
+				AA0000000000000000000005 /* Models */,
+				AA0000000000000000000006 /* Persistence */,
+				AA0000000000000000000007 /* Design */,
+				AA0000000000000000000008 /* Finance */,
+				AA0000000000000000000009 /* Features */,
+				AA000000000000000000000C /* Resources */,
+			);
+			path = LedgerBox;
+			sourceTree = "<group>";
+		};
+		AA0000000000000000000032 /* LedgerBoxWidget */ = {
+			isa = PBXGroup;
+			children = (
+				CC0000000000000000000020 /* LedgerBoxWidgetBundle.swift */,
+				CC0000000000000000000021 /* LedgerBoxWidget.swift */,
+				CC0000000000000000000022 /* Info.plist */,
+			);
+			path = LedgerBoxWidget;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		AA000000000000000000000E /* LedgerBox */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA0000000000000000000010 /* Build configuration list for PBXNativeTarget "LedgerBox" */;
+			buildPhases = (
+				AA0000000000000000000015 /* Sources */,
+				AA0000000000000000000016 /* Frameworks */,
+				AA0000000000000000000017 /* Resources */,
+				AA0000000000000000000036 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AA000000000000000000003A /* PBXTargetDependency */,
+			);
+			name = LedgerBox;
+			productName = LedgerBox;
+			productReference = AA0000000000000000000018 /* LedgerBox.app */;
+			productType = "com.apple.product-type.application";
+		};
+		AA000000000000000000001E /* LedgerBoxTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA0000000000000000000023 /* Build configuration list for PBXNativeTarget "LedgerBoxTests" */;
+			buildPhases = (
+				AA0000000000000000000020 /* Sources */,
+				AA0000000000000000000021 /* Frameworks */,
+				AA0000000000000000000022 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AA0000000000000000000028 /* PBXTargetDependency */,
+			);
+			name = LedgerBoxTests;
+			productName = LedgerBoxTests;
+			productReference = AA000000000000000000001F /* LedgerBoxTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		AA0000000000000000000030 /* LedgerBoxWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA0000000000000000000037 /* Build configuration list for PBXNativeTarget "LedgerBoxWidget" */;
+			buildPhases = (
+				AA0000000000000000000033 /* Sources */,
+				AA0000000000000000000034 /* Frameworks */,
+				AA0000000000000000000035 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LedgerBoxWidget;
+			productName = LedgerBoxWidget;
+			productReference = AA0000000000000000000031 /* LedgerBoxWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		AA0000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					AA000000000000000000000E = {
+						CreatedOnToolsVersion = 15.0;
+					};
+					AA000000000000000000001E = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = AA000000000000000000000E;
+					};
+					AA0000000000000000000030 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = AA000000000000000000000F /* Build configuration list for PBXProject "LedgerBox" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = AA0000000000000000000002;
+			productRefGroup = AA0000000000000000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AA000000000000000000000E /* LedgerBox */,
+				AA000000000000000000001E /* LedgerBoxTests */,
+				AA0000000000000000000030 /* LedgerBoxWidget */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		AA0000000000000000000017 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BB0000000000000000000014 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA0000000000000000000022 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA0000000000000000000035 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		AA0000000000000000000015 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BB0000000000000000000001 /* LedgerBoxApp.swift in Sources */,
+				BB0000000000000000000002 /* PersistenceController.swift in Sources */,
+				BB0000000000000000000003 /* ManagedObjects.swift in Sources */,
+				BB0000000000000000000004 /* Theme.swift in Sources */,
+				BB0000000000000000000005 /* FinanceEngine.swift in Sources */,
+				BB0000000000000000000006 /* LedgerService.swift in Sources */,
+				BB0000000000000000000007 /* HomeView.swift in Sources */,
+				BB0000000000000000000008 /* AddTransactionView.swift in Sources */,
+				BB000000000000000000000A /* MainTabView.swift in Sources */,
+				BB000000000000000000000B /* StatisticsView.swift in Sources */,
+				BB000000000000000000000C /* BudgetView.swift in Sources */,
+				BB000000000000000000000D /* TransactionsView.swift in Sources */,
+				BB000000000000000000000E /* GoalsView.swift in Sources */,
+				BB0000000000000000000013 /* BuyCarPlanView.swift in Sources */,
+				BB000000000000000000000F /* TemplateRules.swift in Sources */,
+				BB0000000000000000000010 /* TemplateInstaller.swift in Sources */,
+				BB0000000000000000000011 /* CSVExporter.swift in Sources */,
+				BB0000000000000000000012 /* SettingsView.swift in Sources */,
+				BB000000000000000000001A /* ChangelogView.swift in Sources */,
+				BB0000000000000000000016 /* QuickEntryParser.swift in Sources */,
+				BB0000000000000000000018 /* QuickEntryView.swift in Sources */,
+				BB0000000000000000000019 /* LedgerIntents.swift in Sources */,
+				BB0000000000000000000009 /* LedgerBox.xcdatamodeld in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA0000000000000000000020 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BB0000000000000000000015 /* FinanceEngineTests.swift in Sources */,
+				BB0000000000000000000017 /* QuickEntryParserTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA0000000000000000000033 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BB0000000000000000000023 /* LedgerBoxWidgetBundle.swift in Sources */,
+				BB0000000000000000000024 /* LedgerBoxWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AA0000000000000000000028 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA000000000000000000000E /* LedgerBox */;
+			targetProxy = AA0000000000000000000027 /* PBXContainerItemProxy */;
+		};
+		AA000000000000000000003A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA0000000000000000000030 /* LedgerBoxWidget */;
+			targetProxy = AA000000000000000000003B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		AA0000000000000000000011 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		AA0000000000000000000012 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		AA0000000000000000000013 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = LedgerBox;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "LedgerBox 使用麦克风把一句话转成记账文字，音频只在本机处理。";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "LedgerBox 使用本地语音识别生成记账内容，不上传音频。";
+				INFOPLIST_KEY_NSSiriUsageDescription = "LedgerBox 使用 Siri 和快捷指令快速记录收支。";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AA0000000000000000000014 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = LedgerBox;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "LedgerBox 使用麦克风把一句话转成记账文字，音频只在本机处理。";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "LedgerBox 使用本地语音识别生成记账内容，不上传音频。";
+				INFOPLIST_KEY_NSSiriUsageDescription = "LedgerBox 使用 Siri 和快捷指令快速记录收支。";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		AA0000000000000000000024 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LedgerBox.app/LedgerBox";
+			};
+			name = Debug;
+		};
+		AA0000000000000000000025 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LedgerBox.app/LedgerBox";
+			};
+			name = Release;
+		};
+		AA0000000000000000000038 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LedgerBoxWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AA0000000000000000000039 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LedgerBoxWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AA000000000000000000000F /* Build configuration list for PBXProject "LedgerBox" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0000000000000000000011 /* Debug */,
+				AA0000000000000000000012 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA0000000000000000000010 /* Build configuration list for PBXNativeTarget "LedgerBox" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0000000000000000000013 /* Debug */,
+				AA0000000000000000000014 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA0000000000000000000023 /* Build configuration list for PBXNativeTarget "LedgerBoxTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0000000000000000000024 /* Debug */,
+				AA0000000000000000000025 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA0000000000000000000037 /* Build configuration list for PBXNativeTarget "LedgerBoxWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0000000000000000000038 /* Debug */,
+				AA0000000000000000000039 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		DD0000000000000000000001 /* LedgerBox.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				CC0000000000000000000009 /* LedgerBox.xcdatamodel */,
+			);
+			currentVersion = CC0000000000000000000009 /* LedgerBox.xcdatamodel */;
+			path = LedgerBox.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
+	};
+	rootObject = AA0000000000000000000001 /* Project object */;
+}

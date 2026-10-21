@@ -1,0 +1,66 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Xcode
+DerivedData/
+build/
+Build/
+*.xcarchive
+*.xcresult
+*.xcuserstate
+*.xccheckout
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM
+*.dSYM.zip
+xcuserdata/
+project.xcworkspace/xcuserdata/
+project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+
+# Swift Package Manager / Swift tooling
+.build/
+.swiftpm/
+Packages/
+Package.resolved
+
+# Secrets and signing assets
+*.p12
+*.pfx
+*.cer
+*.crt
+*.pem
+*.key
+*.p8
+*.mobileprovision
+*.provisionprofile
+Secrets/
+secrets/
+.env
+.env.*
+!.env.example
+
+# IDE and local tooling
+.vscode/
+.idea/
+*.log
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej

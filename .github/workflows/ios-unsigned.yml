@@ -1,0 +1,70 @@
+name: iOS Unsigned Archive
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-unsigned-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  archive:
+    name: Build unsigned IPA
+    runs-on: macos-15
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Xcode
+        run: |
+          xcodebuild -version
+          xcodebuild -showsdks
+
+      - name: Build unsigned archive
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          xcodebuild \
+            -project LedgerBox.xcodeproj \
+            -scheme LedgerBox \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/DerivedData \
+            -archivePath build/LedgerBox.xcarchive \
+            archive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
+
+      - name: Package unsigned IPA
+        run: |
+          set -euo pipefail
+          rm -rf build/ipa
+          mkdir -p build/ipa/Payload
+          cp -R build/LedgerBox.xcarchive/Products/Applications/LedgerBox.app build/ipa/Payload/
+          cd build/ipa
+          zip -r -X ../LedgerBox-unsigned.ipa Payload
+
+      - name: Verify artifact exists
+        run: |
+          set -euo pipefail
+          test -f build/LedgerBox-unsigned.ipa
+          test -d build/LedgerBox.xcarchive/Products/Applications/LedgerBox.app/PlugIns/LedgerBoxWidget.appex
+          unzip -l build/LedgerBox-unsigned.ipa | grep -E 'Payload/LedgerBox.app/(LedgerBox|PlugIns/LedgerBoxWidget.appex/LedgerBoxWidget)$'
+          ls -lh build/LedgerBox-unsigned.ipa
+
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: LedgerBox-unsigned-ipa
+          path: build/LedgerBox-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 7
