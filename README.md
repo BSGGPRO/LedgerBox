@@ -7,7 +7,7 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 开源地址：**[github.com/BSGGPRO/LedgerBox](https://github.com/BSGGPRO/LedgerBox)**
 
 > **当前状态**  
-> 0.9.3 源码已完成。GitHub Actions `macos-15` 待归档；57 个 XCTest 待重跑。尚未做真机安装、截图级视觉验收或真实账本准确率测试；IPA 未签名，需要你用自己的证书自签。
+> 0.9.3 源码已完成。GitHub Actions `macos-15` 已成功归档未签名 IPA（run `39625489033`，commit `8da21d3`），产物 **1,799,048 字节**，SHA-256 `EE729210C82379A2C650F5BB3B71401925588C7F0CA106152A3068FCFE673130`；57 个 XCTest 已在 iPhone 16 / iOS 26.2 模拟器通过（run `39625512950`：57 passed / 0 failed / 0 skipped）。尚未做真机安装、截图级视觉验收或真实账本准确率测试；IPA 未签名，需要你用自己的证书自签。
 
 ---
 
@@ -214,9 +214,9 @@ CONTRIBUTING.md
 - 当前 57 个测试覆盖财务汇总、退款、预算进度、副业分账、结余优先级、金额分位存储、14 个极速记账解析用例、11 个财务大脑模型/计算路由用例、4 个本地教练用例，以及 19 个图片解析/商户词库/去重/转账手续费/写入撤销用例；已在 iPhone 16 / iOS 26.2 模拟器全部通过。
 - 已取消 Siri、快捷指令和 App Intents，不能监听银行/微信通知，也没有系统自动化写账入口。
 - 小 AI 是本地规则 + `NaturalLanguage` + 5,643 参数金钱分类器 + 41,943,080 参数财务意图模型，不是生成式大模型；新模型合成验证集 98.3% 只代表合成语料回归，真实短句、方言和错别字仍需你自己考。
-- 新版未签名 IPA：`LedgerBox-unsigned-0.9.2-UnifiedBar.ipa`，1,790,306 字节，SHA-256 `282C18997C053FC0808A1441B0F5ADB9509E74FFCF2C276EB76F2FF3F07E750D`；无 `PlugIns`、无麦克风/语音/Siri 权限，含相机/相册用途说明，需自签后安装。
+- 新版未签名 IPA：`LedgerBox-unsigned-0.9.3-Bubbles.ipa`，1,799,048 字节，SHA-256 `EE729210C82379A2C650F5BB3B71401925588C7F0CA106152A3068FCFE673130`；无 `PlugIns`、无麦克风/语音/Siri 权限，含相机/相册用途说明，需自签后安装。
 - 权重文件 SHA-256：`6F5E92B17EC300D7A0C69AB79324903AE4407FB992393140BB2F783B7355F380`，41,943,200 字节。
-- 源码包：`LedgerBox-source-0.9.2-UnifiedBar.zip`；大小与 SHA-256 见同目录 `LedgerBox-0.9.2-SHA256.txt`，源码包不包含自身哈希。
+- 源码包：`LedgerBox-source-0.9.3-Bubbles.zip`；大小与 SHA-256 见同目录 `LedgerBox-0.9.3-SHA256.txt`，源码包不包含自身哈希。
 - 当前默认是单 target：不嵌入 `PlugIns/LedgerBoxWidget.appex`，所以 `lcsign` 只需签主 App。Widget 源码仍在仓库中，但不会进入 IPA。
 - 如果要重新启用小组件，必须在 Xcode 中恢复 Embed 阶段，并同时签主 App 与 appex；否则会出现图标有、点不开的安装失败。
 

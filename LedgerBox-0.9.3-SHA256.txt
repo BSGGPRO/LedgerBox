@@ -1,0 +1,23 @@
+LedgerBox 0.9.3 — SHA-256
+Generated: 2026-10-21
+
+LedgerBox-unsigned-0.9.3-Bubbles.ipa
+Size: 1,799,048 bytes
+SHA-256: EE729210C82379A2C650F5BB3B71401925588C7F0CA106152A3068FCFE673130
+
+LedgerBox-source-0.9.3-Bubbles.zip
+Size: 916,944 bytes
+SHA-256: 43A3C3AF9207B57A188BBACD2B10E63C12A2C6DBA8DC55348A2BBF886E1F8C4E
+
+Embedded FinanceMindWeights.bin
+Size: 41,943,200 bytes
+SHA-256: 6F5E92B17EC300D7A0C69AB79324903AE4407FB992393140BB2F783B7355F380
+
+Verification notes:
+- IPA built by GitHub Actions run 39625489033, commit 8da21d3.
+- Tests: GitHub Actions run 39625512950, 57 passed / 0 failed / 0 skipped.
+- IPA is unsigned, has no PlugIns directory, and requires your own certificate to install.
+- No physical-device install, screenshot-level visual acceptance, or real receipt accuracy test was performed.
+- Settings is a tab page; entry options are custom bubble shapes. Bubble tails and spacing still need real-device visual checking.
+- No 0.5B model is included in this build. The embedded model is the 41,943,080-parameter FinanceMind classifier.
+- The repository is currently private; release links require a GitHub account with access.

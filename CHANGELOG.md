@@ -3,6 +3,20 @@
 All user-visible changes to LedgerBox are recorded here and in the in-app
 **设置 → 更新日志** page.
 
+## 0.9.3 — 2026-10-21
+
+### Changed
+
+- 设置从 sheet 抽屉改为底栏第七个页面；切换后底栏仍可见。
+- 中间加号图标从 16pt 提到 22pt，仍与其它项同宽同高，不凸出、不缩小。
+- 极速记账与记一笔改成两个很小的气泡，带小尾巴；点加号后依次向上弹出。
+- 点任一气泡立即收起并进入对应记账流程；切换 Tab 自动收起。
+
+### Notes
+
+- 仍为 41,943,080 参数 FinanceMind 与 9 类 Decimal 计算路由；本次没有加入 0.5B 模型。
+- 没有真机/截图级视觉验收；气泡尾巴、加号对比度、设置页在 SE / Pro Max / 大字号下仍需实机检查。
+
 ## 0.9.2 — 2026-10-21
 
 ### Changed
