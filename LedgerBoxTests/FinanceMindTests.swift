@@ -1,13 +1,13 @@
-import XCTest
+﻿import XCTest
 @testable import LedgerBox
 
 final class FinanceMindTests: XCTestCase {
     func testModelLoadsAtFullCapacity() {
         XCTAssertTrue(FinanceMind.shared.isReady)
-        XCTAssertEqual(FinanceMind.parameterCount, 10_485_800)
-        XCTAssertEqual(FinanceMind.modelByteCount, 10_485_920)
+        XCTAssertEqual(FinanceMind.parameterCount, 20_971_560)
+        XCTAssertEqual(FinanceMind.modelByteCount, 20_971_680)
         XCTAssertEqual(FinanceMindWeights.labels.count, 40)
-        XCTAssertEqual(FinanceMindWeights.bucketCount, 262_144)
+        XCTAssertEqual(FinanceMindWeights.bucketCount, 524_288)
     }
 
     func testCashflowProbe() {

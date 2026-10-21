@@ -14,6 +14,17 @@ struct ChangelogEntry: Identifiable {
 enum ChangelogCatalog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "0.6.0",
+            dateText: "2026.10.21",
+            title: "两千万参数档",
+            changes: [
+                "财务大脑从 10,485,800 参数升到 20,971,560 参数：40 类意图 × 524,288 个字符 n-gram 哈希桶 + 40 个 bias。",
+                "权重文件从 10 MB 增至 20 MB，仍为 Int8 量化、本机映射读取，不上传、不联网。",
+                "参数量翻倍主要降低哈希碰撞、提高稀疏特征区分度；它不是生成式大模型，合成验证集分数不能当成真实准确率。",
+                "同步更新财务大脑页、模型体检、设置页和测试中的参数量与哈希桶数。"
+            ]
+        ),
+        ChangelogEntry(
             version: "0.5.0",
             dateText: "2026.10.21",
             title: "会动的财务大脑",

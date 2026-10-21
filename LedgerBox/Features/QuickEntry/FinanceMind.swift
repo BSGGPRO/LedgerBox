@@ -103,8 +103,8 @@ struct FinanceIntentPrediction {
 
 /// A finance-only, hashed character n-gram intent classifier.
 ///
-/// 40 intents x 262,144 buckets + 40 biases = 10,485,800 parameters. The
-/// weights are Int8 in FinanceMindWeights.bin (about 10 MB), loaded locally.
+/// 40 intents x 524,288 buckets + 40 biases = 20,971,560 parameters. The
+/// weights are Int8 in FinanceMindWeights.bin (about 20 MB), loaded locally.
 /// It routes text to deterministic advice templates; it is not a compressed
 /// Qwen checkpoint and it does not generate free-form answers.
 final class FinanceMind {

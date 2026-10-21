@@ -130,7 +130,7 @@ struct FinanceAdvisorView: View {
                         .font(theme.sectionTitleFont)
                         .foregroundStyle(theme.primaryText)
 
-                    Text("10,485,800 参数 · 本地 · 40 类记账意图")
+                    Text("20,971,560 参数 · 本地 · 40 类记账意图")
                         .font(theme.badgeFont)
                         .foregroundStyle(theme.secondaryText)
                 }

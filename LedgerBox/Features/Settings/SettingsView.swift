@@ -301,7 +301,7 @@ struct SettingsView: View {
                                 .font(theme.bodyFont)
                                 .foregroundStyle(theme.primaryText)
 
-                            Text("40 个记账意图 · 10,485,800 参数 · 离线")
+                            Text("40 个记账意图 · 20,971,560 参数 · 离线")
                                 .font(theme.captionFont)
                                 .foregroundStyle(theme.secondaryText)
                         }

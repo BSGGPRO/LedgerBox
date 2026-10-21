@@ -168,12 +168,12 @@ struct FinanceBrainMapView: View {
                     .foregroundStyle(theme.primaryText)
 
                 HStack(spacing: 8) {
-                    statTile("参数", value: "10,485,800", note: "40 × 262,144 + 40")
+                    statTile("参数", value: "20,971,560", note: "40 × 524,288 + 40")
                     statTile("意图", value: "40", note: "记账 / 会计 / 理财")
                 }
 
                 HStack(spacing: 8) {
-                    statTile("哈希桶", value: "262,144", note: "字符 1–3 gram")
+                    statTile("哈希桶", value: "524,288", note: "字符 1–3 gram")
                     statTile("体积", value: "10.0 MB", note: "Int8 权重 + Float bias")
                 }
 
