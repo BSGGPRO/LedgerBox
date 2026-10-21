@@ -549,7 +549,7 @@ struct ImageLedgerFlowView: View {
     }
 
     private func recognize(_ image: UIImage) {
-        guard let cgImage = image.cgImage else {
+        guard let cgImage = image.normalizedForOCR().cgImage else {
             isProcessing = false
             errorMessage = "无法读取这张图片，请换一张截图。"
             return
@@ -754,6 +754,22 @@ private struct ReceiptCameraPicker: UIViewControllerRepresentable {
                 parent.onPicked(image)
             }
             parent.dismiss()
+        }
+    }
+}
+
+private extension UIImage {
+    /// Camera images can carry an orientation that `cgImage` drops. Redraw once
+    /// so Vision sees upright pixels instead of a sideways receipt.
+    func normalizedForOCR() -> UIImage {
+        guard imageOrientation != .up else { return self }
+
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = scale
+        format.opaque = false
+        let renderer = UIGraphicsImageRenderer(size: size, format: format)
+        return renderer.image { _ in
+            draw(in: CGRect(origin: .zero, size: size))
         }
     }
 }

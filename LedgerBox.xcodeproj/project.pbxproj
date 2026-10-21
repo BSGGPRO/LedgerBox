@@ -733,8 +733,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = LedgerBox;
-				INFOPLIST_KEY_NSCameraUsageDescription = "拍摄账单截图，仅用于本机文字识别。";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "选择账单截图，仅用于本机文字识别。";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Take receipt photos for on-device text recognition.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Choose receipt screenshots for on-device text recognition.";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -766,8 +766,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = LedgerBox;
-				INFOPLIST_KEY_NSCameraUsageDescription = "拍摄账单截图，仅用于本机文字识别。";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "选择账单截图，仅用于本机文字识别。";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Take receipt photos for on-device text recognition.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Choose receipt screenshots for on-device text recognition.";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
