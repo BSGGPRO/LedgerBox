@@ -83,7 +83,7 @@ static int lb_resolve(void *library, void *target, const char *name,
 
 #define LB_RESOLVE(field, name) \
     do { \
-        if (lb_resolve(library, (void *)&handle->field, name, error, error_len) != 0) { \
+        if (lb_resolve(handle->library, (void *)&handle->field, name, error, error_len) != 0) { \
             goto fail; \
         } \
     } while (0)
