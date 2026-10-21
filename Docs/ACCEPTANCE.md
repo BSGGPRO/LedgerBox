@@ -53,7 +53,7 @@ NO BOM
 | `URLSession` | 仅 `OnlineAIClient` 使用；无 CloudKit / Firebase / Supabase / 自建后端 |
 | `@NSManaged var ... Double` | 未发现 |
 | `Podfile` / `Package.swift` / `Package.resolved` / `.xcworkspace` | 未发现 |
-| `#Preview` | 13 个 Swift 文件包含 |
+| `#Preview` | 14 个 Swift 文件包含 |
 | 主页面空状态 | 首页、流水、统计、预算、目标、买车页具备 |
 | 证书/描述文件/Team ID | 未发现 |
 | 文档 + 调研/10 项目清单 | 已创建 |
