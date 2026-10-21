@@ -1,4 +1,4 @@
-﻿# LedgerBox
+# LedgerBox
 
 LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftUI + Core Data 构建。项目把“通用记账引擎”和“场景模板规则”分开：前者只负责收支、转账、退款、预算、统计和目标进度；后者只提供日常、学生、买车三套可选配置。
 
@@ -205,6 +205,7 @@ CONTRIBUTING.md
 - 小 AI 是本地规则 + `NaturalLanguage` + 5,643 参数金钱分类器 + 10,485,800 参数财务意图模型，不是生成式大模型；合成验证集 99.1% 不代表真实世界准确率，真实短句、方言和错别字仍需你自己考。
 - 新版未签名 IPA：`LedgerBox-unsigned-0.4.0-FinanceBrain.ipa`，1,240,946 字节，SHA-256 `9E00BC3F78141FF2DFB321D8B404C835BF9064B677C9F8A12EA4F3F3136E6010`；无 `PlugIns`、无麦克风/语音/Siri 权限，需自签后安装。
 - 权重文件 SHA-256：`FBAE921A209BAF880481E10B91ACADEEE3B324182063CDDDDA7CFE9FB4C7CF74`，10,485,920 字节。
+- 源码包：`LedgerBox-source-0.4.0-FinanceBrain.zip`；大小与 SHA-256 见同目录 `LedgerBox-0.4.0-SHA256.txt`，源码包不包含自身哈希。
 - 当前默认是单 target：不嵌入 `PlugIns/LedgerBoxWidget.appex`，所以 `lcsign` 只需签主 App。Widget 源码仍在仓库中，但不会进入 IPA。
 - 如果要重新启用小组件，必须在 Xcode 中恢复 Embed 阶段，并同时签主 App 与 appex；否则会出现图标有、点不开的安装失败。
 
