@@ -28,6 +28,16 @@ struct AddTransactionView: View {
     @State private var note = ""
     @State private var errorMessage: String?
 
+    // One focus binding drives every dismissal path (keyboard "完成", blank
+    // tap, save, cancel). Focus never feeds `canSave`, so validation is
+    // unchanged.
+    @FocusState private var focusedField: InputField?
+
+    private enum InputField: Hashable {
+        case amount
+        case note
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -38,8 +48,10 @@ struct AddTransactionView: View {
                 }
                 .padding(.horizontal, theme.pagePadding)
                 .padding(.vertical, theme.spacing)
+                .keyboardDismissOnBlankTap { focusedField = nil }
             }
             .scrollDismissesKeyboard(.interactively)
+            .keyboardDoneBar { focusedField = nil }
             .background(theme.background.ignoresSafeArea())
             .navigationTitle("记一笔")
             .navigationBarTitleDisplayMode(.inline)
@@ -48,6 +60,7 @@ struct AddTransactionView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消") {
+                        focusedField = nil
                         dismiss()
                     }
                     .foregroundStyle(theme.secondaryText)
@@ -100,8 +113,7 @@ struct AddTransactionView: View {
                 } label: {
                     Text(item.displayName)
                         .font(theme.captionFont)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 9)
+                        .frame(maxWidth: .infinity, minHeight: 44)
                         .foregroundStyle(type == item ? theme.onAccent : theme.secondaryText)
                         .background(
                             type == item ? theme.accent : Color.clear,
@@ -138,6 +150,7 @@ struct AddTransactionView: View {
 
                     TextField("0.00", text: $amountText)
                         .keyboardType(.decimalPad)
+                        .focused($focusedField, equals: .amount)
                         .font(theme.amountFont)
                         .foregroundStyle(theme.primaryText)
                         .textFieldStyle(.plain)
@@ -150,6 +163,7 @@ struct AddTransactionView: View {
                     .font(theme.captionFont)
                     .foregroundStyle(theme.secondaryText)
             }
+            .keyboardDismissOnBlankTap { focusedField = nil }
         }
     }
 
@@ -244,6 +258,7 @@ struct AddTransactionView: View {
                     Spacer(minLength: theme.smallSpacing)
 
                     TextField("可选", text: $note, axis: .vertical)
+                        .focused($focusedField, equals: .note)
                         .font(theme.bodyFont)
                         .foregroundStyle(theme.primaryText)
                         .multilineTextAlignment(.trailing)
@@ -252,6 +267,7 @@ struct AddTransactionView: View {
                 }
                 .padding(.vertical, 11)
             }
+            .keyboardDismissOnBlankTap { focusedField = nil }
         }
     }
 
@@ -375,6 +391,8 @@ struct AddTransactionView: View {
     }
 
     private func save() {
+        focusedField = nil
+
         guard let amount = parsedAmount, amount > 0 else {
             errorMessage = "请输入大于 0 的有效金额。"
             return

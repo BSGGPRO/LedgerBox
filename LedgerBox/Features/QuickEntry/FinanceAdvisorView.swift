@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 
 struct FinanceExchange: Identifiable {
     let id = UUID()
@@ -75,8 +75,13 @@ struct FinanceAdvisorView: View {
                 }
                 .padding(.horizontal, theme.pagePadding)
                 .padding(.vertical, theme.spacing)
+                .keyboardDismissOnBlankTap { inputFocused = false }
             }
             .scrollDismissesKeyboard(.interactively)
+            // Only the chat composer owns this bar; in "大脑" mode
+            // FinanceBrainMapView contributes its own, and two accessory bars
+            // would show two "完成" buttons.
+            .keyboardDoneBar(isEnabled: mode == .chat) { inputFocused = false }
             .onChange(of: exchanges.count) { _, _ in
                 if let last = exchanges.last {
                     withAnimation(.snappy) {
@@ -122,7 +127,7 @@ struct FinanceAdvisorView: View {
 
                     Image(systemName: "brain.head.profile")
                         .font(theme.rowIconFont)
-                        .foregroundStyle(theme.accent)
+                        .foregroundStyle(theme.accentText)
                 }
 
                 VStack(alignment: .leading, spacing: 3) {
@@ -160,7 +165,7 @@ struct FinanceAdvisorView: View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
             metricCard(title: "本月收入", value: MoneyFormat.currency(snapshot.monthIncome), icon: "arrow.down.left", color: theme.income)
             metricCard(title: "本月支出", value: MoneyFormat.currency(snapshot.monthExpense), icon: "arrow.up.right", color: theme.expense)
-            metricCard(title: "本月结余", value: MoneyFormat.currency(snapshot.monthNet), icon: "equal", color: theme.accent)
+            metricCard(title: "本月结余", value: MoneyFormat.currency(snapshot.monthNet), icon: "equal", color: theme.accentText)
             metricCard(title: "账户总余额", value: MoneyFormat.currency(snapshot.totalBalance), icon: "banknote", color: theme.primaryText)
         }
     }
@@ -219,7 +224,7 @@ struct FinanceAdvisorView: View {
                     .font(theme.bodyFont.weight(.semibold))
                     .foregroundStyle(theme.primaryText)
 
-                Text("它会把问题分到 40 个记账/财务意图，再用本机账本和固定规则回答；切到“大脑”能看到 1048 万参数的本地激活图。不会编数字，不会自动写账。")
+                Text("它会把问题分到 40 个记账/财务意图，再用本机账本和固定规则回答；切到“大脑”能看到 2097 万参数的本地激活图。不会编数字，不会自动写账。")
                     .font(theme.captionFont)
                     .foregroundStyle(theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
@@ -268,7 +273,7 @@ struct FinanceAdvisorView: View {
 
                         Text(exchange.advice.tag)
                             .font(theme.badgeFont)
-                            .foregroundStyle(theme.accent)
+                            .foregroundStyle(theme.accentText)
                             .padding(.horizontal, 7)
                             .padding(.vertical, 3)
                             .background(theme.accent.opacity(0.1), in: Capsule())
@@ -307,7 +312,7 @@ struct FinanceAdvisorView: View {
                 Image(systemName: "arrow.up")
                     .font(theme.headerActionFont)
                     .foregroundStyle(theme.onAccent)
-                    .frame(width: 42, height: 42)
+                    .frame(width: 44, height: 44)
                     .background(theme.accent, in: Circle())
             }
             .buttonStyle(.plain)

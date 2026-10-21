@@ -42,6 +42,12 @@ struct SettingsView: View {
     @State private var alertMessage = ""
     @State private var showingAlert = false
 
+    // Accent editing state. The source of truth is always `themeManager.accentHex`.
+    @State private var customColor = Color(hex: Theme.defaultAccentHex)
+    @State private var hexDraft = Theme.defaultAccentHex
+    @State private var hexError: String?
+    @FocusState private var hexFieldFocused: Bool
+
     private var theme: Theme {
         themeManager.theme(for: colorScheme)
     }
@@ -49,18 +55,23 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: theme.spacing) {
+                VStack(alignment: .leading, spacing: theme.sectionSpacing) {
                     appearanceSection
                     templateSection
                     dataSection
                     aiSection
                     aboutSection
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, theme.pagePadding)
-                .padding(.top, 8)
-                .padding(.bottom, 32)
+                .padding(.top, theme.smallSpacing)
+                .padding(.bottom, theme.sectionSpacing + theme.smallSpacing)
+                .keyboardDismissOnBlankTap {
+                    hexFieldFocused = false
+                }
             }
             .scrollIndicators(.hidden)
+            .scrollDismissesKeyboard(.interactively)
             .background(theme.background.ignoresSafeArea())
             .navigationTitle("设置")
             .navigationBarTitleDisplayMode(.inline)
@@ -72,12 +83,21 @@ struct SettingsView: View {
                         dismiss()
                     }
                     .fontWeight(.semibold)
-                    .foregroundStyle(theme.accent)
+                    .foregroundStyle(theme.accentText)
                 }
             }
         }
         .environment(\.ledgerTheme, theme)
-        .tint(theme.accent)
+        .tint(theme.accentText)
+        .onAppear {
+            syncAccentFields()
+        }
+        .onChange(of: themeManager.accentHex) { _, newValue in
+            if hexDraft.caseInsensitiveCompare(newValue) != .orderedSame {
+                hexDraft = newValue
+            }
+            customColor = Color(hex: newValue)
+        }
         .confirmationDialog(
             "切换模板？",
             isPresented: $showingTemplateConfirmation,
@@ -116,84 +136,287 @@ struct SettingsView: View {
         }
     }
 
-    private var appearanceSection: some View {
-        VStack(spacing: theme.smallSpacing) {
-            LedgerSectionHeader(title: "外观")
+    // MARK: - Appearance
 
+    private var appearanceSection: some View {
+        section("外观") {
             LedgerCard {
-                VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: theme.spacing) {
                     Text("主题")
-                        .font(theme.captionFont)
+                        .font(theme.overlineFont)
+                        .tracking(0.8)
                         .foregroundStyle(theme.secondaryText)
 
-                    Picker(
-                        "主题",
+                    LedgerSegmentedControl(
+                        items: ThemeMode.allCases,
+                        title: { $0.displayName },
+                        symbol: { $0.symbolName },
                         selection: Binding(
                             get: { themeManager.mode },
                             set: { themeManager.mode = $0 }
                         )
-                    ) {
-                        ForEach(ThemeMode.allCases) { mode in
-                            Label(mode.displayName, systemImage: mode.symbolName)
-                                .tag(mode)
-                        }
-                    }
-                    .labelsHidden()
-                    .pickerStyle(.segmented)
+                    )
 
-                    Divider()
-                        .overlay(theme.separator)
+                    hairline
 
-                    Text("强调色")
-                        .font(theme.captionFont)
-                        .foregroundStyle(theme.secondaryText)
-
-                    HStack(spacing: 14) {
-                        ForEach(ThemeAccent.allCases) { accent in
-                            Button {
-                                themeManager.accentHex = accent.hex
-                            } label: {
-                                Circle()
-                                    .fill(Color(hex: accent.hex))
-                                    .frame(width: 30, height: 30)
-                                    .overlay {
-                                        if isSelected(accent) {
-                                            Image(systemName: "checkmark")
-                                                .font(theme.badgeFont)
-                                                .foregroundStyle(theme.onAccent)
-                                        }
-                                    }
-                                    .overlay {
-                                        Circle()
-                                            .stroke(
-                                                theme.primaryText.opacity(isSelected(accent) ? 0.25 : 0),
-                                                lineWidth: 2
-                                            )
-                                    }
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel(accent.displayName)
-                        }
-
-                        Spacer()
-                    }
+                    accentEditor
                 }
             }
         }
     }
 
-    private var templateSection: some View {
-        VStack(spacing: theme.smallSpacing) {
-            LedgerSectionHeader(title: "模板")
+    private var accentEditor: some View {
+        VStack(alignment: .leading, spacing: theme.spacing) {
+            HStack(alignment: .firstTextBaseline, spacing: theme.smallSpacing) {
+                Text("强调色")
+                    .font(theme.overlineFont)
+                    .tracking(0.8)
+                    .foregroundStyle(theme.secondaryText)
 
+                Spacer(minLength: theme.smallSpacing)
+
+                Text("#\(theme.accentHex)")
+                    .font(theme.hexFont)
+                    .foregroundStyle(theme.tertiaryText)
+            }
+
+            presetRow
+
+            customColorRow
+
+            hexRow
+
+            if let hexError {
+                Text(hexError)
+                    .font(theme.captionFont)
+                    .foregroundStyle(theme.expense)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if let notice = themeManager.accentFallbackNotice {
+                fallbackNotice(notice)
+            }
+
+            accentPreview
+
+            if showsAccentCorrection {
+                lowContrastHint
+            }
+        }
+    }
+
+    private var presetRow: some View {
+        HStack(spacing: theme.tinySpacing) {
+            ForEach(ThemeAccent.allCases) { accent in
+                Button {
+                    applyHex(accent.hex)
+                } label: {
+                    swatch(hex: accent.hex, selected: isSelected(accent))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(accent.displayName)
+                .accessibilityAddTraits(isSelected(accent) ? AccessibilityTraits.isSelected : AccessibilityTraits())
+            }
+
+            Spacer(minLength: 0)
+        }
+    }
+
+    private func swatch(hex: String, selected: Bool) -> some View {
+        ZStack {
+            Circle()
+                .fill(Color(hex: hex))
+                .frame(width: 32, height: 32)
+
+            if selected {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(LedgerAccent.onColor(for: hex))
+            }
+        }
+        .frame(width: theme.minTapTarget, height: theme.minTapTarget)
+        .overlay {
+            Circle()
+                .strokeBorder(theme.primaryText.opacity(selected ? 0.9 : 0), lineWidth: 1.5)
+                .frame(width: 38, height: 38)
+        }
+        .contentShape(Circle())
+    }
+
+    private var customColorRow: some View {
+        HStack(spacing: theme.cardSpacing) {
+            ColorPicker(selection: customColorBinding, supportsOpacity: false) {
+                HStack(spacing: 6) {
+                    Image(systemName: "eyedropper")
+                        .font(theme.controlIconFont)
+
+                    Text("自定义颜色")
+                        .font(theme.captionFont)
+                }
+                .foregroundStyle(theme.secondaryText)
+            }
+            .tint(theme.accentText)
+
+            Spacer(minLength: theme.smallSpacing)
+        }
+        .frame(minHeight: theme.minTapTarget)
+    }
+
+    private var hexRow: some View {
+        HStack(spacing: theme.smallSpacing) {
+            Text("HEX")
+                .font(theme.overlineFont)
+                .tracking(0.6)
+                .foregroundStyle(theme.tertiaryText)
+
+            TextField("2F6FED", text: $hexDraft)
+                .font(theme.hexFont)
+                .foregroundStyle(theme.primaryText)
+                .focused($hexFieldFocused)
+                .textInputAutocapitalization(.characters)
+                .autocorrectionDisabled()
+                .keyboardType(.asciiCapable)
+                .submitLabel(.done)
+                .onSubmit { applyHexDraft() }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .frame(maxWidth: 132)
+                .background(
+                    RoundedRectangle(cornerRadius: theme.controlRadius, style: .continuous)
+                        .fill(theme.surfaceElevated)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: theme.controlRadius, style: .continuous)
+                        .strokeBorder(hexError == nil ? theme.separator : theme.expense, lineWidth: theme.hairline)
+                )
+                .accessibilityLabel("强调色 HEX 值")
+
+            Spacer(minLength: theme.smallSpacing)
+
+            Button("应用") {
+                applyHexDraft()
+            }
+            .buttonStyle(LedgerSecondaryButtonStyle(theme: theme))
+            .accessibilityLabel("应用自定义 HEX 颜色")
+        }
+    }
+
+    private func fallbackNotice(_ notice: String) -> some View {
+        HStack(alignment: .top, spacing: theme.smallSpacing) {
+            Image(systemName: "arrow.uturn.backward.circle")
+                .font(theme.controlIconFont)
+                .foregroundStyle(theme.warning)
+
+            Text(notice)
+                .font(theme.captionFont)
+                .foregroundStyle(theme.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer(minLength: theme.tinySpacing)
+
+            Button {
+                themeManager.dismissFallbackNotice()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(theme.controlIconFont)
+                    .foregroundStyle(theme.tertiaryText)
+                    .frame(width: theme.minTapTarget, height: theme.minTapTarget)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("收起提示")
+        }
+        .padding(.leading, theme.cardSpacing)
+        .padding(.vertical, theme.tinySpacing)
+        .background(
+            theme.warningSoft,
+            in: RoundedRectangle(cornerRadius: theme.controlRadius + 3, style: .continuous)
+        )
+    }
+
+    private var accentPreview: some View {
+        VStack(alignment: .leading, spacing: theme.smallSpacing) {
+            HStack(spacing: theme.cardSpacing) {
+                Text("记一笔")
+                    .font(theme.buttonLabelFont)
+                    .foregroundStyle(theme.onAccent)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(theme.accent, in: Capsule())
+
+                Text("强调文字 / 图标")
+                    .font(theme.bodyFont.weight(.semibold))
+                    .foregroundStyle(theme.accentText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+
+                Spacer(minLength: theme.tinySpacing)
+            }
+
+            Text("按钮文字 \(contrastText(buttonTextContrast)) · 文字 \(contrastText(theme.accentTextContrast))")
+                .font(theme.captionFont)
+                .foregroundStyle(theme.tertiaryText)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            theme.surfaceElevated,
+            in: RoundedRectangle(cornerRadius: theme.controlRadius + 3, style: .continuous)
+        )
+        .accessibilityElement(children: .combine)
+    }
+
+    private var lowContrastHint: some View {
+        HStack(alignment: .top, spacing: theme.smallSpacing) {
+            Image(systemName: "exclamationmark.circle")
+                .font(theme.controlIconFont)
+                .foregroundStyle(theme.warning)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("自定义颜色在卡片上作为文字只有 \(contrastText(theme.accentContrast))")
+                    .font(theme.captionFont)
+                    .foregroundStyle(theme.primaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text("按钮文字已自动使用\(theme.accentInkOnAccent ? "深色" : "白色")；文字与图标自动改用加深后的 #\(theme.accentTextHex)，保证可读。")
+                    .font(theme.captionFont)
+                    .foregroundStyle(theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Button("改用加深版") {
+                    applyHex(theme.accentTextHex)
+                }
+                .font(theme.captionFont.weight(.semibold))
+                .foregroundStyle(theme.accentText)
+                .frame(minHeight: theme.minTapTarget, alignment: .leading)
+                .contentShape(Rectangle())
+                .accessibilityLabel("改用加深后的强调色")
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(theme.cardSpacing)
+        .background(
+            theme.warningSoft,
+            in: RoundedRectangle(cornerRadius: theme.controlRadius + 3, style: .continuous)
+        )
+    }
+
+    // MARK: - Templates
+
+    private var templateSection: some View {
+        section("模板") {
             if let activeTemplate {
                 HStack(spacing: 6) {
-                    Image(systemName: "checkmark.seal.fill")
-                        .foregroundStyle(theme.accent)
+                    Image(systemName: "checkmark.seal")
+                        .font(theme.controlIconFont)
+                        .foregroundStyle(theme.accentText)
 
                     Text("当前：\(activeTemplate.name)")
                         .font(theme.captionFont)
                         .foregroundStyle(theme.secondaryText)
+                        .lineLimit(1)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -212,120 +435,86 @@ struct SettingsView: View {
 
             Text("切换模板只影响之后的新规则，不回溯历史。已存金额与交易记录不会被重置。")
                 .font(theme.captionFont)
-                .foregroundStyle(theme.secondaryText)
+                .foregroundStyle(theme.tertiaryText)
+                .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 2)
+                .padding(.horizontal, theme.tinySpacing)
         }
     }
 
-    private var dataSection: some View {
-        VStack(spacing: theme.smallSpacing) {
-            LedgerSectionHeader(title: "数据")
+    // MARK: - Data
 
-            LedgerCard {
+    private var dataSection: some View {
+        section("数据") {
+            LedgerCard(padding: 0) {
                 VStack(spacing: 0) {
                     Button {
                         prepareExport()
                     } label: {
-                        HStack(spacing: 12) {
-                            ZStack {
-                                Circle()
-                                    .fill(theme.surfaceElevated)
-                                    .frame(width: theme.iconCircleSize, height: theme.iconCircleSize)
-
-                                Image(systemName: "square.and.arrow.up")
-                                    .font(theme.rowIconFont)
-                                    .foregroundStyle(theme.accent)
-                            }
-
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text("导出 CSV")
-                                    .font(theme.bodyFont)
-                                    .foregroundStyle(theme.primaryText)
-
-                                Text("日期、类型、金额、分类、账户、备注")
-                                    .font(theme.captionFont)
-                                    .foregroundStyle(theme.secondaryText)
-                            }
-
-                            Spacer(minLength: theme.smallSpacing)
-
-                            Image(systemName: "chevron.right")
-                                .font(theme.controlIconFont)
-                                .foregroundStyle(theme.secondaryText)
-                        }
-                        .padding(.vertical, 4)
+                        SettingsRow(
+                            theme: theme,
+                            icon: "square.and.arrow.up",
+                            tint: theme.accentText,
+                            title: "导出 CSV",
+                            subtitle: "日期、类型、金额、分类、账户、备注"
+                        )
                     }
                     .buttonStyle(.plain)
+                    .padding(.horizontal, theme.cardPadding)
+                    .padding(.vertical, theme.tinySpacing)
 
-                    Divider()
-                        .overlay(theme.separator)
-                        .padding(.vertical, 12)
+                    Rectangle()
+                        .fill(theme.separator)
+                        .frame(height: theme.hairline)
+                        .padding(.leading, theme.cardPadding)
 
-                    HStack(alignment: .top, spacing: 10) {
+                    HStack(alignment: .top, spacing: theme.smallSpacing) {
                         Image(systemName: "lock.shield")
-                            .font(theme.rowIconFont)
-                            .foregroundStyle(theme.secondaryText)
+                            .font(theme.controlIconFont)
+                            .foregroundStyle(theme.tertiaryText)
 
                         Text("账本默认只保存在本机 Core Data。App 不含联网 AI，也不会发起任何网络请求；无登录、无广告、无内购。")
                             .font(theme.captionFont)
                             .foregroundStyle(theme.secondaryText)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, theme.cardPadding)
+                    .padding(.top, theme.cardSpacing)
+                    .padding(.bottom, theme.cardPadding)
                 }
             }
         }
     }
 
-    private var aiSection: some View {
-        VStack(spacing: theme.smallSpacing) {
-            LedgerSectionHeader(title: "AI")
+    // MARK: - AI
 
+    private var aiSection: some View {
+        section("AI") {
             NavigationLink {
                 FinanceAdvisorView()
             } label: {
                 LedgerCard {
-                    HStack(spacing: 12) {
-                        ZStack {
-                            Circle()
-                                .fill(theme.accent.opacity(0.12))
-                                .frame(width: theme.iconCircleSize, height: theme.iconCircleSize)
-
-                            Image(systemName: "brain.head.profile")
-                                .font(theme.rowIconFont)
-                                .foregroundStyle(theme.accent)
-                        }
-
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("财务大脑")
-                                .font(theme.bodyFont)
-                                .foregroundStyle(theme.primaryText)
-
-                            Text("40 个记账意图 · 20,971,560 参数 · 离线")
-                                .font(theme.captionFont)
-                                .foregroundStyle(theme.secondaryText)
-                        }
-
-                        Spacer(minLength: theme.smallSpacing)
-
-                        Text("本地")
-                            .font(theme.captionFont)
-                            .foregroundStyle(theme.income)
-
-                        Image(systemName: "chevron.right")
-                            .font(theme.controlIconFont)
-                            .foregroundStyle(theme.secondaryText)
-                    }
+                    SettingsRow(
+                        theme: theme,
+                        icon: "brain.head.profile",
+                        tint: theme.accentText,
+                        title: "财务大脑",
+                        subtitle: "40 个记账意图 · 20,971,560 参数 · 离线",
+                        trailingText: "本地",
+                        trailingTint: theme.income
+                    )
                 }
             }
             .buttonStyle(.plain)
             .accessibilityHint("打开离线的财务专用小模型")
-
         }
     }
 
+    // MARK: - About
+
     private var aboutSection: some View {
-        VStack(spacing: theme.smallSpacing) {
+        section("关于") {
             LedgerCard {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("LedgerBox \(appVersion)")
@@ -335,42 +524,26 @@ struct SettingsView: View {
                     Text("iOS 17+ · SwiftUI · Core Data · 本地优先")
                         .font(theme.captionFont)
                         .foregroundStyle(theme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
 
                     Text("通用记账引擎与场景模板分离；模板只影响之后的新规则。")
                         .font(theme.captionFont)
-                        .foregroundStyle(theme.secondaryText)
+                        .foregroundStyle(theme.tertiaryText)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
 
             Link(destination: authorURL) {
                 LedgerCard {
-                    HStack(spacing: 12) {
-                        ZStack {
-                            Circle()
-                                .fill(theme.surfaceElevated)
-                                .frame(width: theme.iconCircleSize, height: theme.iconCircleSize)
-
-                            Image(systemName: "play.rectangle.fill")
-                                .font(theme.rowIconFont)
-                                .foregroundStyle(theme.accent)
-                        }
-
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("Beausoleil")
-                                .font(theme.bodyFont)
-                                .foregroundStyle(theme.primaryText)
-
-                            Text("作者 · Bilibili 个人空间")
-                                .font(theme.captionFont)
-                                .foregroundStyle(theme.secondaryText)
-                        }
-
-                        Spacer(minLength: theme.smallSpacing)
-
-                        Image(systemName: "arrow.up.right")
-                            .font(theme.controlIconFont)
-                            .foregroundStyle(theme.secondaryText)
-                    }
+                    SettingsRow(
+                        theme: theme,
+                        icon: "play.rectangle",
+                        tint: theme.accentText,
+                        title: "Beausoleil",
+                        subtitle: "作者 · Bilibili 个人空间",
+                        showsChevron: false,
+                        trailingSystemImage: "arrow.up.right"
+                    )
                 }
             }
             .buttonStyle(.plain)
@@ -378,33 +551,15 @@ struct SettingsView: View {
 
             Link(destination: repositoryURL) {
                 LedgerCard {
-                    HStack(spacing: 12) {
-                        ZStack {
-                            Circle()
-                                .fill(theme.accent.opacity(0.12))
-                                .frame(width: theme.iconCircleSize, height: theme.iconCircleSize)
-
-                            Image(systemName: "chevron.left.forwardslash.chevron.right")
-                                .font(theme.rowIconFont)
-                                .foregroundStyle(theme.accent)
-                        }
-
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("GitHub 开源地址")
-                                .font(theme.bodyFont)
-                                .foregroundStyle(theme.primaryText)
-
-                            Text("BSGGPRO / LedgerBox · MIT")
-                                .font(theme.captionFont)
-                                .foregroundStyle(theme.secondaryText)
-                        }
-
-                        Spacer(minLength: theme.smallSpacing)
-
-                        Image(systemName: "arrow.up.right")
-                            .font(theme.controlIconFont)
-                            .foregroundStyle(theme.secondaryText)
-                    }
+                    SettingsRow(
+                        theme: theme,
+                        icon: "chevron.left.forwardslash.chevron.right",
+                        tint: theme.accentText,
+                        title: "GitHub 开源地址",
+                        subtitle: "BSGGPRO / LedgerBox · MIT",
+                        showsChevron: false,
+                        trailingSystemImage: "arrow.up.right"
+                    )
                 }
             }
             .buttonStyle(.plain)
@@ -414,43 +569,112 @@ struct SettingsView: View {
                 ChangelogView()
             } label: {
                 LedgerCard {
-                    HStack(spacing: 12) {
-                        ZStack {
-                            Circle()
-                                .fill(theme.surfaceElevated)
-                                .frame(width: theme.iconCircleSize, height: theme.iconCircleSize)
-
-                            Image(systemName: "clock.arrow.circlepath")
-                                .font(theme.rowIconFont)
-                                .foregroundStyle(theme.accent)
-                        }
-
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("更新日志")
-                                .font(theme.bodyFont)
-                                .foregroundStyle(theme.primaryText)
-
-                            Text("查看每个版本新增与修复了什么")
-                                .font(theme.captionFont)
-                                .foregroundStyle(theme.secondaryText)
-                        }
-
-                        Spacer(minLength: theme.smallSpacing)
-
-                        Text("v\(appVersion)")
-                            .font(theme.captionFont)
-                            .foregroundStyle(theme.secondaryText)
-
-                        Image(systemName: "chevron.right")
-                            .font(theme.controlIconFont)
-                            .foregroundStyle(theme.secondaryText)
-                    }
+                    SettingsRow(
+                        theme: theme,
+                        icon: "clock.arrow.circlepath",
+                        tint: theme.accentText,
+                        title: "更新日志",
+                        subtitle: "查看每个版本新增与修复了什么",
+                        trailingText: "v\(appVersion)"
+                    )
                 }
             }
             .buttonStyle(.plain)
             .accessibilityHint("打开版本更新记录")
         }
     }
+
+    // MARK: - Building blocks
+
+    private func section<Content: View>(
+        _ title: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: theme.cardSpacing) {
+            LedgerSectionHeader(title: title)
+            content()
+        }
+    }
+
+    private var hairline: some View {
+        Rectangle()
+            .fill(theme.separator)
+            .frame(height: theme.hairline)
+    }
+
+    // MARK: - Accent editing
+
+    private var customColorBinding: Binding<Color> {
+        Binding(
+            get: { customColor },
+            set: { newValue in
+                customColor = newValue
+                applyCustomColor(newValue)
+            }
+        )
+    }
+
+    /// Contrast of the button label (white or ink) against the accent fill.
+    private var buttonTextContrast: Double {
+        guard let fill = LedgerRGB(hex: theme.accentHex),
+              let label = LedgerRGB(hex: theme.accentInkOnAccent ? LedgerAccent.inkHex : "FFFFFF") else {
+            return 0
+        }
+        return fill.contrast(with: label)
+    }
+
+    private func contrastText(_ value: Double) -> String {
+        String(format: "%.1f:1", value)
+    }
+
+    private func applyCustomColor(_ color: Color) {
+        guard let hex = color.ledgerHex else {
+            syncAccentFields()
+            showAlert(title: "无法读取这个颜色", message: "请换一个 sRGB 颜色。当前强调色保持不变。")
+            return
+        }
+
+        _ = themeManager.setAccent(hex: hex)
+        hexError = nil
+        hexDraft = themeManager.accentHex
+    }
+
+    private func applyHex(_ hex: String) {
+        hexFieldFocused = false
+        guard themeManager.setAccent(hex: hex) else {
+            hexError = "HEX 需要 6 位十六进制，例如 2F6FED。当前强调色未改变。"
+            return
+        }
+        hexError = nil
+        syncAccentFields()
+    }
+
+    private func applyHexDraft() {
+        applyHex(hexDraft)
+    }
+
+    private func syncAccentFields() {
+        hexDraft = themeManager.accentHex
+        customColor = Color(hex: themeManager.accentHex)
+    }
+
+    private func isSelected(_ accent: ThemeAccent) -> Bool {
+        themeManager.accentHex.caseInsensitiveCompare(accent.hex) == .orderedSame
+    }
+
+    /// The five curated presets are vetted by design; only user-picked colors get
+    /// the auto-correction banner. The numeric contrast readout is always visible.
+    private var isPresetAccent: Bool {
+        ThemeAccent.allCases.contains { accent in
+            themeManager.accentHex.caseInsensitiveCompare(accent.hex) == .orderedSame
+        }
+    }
+
+    private var showsAccentCorrection: Bool {
+        theme.accentIsLowContrast && !isPresetAccent
+    }
+
+    // MARK: - Templates & export
 
     private var activeTemplate: TemplateRules? {
         templates.first { $0.active }
@@ -466,10 +690,6 @@ struct SettingsView: View {
 
     private var repositoryURL: URL {
         URL(string: "https://github.com/BSGGPRO/LedgerBox")!
-    }
-
-    private func isSelected(_ accent: ThemeAccent) -> Bool {
-        themeManager.accentHex.caseInsensitiveCompare(accent.hex) == .orderedSame
     }
 
     private func requestApply(_ kind: TemplateKind) {
@@ -517,6 +737,8 @@ struct SettingsView: View {
     }
 }
 
+// MARK: - Rows
+
 private struct TemplateRuleRow: View {
     let rules: any TemplateRuleProviding
     let isActive: Bool
@@ -525,7 +747,7 @@ private struct TemplateRuleRow: View {
 
     var body: some View {
         LedgerCard {
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: theme.cardSpacing) {
                 HStack(alignment: .top, spacing: theme.smallSpacing) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(rules.title)
@@ -541,39 +763,98 @@ private struct TemplateRuleRow: View {
                     Spacer(minLength: theme.smallSpacing)
 
                     if isActive {
-                        Text("已启用")
-                            .font(theme.badgeFont)
-                            .foregroundStyle(theme.accent)
-                            .padding(.horizontal, 7)
-                            .padding(.vertical, 3)
-                            .background(theme.accent.opacity(0.12), in: Capsule())
+                        LedgerTag("已启用", tint: theme.income)
                     }
                 }
 
                 if let note = rules.plan.notes.first {
                     Text(note)
                         .font(theme.captionFont)
-                        .foregroundStyle(theme.secondaryText)
+                        .foregroundStyle(theme.tertiaryText)
                         .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 HStack(spacing: theme.smallSpacing) {
                     Text("\(rules.plan.budgets.count) 个预算 · \(rules.plan.goals.count) 个目标")
                         .font(theme.captionFont)
-                        .foregroundStyle(theme.secondaryText)
+                        .foregroundStyle(theme.tertiaryText)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
 
                     Spacer(minLength: theme.smallSpacing)
 
-                    Button(isActive ? "已启用" : "应用") {
-                        onApply()
+                    if isActive {
+                        Text("已启用")
+                            .font(theme.buttonLabelFont)
+                            .foregroundStyle(theme.secondaryText)
+                            .padding(.horizontal, theme.cardPadding)
+                            .frame(minHeight: theme.minTapTarget)
+                    } else {
+                        Button("应用") {
+                            onApply()
+                        }
+                        .buttonStyle(LedgerSecondaryButtonStyle(theme: theme))
                     }
-                    .font(theme.captionFont)
-                    .buttonStyle(.bordered)
-                    .tint(theme.accent)
-                    .disabled(isActive)
                 }
             }
         }
+    }
+}
+
+private struct SettingsRow: View {
+    let theme: Theme
+    let icon: String
+    let tint: Color
+    let title: String
+    let subtitle: String
+    var trailingText: String? = nil
+    var trailingTint: Color? = nil
+    var showsChevron = true
+    var trailingSystemImage: String? = nil
+
+    var body: some View {
+        HStack(spacing: theme.cardSpacing) {
+            LedgerIconBadge(systemName: icon, tint: tint)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(theme.bodyFont.weight(.medium))
+                    .foregroundStyle(theme.primaryText)
+                    .lineLimit(1)
+
+                Text(subtitle)
+                    .font(theme.captionFont)
+                    .foregroundStyle(theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .layoutPriority(0)
+
+            Spacer(minLength: theme.smallSpacing)
+
+            if let trailingText {
+                Text(trailingText)
+                    .font(theme.captionFont)
+                    .foregroundStyle(trailingTint ?? theme.tertiaryText)
+                    .lineLimit(1)
+                    .layoutPriority(1)
+            }
+
+            if let trailingSystemImage {
+                Image(systemName: trailingSystemImage)
+                    .font(theme.controlIconFont)
+                    .foregroundStyle(theme.tertiaryText)
+            }
+
+            if showsChevron {
+                Image(systemName: "chevron.right")
+                    .font(theme.controlIconFont)
+                    .foregroundStyle(theme.tertiaryText)
+            }
+        }
+        .frame(minHeight: theme.minTapTarget)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
     }
 }
 

@@ -1,4 +1,4 @@
-import CoreData
+﻿import CoreData
 import Foundation
 import SwiftUI
 
@@ -42,7 +42,17 @@ struct QuickEntryView: View {
     @State private var lastAutoRemark = ""
     @State private var alert: QuickEntryAlert?
     @State private var showingFinanceAdvisor = false
-    @FocusState private var inputFocused: Bool
+
+    // All three inputs share one focus binding: the keyboard "完成" bar, the
+    // parse button, the example chips, the brain sheet and save all clear it,
+    // so the keyboard always has an exit. Focus is not part of `canSave`.
+    @FocusState private var focusedField: InputField?
+
+    private enum InputField: Hashable {
+        case text
+        case amount
+        case note
+    }
 
     private let parser = QuickEntryParser()
 
@@ -58,8 +68,10 @@ struct QuickEntryView: View {
                 }
                 .padding(.horizontal, theme.pagePadding)
                 .padding(.vertical, theme.spacing)
+                .keyboardDismissOnBlankTap { focusedField = nil }
             }
             .scrollDismissesKeyboard(.interactively)
+            .keyboardDoneBar { focusedField = nil }
             .background(theme.background.ignoresSafeArea())
             .navigationTitle("AI 记账")
             .navigationBarTitleDisplayMode(.inline)
@@ -120,7 +132,7 @@ struct QuickEntryView: View {
 
                     Label("本地", systemImage: "sparkles")
                         .font(theme.badgeFont)
-                        .foregroundStyle(theme.accent)
+                        .foregroundStyle(theme.accentText)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
                         .background(theme.accent.opacity(0.10), in: Capsule())
@@ -128,7 +140,7 @@ struct QuickEntryView: View {
 
                 HStack(alignment: .bottom, spacing: theme.smallSpacing) {
                     TextField("例如：微信买奶茶 15 元", text: $text, axis: .vertical)
-                        .focused($inputFocused)
+                        .focused($focusedField, equals: .text)
                         .font(theme.bodyFont)
                         .lineLimit(3...6)
                         .textInputAutocapitalization(.never)
@@ -143,7 +155,7 @@ struct QuickEntryView: View {
                         )
 
                     Button {
-                        inputFocused = false
+                        focusedField = nil
                         reparse()
                     } label: {
                         Image(systemName: "sparkles")
@@ -166,7 +178,7 @@ struct QuickEntryView: View {
                         ForEach(QuickEntryAI.examples, id: \.self) { example in
                             Button {
                                 text = example
-                                inputFocused = false
+                                focusedField = nil
                             } label: {
                                 Text(example)
                                     .font(theme.captionFont)
@@ -181,6 +193,7 @@ struct QuickEntryView: View {
                 }
                 .scrollIndicators(.hidden)
             }
+            .keyboardDismissOnBlankTap { focusedField = nil }
         }
     }
 
@@ -219,11 +232,12 @@ struct QuickEntryView: View {
                     Spacer(minLength: 4)
 
                     Button {
+                        focusedField = nil
                         showingFinanceAdvisor = true
                     } label: {
                         Label("大脑", systemImage: "brain.head.profile")
                             .font(theme.badgeFont)
-                            .foregroundStyle(theme.accent)
+                            .foregroundStyle(theme.accentText)
                             .padding(.horizontal, 9)
                             .padding(.vertical, 5)
                             .background(theme.accent.opacity(0.12), in: Capsule())
@@ -334,7 +348,7 @@ struct QuickEntryView: View {
                                         } label: {
                                             Text(category.name)
                                                 .font(theme.captionFont)
-                                                .foregroundStyle(theme.accent)
+                                                .foregroundStyle(theme.accentText)
                                                 .padding(.horizontal, 10)
                                                 .padding(.vertical, 6)
                                                 .background(theme.accent.opacity(0.10), in: Capsule())
@@ -361,7 +375,7 @@ struct QuickEntryView: View {
                                         } label: {
                                             Text(account.name)
                                                 .font(theme.captionFont)
-                                                .foregroundStyle(theme.accent)
+                                                .foregroundStyle(theme.accentText)
                                                 .padding(.horizontal, 10)
                                                 .padding(.vertical, 6)
                                                 .background(theme.accent.opacity(0.10), in: Capsule())
@@ -410,6 +424,7 @@ struct QuickEntryView: View {
                 datePicker
                 noteField
             }
+            .keyboardDismissOnBlankTap { focusedField = nil }
         }
     }
 
@@ -529,6 +544,7 @@ struct QuickEntryView: View {
 
             TextField("0.00", text: $amountText)
                 .keyboardType(.decimalPad)
+                .focused($focusedField, equals: .amount)
                 .multilineTextAlignment(.trailing)
                 .font(theme.rowMoneyFont)
                 .foregroundStyle(theme.primaryText)
@@ -572,6 +588,7 @@ struct QuickEntryView: View {
 
     private var noteField: some View {
         TextField("备注", text: $note)
+            .focused($focusedField, equals: .note)
             .font(theme.bodyFont)
             .foregroundStyle(theme.primaryText)
             .padding(12)
@@ -934,6 +951,8 @@ struct QuickEntryView: View {
     }
 
     private func save() {
+        focusedField = nil
+
         guard
             let amountValue,
             amountValue > 0,

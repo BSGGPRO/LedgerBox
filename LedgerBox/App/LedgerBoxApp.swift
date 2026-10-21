@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 
 @main
 struct LedgerBoxApp: App {
@@ -26,7 +26,7 @@ struct RootView: View {
 
         MainTabView()
             .environment(\.ledgerTheme, theme)
-            .tint(theme.accent)
+            .tint(theme.accentText)
             .preferredColorScheme(themeManager.preferredColorScheme)
     }
 }

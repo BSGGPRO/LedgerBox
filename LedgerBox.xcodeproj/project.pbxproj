@@ -11,6 +11,7 @@
 		BB0000000000000000000002 /* PersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000002 /* PersistenceController.swift */; };
 		BB0000000000000000000003 /* ManagedObjects.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000003 /* ManagedObjects.swift */; };
 		BB0000000000000000000004 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000004 /* Theme.swift */; };
+		BB0000000000000000000050 /* KeyboardDismiss.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000050 /* KeyboardDismiss.swift */; };
 		BB0000000000000000000005 /* FinanceEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000005 /* FinanceEngine.swift */; };
 		BB0000000000000000000006 /* LedgerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000006 /* LedgerService.swift */; };
 		BB0000000000000000000007 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000007 /* HomeView.swift */; };
@@ -53,6 +54,7 @@
 		CC0000000000000000000002 /* PersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceController.swift; sourceTree = "<group>"; };
 		CC0000000000000000000003 /* ManagedObjects.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagedObjects.swift; sourceTree = "<group>"; };
 		CC0000000000000000000004 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		CC0000000000000000000050 /* KeyboardDismiss.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardDismiss.swift; sourceTree = "<group>"; };
 		CC0000000000000000000005 /* FinanceEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinanceEngine.swift; sourceTree = "<group>"; };
 		CC0000000000000000000006 /* LedgerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LedgerService.swift; sourceTree = "<group>"; };
 		CC0000000000000000000007 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
@@ -197,6 +199,7 @@
 			isa = PBXGroup;
 			children = (
 				CC0000000000000000000004 /* Theme.swift */,
+				CC0000000000000000000050 /* KeyboardDismiss.swift */,
 			);
 			path = Design;
 			sourceTree = "<group>";
@@ -481,6 +484,7 @@
 				BB0000000000000000000002 /* PersistenceController.swift in Sources */,
 				BB0000000000000000000003 /* ManagedObjects.swift in Sources */,
 				BB0000000000000000000004 /* Theme.swift in Sources */,
+				BB0000000000000000000050 /* KeyboardDismiss.swift in Sources */,
 				BB0000000000000000000005 /* FinanceEngine.swift in Sources */,
 				BB0000000000000000000006 /* LedgerService.swift in Sources */,
 				BB0000000000000000000007 /* HomeView.swift in Sources */,
@@ -668,7 +672,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.6.0;
+				MARKETING_VERSION = 0.7.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -699,7 +703,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.6.0;
+				MARKETING_VERSION = 0.7.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -723,7 +727,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.6.0;
+				MARKETING_VERSION = 0.7.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -747,7 +751,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.6.0;
+				MARKETING_VERSION = 0.7.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -772,7 +776,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.6.0;
+				MARKETING_VERSION = 0.7.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -797,7 +801,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.6.0;
+				MARKETING_VERSION = 0.7.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

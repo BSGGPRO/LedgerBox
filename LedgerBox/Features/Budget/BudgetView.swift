@@ -1,4 +1,4 @@
-import CoreData
+﻿import CoreData
 import Foundation
 import SwiftUI
 
@@ -298,7 +298,7 @@ private struct BudgetRow: View {
 
                         Image(systemName: category?.icon ?? "chart.pie.fill")
                             .font(theme.rowIconFont)
-                            .foregroundStyle(progress.isOverBudget ? theme.expense : theme.accent)
+                            .foregroundStyle(progress.isOverBudget ? theme.expense : theme.accentText)
                     }
 
                     VStack(alignment: .leading, spacing: 3) {
@@ -321,7 +321,7 @@ private struct BudgetRow: View {
                 }
 
                 ProgressView(value: progress.ratio)
-                    .tint(progress.isOverBudget ? theme.expense : theme.accent)
+                    .tint(progress.isOverBudget ? theme.expense : theme.accentText)
             }
             .animation(.snappy, value: progress)
         }
@@ -355,6 +355,10 @@ private struct BudgetEditorView: View {
     @State private var errorMessage: String?
     @State private var showingDeleteConfirmation = false
 
+    // `.decimalPad` has no Return key, so the limit field needs the shared
+    // keyboard "完成" bar plus a blank-tap exit. Focus never affects `canSave`.
+    @FocusState private var limitFocused: Bool
+
     init(budget: Budget?) {
         self.budget = budget
         _limitText = State(initialValue: budget.map { MoneyFormat.editable($0.limitValue) } ?? "")
@@ -376,8 +380,10 @@ private struct BudgetEditorView: View {
                 }
                 .padding(.horizontal, theme.pagePadding)
                 .padding(.vertical, theme.spacing)
+                .keyboardDismissOnBlankTap { limitFocused = false }
             }
             .scrollDismissesKeyboard(.interactively)
+            .keyboardDoneBar { limitFocused = false }
             .background(theme.background.ignoresSafeArea())
             .navigationTitle(budget == nil ? "新增预算" : "编辑预算")
             .navigationBarTitleDisplayMode(.inline)
@@ -386,6 +392,7 @@ private struct BudgetEditorView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消") {
+                        limitFocused = false
                         dismiss()
                     }
                     .foregroundStyle(theme.secondaryText)
@@ -449,6 +456,7 @@ private struct BudgetEditorView: View {
 
                     TextField("0.00", text: $limitText)
                         .keyboardType(.decimalPad)
+                        .focused($limitFocused)
                         .font(theme.amountFont)
                         .foregroundStyle(theme.primaryText)
                         .textFieldStyle(.plain)
@@ -457,6 +465,7 @@ private struct BudgetEditorView: View {
                         }
                 }
             }
+            .keyboardDismissOnBlankTap { limitFocused = false }
         }
     }
 
@@ -591,6 +600,8 @@ private struct BudgetEditorView: View {
     }
 
     private func save() {
+        limitFocused = false
+
         guard let limit = parsedLimit, limit > 0 else {
             errorMessage = "请输入大于 0 的预算上限。"
             return

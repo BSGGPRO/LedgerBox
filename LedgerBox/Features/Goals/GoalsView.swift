@@ -1,4 +1,4 @@
-import CoreData
+﻿import CoreData
 import Foundation
 import SwiftUI
 
@@ -128,7 +128,7 @@ struct GoalsView: View {
 
                         Image(systemName: "car.fill")
                             .font(theme.rowIconFont)
-                            .foregroundStyle(theme.accent)
+                            .foregroundStyle(theme.accentText)
                     }
 
                     VStack(alignment: .leading, spacing: 3) {
@@ -184,11 +184,11 @@ struct GoalsView: View {
                     HStack(alignment: .top, spacing: 7) {
                         Image(systemName: "brain.head.profile")
                             .font(theme.badgeFont)
-                            .foregroundStyle(theme.accent)
+                            .foregroundStyle(theme.accentText)
 
                         Text(forecastLine)
                             .font(theme.captionFont)
-                            .foregroundStyle(theme.accent)
+                            .foregroundStyle(theme.accentText)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(.top, 2)
@@ -478,6 +478,17 @@ private struct GoalEditorView: View {
     @State private var errorMessage: String?
     @State private var showingDeleteConfirmation = false
 
+    // The name field uses a normal keyboard and the two amounts use
+    // `.decimalPad`; one focus binding gives all three the shared "完成" bar
+    // plus blank-tap exit. Focus never affects `canSave`.
+    @FocusState private var focusedField: InputField?
+
+    private enum InputField: Hashable {
+        case name
+        case target
+        case current
+    }
+
     init(goal: SavingsGoal?) {
         self.goal = goal
         _name = State(initialValue: goal?.name ?? "")
@@ -506,8 +517,10 @@ private struct GoalEditorView: View {
                 }
                 .padding(.horizontal, theme.pagePadding)
                 .padding(.vertical, theme.spacing)
+                .keyboardDismissOnBlankTap { focusedField = nil }
             }
             .scrollDismissesKeyboard(.interactively)
+            .keyboardDoneBar { focusedField = nil }
             .background(theme.background.ignoresSafeArea())
             .navigationTitle(goal == nil ? "新增目标" : "编辑目标")
             .navigationBarTitleDisplayMode(.inline)
@@ -516,6 +529,7 @@ private struct GoalEditorView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消") {
+                        focusedField = nil
                         dismiss()
                     }
                     .foregroundStyle(theme.secondaryText)
@@ -576,6 +590,7 @@ private struct GoalEditorView: View {
                     Spacer(minLength: theme.smallSpacing)
 
                     TextField("例如：换手机", text: $name)
+                        .focused($focusedField, equals: .name)
                         .font(theme.bodyFont)
                         .multilineTextAlignment(.trailing)
                         .textFieldStyle(.plain)
@@ -586,13 +601,13 @@ private struct GoalEditorView: View {
                 Divider()
                     .overlay(theme.separator)
 
-                amountRow(title: "目标金额", text: $targetText)
+                amountRow(title: "目标金额", text: $targetText, field: .target)
                     .padding(.vertical, 9)
 
                 Divider()
                     .overlay(theme.separator)
 
-                amountRow(title: "已存金额", text: $currentText)
+                amountRow(title: "已存金额", text: $currentText, field: .current)
                     .padding(.vertical, 9)
 
                 Text("已存金额只用于目标进度，不会自动从账户转账。")
@@ -601,6 +616,7 @@ private struct GoalEditorView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 2)
             }
+            .keyboardDismissOnBlankTap { focusedField = nil }
         }
     }
 
@@ -686,7 +702,11 @@ private struct GoalEditorView: View {
         .foregroundStyle(theme.expense)
     }
 
-    private func amountRow(title: String, text: Binding<String>) -> some View {
+    private func amountRow(
+        title: String,
+        text: Binding<String>,
+        field: InputField
+    ) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             Text(title)
                 .font(theme.bodyFont)
@@ -700,6 +720,7 @@ private struct GoalEditorView: View {
 
             TextField("0.00", text: text)
                 .keyboardType(.decimalPad)
+                .focused($focusedField, equals: field)
                 .font(theme.rowMoneyFont)
                 .multilineTextAlignment(.trailing)
                 .textFieldStyle(.plain)
@@ -766,6 +787,8 @@ private struct GoalEditorView: View {
     }
 
     private func save() {
+        focusedField = nil
+
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else {
             errorMessage = "请输入目标名称。"

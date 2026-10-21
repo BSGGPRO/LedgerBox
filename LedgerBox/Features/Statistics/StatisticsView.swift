@@ -1,4 +1,4 @@
-import Charts
+﻿import Charts
 import CoreData
 import Foundation
 import SwiftUI
@@ -65,7 +65,7 @@ struct StatisticsView: View {
                 Image(systemName: "chevron.left")
                     .font(theme.controlIconFont)
                     .foregroundStyle(theme.primaryText)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 44, height: 44)
                     .background(theme.surface, in: Circle())
             }
             .buttonStyle(.plain)
@@ -85,7 +85,7 @@ struct StatisticsView: View {
                 Image(systemName: "chevron.right")
                     .font(theme.controlIconFont)
                     .foregroundStyle(canGoForward ? theme.primaryText : theme.secondaryText)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 44, height: 44)
                     .background(theme.surface, in: Circle())
             }
             .buttonStyle(.plain)
@@ -312,7 +312,7 @@ struct StatisticsView: View {
                                 x: .value("日期", point.date),
                                 y: .value("累计结余", point.cumulativeNet.doubleValue)
                             )
-                            .foregroundStyle(theme.accent)
+                            .foregroundStyle(theme.accentText)
                             .lineStyle(
                                 StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
                             )

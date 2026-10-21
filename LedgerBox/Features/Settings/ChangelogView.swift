@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 
 // Add a new entry at the top for every user-visible release. Keep the wording
 // factual: what changed, not a promise that it has been verified on device.
@@ -160,7 +160,7 @@ struct ChangelogView: View {
 
                     Image(systemName: "clock.arrow.circlepath")
                         .font(theme.sectionTitleFont)
-                        .foregroundStyle(theme.accent)
+                        .foregroundStyle(theme.accentText)
                 }
 
                 VStack(alignment: .leading, spacing: 5) {
@@ -227,7 +227,7 @@ struct ChangelogView: View {
                     if isCurrent {
                         Text("当前版本")
                             .font(theme.badgeFont)
-                            .foregroundStyle(theme.accent)
+                            .foregroundStyle(theme.accentText)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
                             .background(
@@ -246,7 +246,7 @@ struct ChangelogView: View {
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
                             Text("·")
                                 .font(theme.bodyFont.weight(.bold))
-                                .foregroundStyle(theme.accent)
+                                .foregroundStyle(theme.accentText)
 
                             Text(change)
                                 .font(theme.captionFont)

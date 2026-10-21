@@ -7,6 +7,7 @@ import SwiftUI
 /// number and bar comes from the local hashed classifier in `FinanceMind`.
 struct FinanceBrainMapView: View {
     @Environment(\.ledgerTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var query = "这个月现金流怎么样？"
     @State private var probe: FinanceBrainProbe? = FinanceMind.shared.probe(
@@ -43,7 +44,10 @@ struct FinanceBrainMapView: View {
             disclaimer
         }
         .onAppear {
-            withAnimation(.easeOut(duration: 0.55)) {
+            if reduceMotion {
+                autoDemo = false
+            }
+            withAnimation(reduceMotion ? nil : .easeOut(duration: 0.55)) {
                 hasAppeared = true
             }
             if probe == nil {
@@ -68,6 +72,8 @@ struct FinanceBrainMapView: View {
                 probe = FinanceMind.shared.probe(next)
             }
         }
+        .keyboardDoneBar { queryFocused = false }
+        .keyboardDismissOnBlankTap { queryFocused = false }
     }
 
     // MARK: - Orb
@@ -100,7 +106,9 @@ struct FinanceBrainMapView: View {
                     TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
                         BrainOrbCanvas(
                             predictions: probe?.predictions ?? [],
-                            phase: timeline.date.timeIntervalSinceReferenceDate
+                            phase: reduceMotion
+                                ? 0
+                                : timeline.date.timeIntervalSinceReferenceDate
                         )
                     }
                     .frame(height: 286)
@@ -109,8 +117,9 @@ struct FinanceBrainMapView: View {
 
                     VStack(spacing: 3) {
                         Text(millions)
-                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .font(theme.balanceFont)
                             .foregroundStyle(theme.primaryText)
+                            .ledgerMoneyLine(minScale: 0.5)
 
                         Text("参数")
                             .font(theme.badgeFont)
@@ -118,7 +127,7 @@ struct FinanceBrainMapView: View {
 
                         Text("Int8 · 本地")
                             .font(theme.badgeFont)
-                            .foregroundStyle(theme.accent)
+                            .foregroundStyle(theme.accentText)
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -174,7 +183,7 @@ struct FinanceBrainMapView: View {
 
                 HStack(spacing: 8) {
                     statTile("哈希桶", value: "524,288", note: "字符 1–3 gram")
-                    statTile("体积", value: "10.0 MB", note: "Int8 权重 + Float bias")
+                    statTile("体积", value: "20.0 MB", note: "Int8 权重 + Float bias")
                 }
 
                 HStack(spacing: 6) {
@@ -250,10 +259,12 @@ struct FinanceBrainMapView: View {
                             )
                         )
                         .onSubmit {
+                            queryFocused = false
                             runProbe(manual: true)
                         }
 
                     Button("探测") {
+                        queryFocused = false
                         runProbe(manual: true)
                     }
                     .font(theme.buttonLabelFont)
@@ -336,7 +347,7 @@ struct FinanceBrainMapView: View {
 
                     Text("\(intents.count) 类")
                         .font(theme.badgeFont)
-                        .foregroundStyle(theme.accent)
+                        .foregroundStyle(theme.accentText)
                 }
 
                 LazyVGrid(

@@ -13,6 +13,7 @@ private enum HomeSheet: String, Identifiable {
 struct HomeView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.ledgerTheme) private var theme
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @EnvironmentObject private var themeManager: ThemeManager
 
     @FetchRequest(
@@ -50,20 +51,26 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: theme.spacing) {
+                VStack(alignment: .leading, spacing: 0) {
                     header
-                    balanceCard
-                    coachCard
-                    recentSection
+                        .padding(.top, theme.smallSpacing)
+
+                    VStack(alignment: .leading, spacing: theme.sectionSpacing) {
+                        balanceCard
+                        monthStatsSection
+                        coachCard
+                        recentSection
+                    }
+                    .padding(.top, theme.sectionSpacing)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, theme.pagePadding)
-                .padding(.top, 10)
-                .padding(.bottom, 96)
+                .padding(.bottom, theme.sectionSpacing)
             }
             .scrollIndicators(.hidden)
             .background(theme.background.ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
-            .safeAreaInset(edge: .bottom) {
+            .safeAreaInset(edge: .bottom, spacing: 0) {
                 actionBar
             }
         }
@@ -85,13 +92,16 @@ struct HomeView: View {
         }
     }
 
+    // MARK: - Header
+
     private var header: some View {
-        HStack(alignment: .top, spacing: theme.spacing) {
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .center, spacing: theme.spacing) {
+            VStack(alignment: .leading, spacing: theme.tinySpacing) {
                 Text("LedgerBox")
-                    .font(theme.largeTitleFont)
+                    .font(theme.screenTitleFont)
                     .tracking(-0.6)
                     .foregroundStyle(theme.primaryText)
+                    .accessibilityAddTraits(.isHeader)
 
                 Text(Date.now.formatted(.dateTime.year().month(.wide)))
                     .font(theme.captionFont)
@@ -103,95 +113,164 @@ struct HomeView: View {
             Button {
                 activeSheet = .settings
             } label: {
-                ZStack {
-                    Circle()
-                        .fill(theme.surface)
-                        .frame(width: 42, height: 42)
-
-                    Image(systemName: "person.crop.circle.fill")
-                        .font(.system(size: 27, weight: .regular))
-                        .foregroundStyle(theme.accent)
-                }
+                Image(systemName: "person.crop.circle")
+                    .font(.system(size: 22, weight: .regular))
+                    .foregroundStyle(theme.accentText)
+                    .frame(width: theme.minTapTarget, height: theme.minTapTarget)
+                    .background(theme.surface, in: Circle())
+                    .overlay(
+                        Circle()
+                            .strokeBorder(theme.separator, lineWidth: theme.hairline)
+                    )
+                    .contentShape(Circle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("用户与设置")
         }
     }
 
+    // MARK: - Balance
+
     private var balanceCard: some View {
         LedgerCard {
             VStack(alignment: .leading, spacing: theme.spacing) {
-                Text("总余额")
-                    .font(theme.captionFont)
-                    .foregroundStyle(theme.secondaryText)
-
-                Text(MoneyFormat.currency(totalBalance))
-                    .font(theme.moneyFont)
-                    .foregroundStyle(theme.primaryText)
-                    .contentTransition(.numericText())
-
-                HStack(spacing: theme.spacing) {
-                    amountColumn(
-                        title: "本月收入",
-                        value: summary.income,
-                        color: theme.income
-                    )
-
-                    Divider()
-                        .frame(height: 30)
-                        .overlay(theme.separator)
-
-                    amountColumn(
-                        title: "本月支出",
-                        value: summary.expense,
-                        color: theme.expense
-                    )
-                }
-
-                HStack {
-                    Text("本月结余")
-                        .font(theme.captionFont)
+                HStack(alignment: .center, spacing: theme.smallSpacing) {
+                    Text("总余额")
+                        .font(theme.overlineFont)
+                        .tracking(0.8)
                         .foregroundStyle(theme.secondaryText)
 
                     Spacer(minLength: theme.smallSpacing)
 
-                    Text(MoneyFormat.currency(summary.net))
-                        .font(theme.rowMoneyFont)
-                        .foregroundStyle(summary.net >= 0 ? theme.income : theme.expense)
-                        .contentTransition(.numericText())
+                    LedgerTag("CNY")
+                }
+
+                Text(MoneyFormat.currency(totalBalance))
+                    .font(theme.balanceFont)
+                    .foregroundStyle(theme.primaryText)
+                    .ledgerMoneyLine(minScale: 0.45)
+                    .contentTransition(.numericText())
+
+                Rectangle()
+                    .fill(theme.separator)
+                    .frame(height: theme.hairline)
+
+                HStack(spacing: 6) {
+                    Image(systemName: "clock")
+                        .font(theme.controlIconFont)
+                        .foregroundStyle(theme.tertiaryText)
+
+                    Text("\(monthTransactionCount) 笔本月记录 · \(accounts.count) 个账户")
+                        .font(theme.captionFont)
+                        .foregroundStyle(theme.tertiaryText)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
             }
             .animation(.snappy, value: summary)
         }
     }
 
-    private func amountColumn(title: String, value: Decimal, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+    // MARK: - This month, three columns
+
+    private var monthStatsSection: some View {
+        VStack(alignment: .leading, spacing: theme.cardSpacing) {
+            LedgerSectionHeader(title: "本月")
+
+            LedgerCard {
+                if dynamicTypeSize.isAccessibilitySize {
+                    VStack(alignment: .leading, spacing: theme.cardSpacing) {
+                        statLine(title: "收入", value: summary.income, color: theme.income)
+                        horizontalDivider
+                        statLine(title: "支出", value: summary.expense, color: theme.expense)
+                        horizontalDivider
+                        statLine(title: "结余", value: summary.net, color: netColor)
+                    }
+                } else {
+                    HStack(alignment: .top, spacing: theme.cardSpacing) {
+                        statColumn(title: "收入", value: summary.income, color: theme.income)
+                        verticalDivider
+                        statColumn(title: "支出", value: summary.expense, color: theme.expense)
+                        verticalDivider
+                        statColumn(title: "结余", value: summary.net, color: netColor)
+                    }
+                }
+            }
+            .animation(.snappy, value: summary)
+        }
+    }
+
+    private func statColumn(title: String, value: Decimal, color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(theme.captionFont)
+                .foregroundStyle(theme.secondaryText)
+                .lineLimit(1)
+
+            Text(MoneyFormat.currency(value))
+                .font(theme.statValueFont)
+                .foregroundStyle(color)
+                .ledgerMoneyLine(minScale: 0.55)
+                .contentTransition(.numericText())
+                .layoutPriority(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .frame(minHeight: 44, alignment: .topLeading)
+        .accessibilityElement(children: .combine)
+    }
+
+    private func statLine(title: String, value: Decimal, color: Color) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: theme.smallSpacing) {
             Text(title)
                 .font(theme.captionFont)
                 .foregroundStyle(theme.secondaryText)
 
+            Spacer(minLength: theme.smallSpacing)
+
             Text(MoneyFormat.currency(value))
-                .font(theme.rowMoneyFont)
+                .font(theme.statValueFont)
                 .foregroundStyle(color)
+                .ledgerMoneyLine(minScale: 0.6)
                 .contentTransition(.numericText())
+                .layoutPriority(1)
         }
-        .frame(maxWidth: .infinity, minHeight: 42, alignment: .leading)
+        .accessibilityElement(children: .combine)
     }
+
+    private var verticalDivider: some View {
+        Rectangle()
+            .fill(theme.separator)
+            .frame(width: theme.hairline, height: 34)
+            .padding(.top, 2)
+    }
+
+    private var horizontalDivider: some View {
+        Rectangle()
+            .fill(theme.separator)
+            .frame(height: theme.hairline)
+    }
+
+    // MARK: - Coach
 
     private var coachCard: some View {
-        CoachTipCard(tip: FinanceCoach.dailyTip(context: coachContext))
-            .animation(.easeInOut(duration: 0.3), value: summary)
+        VStack(alignment: .leading, spacing: theme.cardSpacing) {
+            LedgerSectionHeader(title: "财务教练")
+
+            CoachTipCard(tip: FinanceCoach.dailyTip(context: coachContext))
+                .animation(.easeInOut(duration: 0.3), value: summary)
+        }
     }
 
+    // MARK: - Recent transactions
+
     private var recentSection: some View {
-        VStack(spacing: theme.smallSpacing) {
+        VStack(alignment: .leading, spacing: theme.cardSpacing) {
             LedgerSectionHeader(title: "最近流水")
 
             if recentTransactions.isEmpty {
                 emptyTransactions
             } else {
-                LedgerCard {
+                LedgerCard(padding: 0) {
                     VStack(spacing: 0) {
                         ForEach(recentTransactions, id: \.objectID) { transaction in
                             TransactionRow(
@@ -199,11 +278,14 @@ struct HomeView: View {
                                 category: category(for: transaction),
                                 theme: theme
                             )
+                            .padding(.horizontal, theme.cardPadding)
 
                             if transaction.objectID != recentTransactions.last?.objectID {
-                                Divider()
-                                    .overlay(theme.separator)
-                                    .padding(.leading, 48)
+                                Rectangle()
+                                    .fill(theme.separator)
+                                    .frame(height: theme.hairline)
+                                    .padding(.leading, theme.cardPadding + theme.iconCircleSize + theme.cardSpacing)
+                                    .padding(.trailing, theme.cardPadding)
                             }
                         }
                     }
@@ -214,75 +296,63 @@ struct HomeView: View {
 
     private var emptyTransactions: some View {
         LedgerCard {
-            VStack(spacing: theme.smallSpacing) {
-                Image(systemName: "tray")
-                    .font(theme.emptyStateIconFont)
-                    .foregroundStyle(theme.secondaryText)
+            VStack(spacing: theme.cardSpacing) {
+                LedgerIconBadge(systemName: "tray", tint: theme.secondaryText, size: 44)
 
                 Text("还没有流水")
                     .font(theme.sectionTitleFont)
                     .foregroundStyle(theme.primaryText)
 
                 Text("记下第一笔收入，首页会自动汇总。")
-                    .font(theme.bodyFont)
+                    .font(theme.captionFont)
                     .foregroundStyle(theme.secondaryText)
                     .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 Button("记一笔") {
                     activeSheet = .add
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(theme.accent)
-                .padding(.top, 4)
+                .buttonStyle(LedgerPrimaryButtonStyle(theme: theme))
+                .padding(.top, theme.tinySpacing)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
+            .padding(.vertical, theme.cardSpacing)
         }
     }
+
+    // MARK: - Bottom actions
 
     private var actionBar: some View {
-        HStack(spacing: 10) {
-            Button {
-                activeSheet = .quickEntry
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "bolt.fill")
-                    Text("极速")
+        VStack(spacing: 0) {
+            Rectangle()
+                .fill(theme.separator)
+                .frame(height: theme.hairline)
+
+            HStack(spacing: theme.smallSpacing + 2) {
+                Button {
+                    activeSheet = .quickEntry
+                } label: {
+                    Label("极速", systemImage: "bolt.fill")
                 }
-                .font(theme.buttonLabelFont)
-                .foregroundStyle(theme.accent)
-                .padding(.horizontal, 18)
-                .padding(.vertical, 14)
-                .background(theme.surface, in: Capsule())
-                .overlay(
-                    Capsule()
-                        .stroke(theme.accent.opacity(0.35), lineWidth: 1)
-                )
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("极速记账")
+                .buttonStyle(LedgerSecondaryButtonStyle(theme: theme))
+                .accessibilityLabel("极速记账")
 
-            addButton
+                Button {
+                    activeSheet = .add
+                } label: {
+                    Label("记一笔", systemImage: "plus")
+                }
+                .buttonStyle(LedgerPrimaryButtonStyle(theme: theme, fullWidth: true))
+                .accessibilityLabel("记一笔")
+            }
+            .padding(.horizontal, theme.pagePadding)
+            .padding(.top, theme.cardSpacing)
+            .padding(.bottom, theme.smallSpacing)
         }
-        .padding(.bottom, 8)
+        .background(theme.background)
     }
 
-    private var addButton: some View {
-        Button {
-            activeSheet = .add
-        } label: {
-            HStack(spacing: theme.smallSpacing) {
-                Image(systemName: "plus")
-                Text("记一笔")
-            }
-            .font(theme.buttonLabelFont)
-            .foregroundStyle(theme.onAccent)
-            .padding(.horizontal, 22)
-            .padding(.vertical, 14)
-            .background(theme.accent, in: Capsule())
-        }
-        .buttonStyle(.plain)
-    }
+    // MARK: - Derived data
 
     private var currentMonthInterval: DateInterval {
         Calendar.current.dateInterval(of: .month, for: Date())
@@ -294,6 +364,14 @@ struct HomeView: View {
             transactions: Array(transactions),
             in: currentMonthInterval
         )
+    }
+
+    private var netColor: Color {
+        summary.net >= 0 ? theme.income : theme.expense
+    }
+
+    private var monthTransactionCount: Int {
+        transactions.filter { currentMonthInterval.contains($0.date) }.count
     }
 
     private var coachContext: FinanceCoachContext {
@@ -380,20 +458,12 @@ private struct TransactionRow: View {
     let theme: Theme
 
     var body: some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(theme.surfaceElevated)
-                    .frame(width: theme.iconCircleSize, height: theme.iconCircleSize)
+        HStack(spacing: theme.cardSpacing) {
+            LedgerIconBadge(systemName: iconName, tint: amountColor)
 
-                Image(systemName: category?.icon ?? transaction.transactionType.symbolName)
-                    .font(theme.rowIconFont)
-                    .foregroundStyle(amountColor)
-            }
-
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(theme.bodyFont)
+                    .font(theme.bodyFont.weight(.medium))
                     .foregroundStyle(theme.primaryText)
                     .lineLimit(1)
 
@@ -402,6 +472,7 @@ private struct TransactionRow: View {
                     .foregroundStyle(theme.secondaryText)
                     .lineLimit(1)
             }
+            .layoutPriority(0)
 
             Spacer(minLength: theme.smallSpacing)
 
@@ -413,9 +484,16 @@ private struct TransactionRow: View {
             )
             .font(theme.rowMoneyFont)
             .foregroundStyle(amountColor)
+            .ledgerMoneyLine(minScale: 0.7)
             .contentTransition(.numericText())
+            .layoutPriority(1)
         }
-        .padding(.vertical, 10)
+        .frame(minHeight: theme.rowMinHeight)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var iconName: String {
+        category?.icon ?? transaction.transactionType.symbolName
     }
 
     private var title: String {
@@ -445,7 +523,7 @@ private struct TransactionRow: View {
         case .refund:
             return theme.income
         case .transfer:
-            return theme.accent
+            return theme.accentText
         }
     }
 }

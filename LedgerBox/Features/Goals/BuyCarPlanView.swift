@@ -46,6 +46,16 @@ struct BuyCarPlanView: View {
     @State private var alertMessage = ""
     @State private var showingAlert = false
 
+    // Both money fields use `.decimalPad`: the shared "完成" bar and blank-tap
+    // exit keep the keyboard from covering the cards. Focus does not touch the
+    // amount parsing rules.
+    @FocusState private var focusedField: InputField?
+
+    private enum InputField: Hashable {
+        case sideHustle
+        case milkTea
+    }
+
     private var carRules: BuyCarTemplateRules {
         BuyCarTemplateRules()
     }
@@ -266,8 +276,11 @@ struct BuyCarPlanView: View {
             .padding(.horizontal, theme.pagePadding)
             .padding(.top, 8)
             .padding(.bottom, 32)
+            .keyboardDismissOnBlankTap { focusedField = nil }
         }
         .scrollIndicators(.hidden)
+        .scrollDismissesKeyboard(.interactively)
+        .keyboardDoneBar { focusedField = nil }
         .background(theme.background.ignoresSafeArea())
         .navigationTitle("买车攒钱")
         .navigationBarTitleDisplayMode(.inline)
@@ -298,7 +311,7 @@ struct BuyCarPlanView: View {
 
                     Text(currentGoalName)
                         .font(theme.captionFont)
-                        .foregroundStyle(theme.accent)
+                        .foregroundStyle(theme.accentText)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
                         .background(theme.accent.opacity(0.12), in: Capsule())
@@ -481,7 +494,8 @@ struct BuyCarPlanView: View {
             } label: {
                 Text("选择")
                     .font(theme.captionFont)
-                    .foregroundStyle(theme.accent)
+                    .foregroundStyle(theme.accentText)
+                    .frame(minWidth: 44, minHeight: 44)
             }
         }
     }
@@ -505,11 +519,12 @@ struct BuyCarPlanView: View {
 
                 Text(currentGoalName)
                     .font(theme.captionFont)
-                    .foregroundStyle(theme.accent)
+                    .foregroundStyle(theme.accentText)
             }
 
             TextField("副业收入金额", text: $sideHustleAmount)
                 .keyboardType(.decimalPad)
+                .focused($focusedField, equals: .sideHustle)
                 .textFieldStyle(.roundedBorder)
                 .font(theme.bodyFont)
 
@@ -527,6 +542,7 @@ struct BuyCarPlanView: View {
             }
 
             Button("记录分账") {
+                focusedField = nil
                 recordSideHustle()
             }
             .font(theme.buttonLabelFont)
@@ -615,10 +631,12 @@ struct BuyCarPlanView: View {
                 HStack(spacing: theme.smallSpacing) {
                     TextField("金额", text: $milkTeaAmount)
                         .keyboardType(.decimalPad)
+                        .focused($focusedField, equals: .milkTea)
                         .textFieldStyle(.roundedBorder)
                         .font(theme.bodyFont)
 
                     Button("记一杯") {
+                        focusedField = nil
                         recordMilkTea()
                     }
                     .font(theme.captionFont)
@@ -1077,7 +1095,7 @@ struct BuyCarPlanView: View {
 
             Image(systemName: systemName)
                 .font(theme.rowIconFont)
-                .foregroundStyle(theme.accent)
+                .foregroundStyle(theme.accentText)
         }
     }
 
