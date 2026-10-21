@@ -91,7 +91,7 @@ struct MoneyBrainPrediction {
     }
 }
 
-enum MoneyBrain {
+final class MoneyBrain {
     static let shared = MoneyBrain()
     static let parameterCount = MoneyBrainWeights.bucketCount
         * MoneyBrainWeights.classCount
