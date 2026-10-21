@@ -312,8 +312,8 @@ The model configuration used to open the store is incompatible with the one that
 
 - `Assets.xcassets` 与 AppIcon 已随 archive 编译；仍未做真机/视觉检查。
 - `LedgerBoxTests` 已加入，但尚未实际运行。
-- `.github/workflows/ios-unsigned.yml` 已实际运行：run `39570507810`，结论 success。
-- 新版未签名 IPA 已生成：`LedgerBox-unsigned-0.2.1-MoneyBrain.ipa`（750,259 字节，含小 AI、5,643 参数金钱模型、更新日志，无语音权限，无 `PlugIns`）。
+- `.github/workflows/ios-unsigned.yml` 已实际运行：run `39573057512`，结论 success。
+- 新版未签名 IPA 已生成：`LedgerBox-unsigned-0.2.2-OnlineAI.ipa`（803,142 字节，含本地小 AI、5,643 参数金钱模型、可选联网 AI、更新日志，无语音/Siri 权限，无 `PlugIns`）。
 - Widget Extension 源码保留，但当前**不嵌入** `Payload/LedgerBox.app/PlugIns/`；这是为了兼容只签主 App 的 `lcsign`。需要小组件时再恢复 Embed 阶段并签 appex。
 - Widget 未配置 App Group，因此即使重新嵌入也不读取真实账本。
 - 没有证书、描述文件、Team ID。

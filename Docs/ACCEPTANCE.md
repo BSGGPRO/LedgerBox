@@ -15,13 +15,13 @@
 
 | 项目 | 结论 |
 |---|---|
-| 静态源码 | 29 个 Swift 文件（25 个 App + 2 个 Widget + 2 个测试） |
+| 静态源码 | 30 个 Swift 文件（26 个 App + 2 个 Widget + 2 个测试） |
 | 文档 | README、LICENSE、.gitignore、CONTRIBUTING、核心 Docs、开源调研与 10 项目清单 |
 | 静态语法 | tree-sitter-swift 解析通过 |
 | 工程结构 | pbxproj / XML / plist 解析通过；App + Widget Extension 两个 Target，Widget 默认不嵌入 |
-| 实际编译 | GitHub Actions `macos-15` archive 成功（run `39570507810`，commit `8c69fc7`） |
+| 实际编译 | GitHub Actions `macos-15` archive 成功（run `39573057512`，commit `3ec0fde`） |
 | 实际运行 | **未执行**（无模拟器/真机） |
-| 签名/IPA | `LedgerBox-unsigned-0.2.1-MoneyBrain.ipa` 已生成；未签名、未真机安装 |
+| 签名/IPA | `LedgerBox-unsigned-0.2.2-OnlineAI.ipa` 已生成；未签名、未真机安装 |
 | Assets/AppIcon | 已随 archive 编译；未做视觉/真机验证 |
 | GitHub Actions | 已实际运行，结论 success |
 | 测试 Target | 已加入，未运行 |
@@ -34,15 +34,15 @@
 最后一次静态检查结果：
 
 ```text
-SWIFT SYNTAX OK 29
-XML/PLIST/PBX OK 37 33
+SWIFT SYNTAX OK 30
+XML/PLIST/PBX OK 38 34
 NO BOM
 ```
 
 解释：
 
-- `SWIFT SYNTAX OK 29`：29 个 `.swift` 文件（25 个 App + 2 个 Widget + 2 个测试）均可被 tree-sitter-swift 解析，根节点无错误。
-- `37`：`PBXFileReference` 数量（25 个 App Swift + 2 个 Widget Swift + 2 个测试 Swift + 图标/框架/产品/Info.plist 等）。
+- `SWIFT SYNTAX OK 30`：30 个 `.swift` 文件（26 个 App + 2 个 Widget + 2 个测试）均可被 tree-sitter-swift 解析，根节点无错误。
+- `38`：`PBXFileReference` 数量（26 个 App Swift + 2 个 Widget Swift + 2 个测试 Swift + 图标/框架/产品/Info.plist 等）。
 - `33`：`PBXBuildFile` 数量（App 源文件 + Widget 源文件 + 测试源文件 + 模型/资源/框架；Widget 不再嵌入，因此没有 appex 嵌入项）。
 - `NO BOM`：`project.pbxproj` 为 UTF-8 无 BOM。
 
@@ -60,7 +60,7 @@ NO BOM
 | AppIcon | 1024×1024、RGB、无 alpha；未做视觉审查 |
 | Asset Catalog JSON | `Contents.json` 可解析；已随 archive 编译 |
 | Assets 工程引用 | 文件引用 + Resources build phase 已存在 |
-| GitHub Actions | `.github/workflows/ios-unsigned.yml` 已实际运行成功（run `39570507810`） |
+| GitHub Actions | `.github/workflows/ios-unsigned.yml` 已实际运行成功（run `39573057512`） |
 | 测试 Target | `LedgerBoxTests` 已加入；2 个测试源文件；未运行 |
 | Scheme Test Action | 已加入 `TestableReference` 与 `MacroExpansion`；未运行 |
 
@@ -80,8 +80,8 @@ NO BOM
 | # | 规则 | 状态 | 说明 |
 |---|---|---|---|
 | P0-1 | iOS 17+ SwiftUI + Core Data | 源码具备 | Deployment Target 17.0；无 SwiftData |
-| P0-2 | 仅本地 Core Data，无网络/登录/云/广告/内购 | 源码具备 | 静态 grep 未发现网络 API；无第三方 SDK |
-| P0-3 | 金额 Decimal，不用 Double 存钱 | 源码具备 | 模型金额为 Decimal；`@NSManaged` 无 Double；UI 比例使用 Double；App Intent 的 Double 入参在边界转 Decimal；落库前统一 `roundedToCents()` 保留两位 |
+| P0-2 | 账本仅本地 Core Data；无登录/云/广告/内购 | 源码具备 | 账本不离开本机；可选联网 AI 默认关闭、用户主动发送；无第三方 SDK |
+| P0-3 | 金额 Decimal，不用 Double 存钱 | 源码具备 | 模型金额为 Decimal；`@NSManaged` 无 Double；UI 比例使用 Double；解析文本在边界转 Decimal；落库前统一 `roundedToCents()` 保留两位 |
 | P0-4 | 颜色/圆角/字体集中在 Theme | 源码具备 | Theme + ThemeManager + EnvironmentKey；页面使用 theme 令牌 |
 | P0-5 | 每个主页面有空状态 | 源码具备 | 六个数据页面均有空状态 |
 | P0-6 | 每个主页面有 `#Preview` | 源码具备 | 13 个文件含 Preview，含浅色/深色/小组件 |
@@ -93,7 +93,7 @@ NO BOM
 | P0-12 | README / LICENSE / .gitignore / CONTRIBUTING | 源码具备 | 均已创建 |
 | P0-13 | Docs 核心文档 | 源码具备 | COMPONENTS / FINANCE_RULES / BUILD_STEPS / WINDOWS_BUILD_SIGN / ACCEPTANCE / THEMING；另有 GITHUB_RESEARCH、OPEN_SOURCE_10、CHANGELOG |
 | P0-14 | Assets.xcassets / AppIcon | 源码具备（占位） | 1024×1024 PNG + Contents.json；已随 archive 编译，未做视觉检查 |
-| P0-15 | GitHub Actions 无签名归档 | 已运行成功 | `.github/workflows/ios-unsigned.yml`；run `39570507810` |
+| P0-15 | GitHub Actions 无签名归档 | 已运行成功 | `.github/workflows/ios-unsigned.yml`；run `39573057512` |
 | P0-16 | 测试 Target | 源码具备（未运行） | `LedgerBoxTests` 已加入；覆盖财务汇总/退款/预算/分账；未执行 |
 | P0-17 | 实际编译/运行/签名 | **部分** | 远程 archive 成功；运行/签名/真机未验证 |
 | P0-18 | 不虚假宣称已编译/已签名 | 文档具备 | README 与 Docs 明确标注未编译 |
@@ -147,20 +147,20 @@ NO BOM
 | P5-3 | .gitignore 覆盖 Xcode/证书/构建产物 | 具备 |
 | P5-4 | CONTRIBUTING 说明硬规则与 PR 清单 | 具备 |
 | P5-5 | Docs 核心文档 + 调研/10 项目清单 | 具备 |
-| P5-6 | 版本号 0.2.1 / Bundle ID 占位 | 具备 |
+| P5-6 | 版本号 0.2.2 / Bundle ID 占位 | 具备 |
 | P5-7 | 无 DEVELOPMENT_TEAM | 具备 |
 | P5-8 | Assets/AppIcon | 已有占位，已随 archive 编译，未视觉验证 |
-| P5-9 | GitHub Actions workflow | 已实际运行，run `39570507810` success |
+| P5-9 | GitHub Actions workflow | 已实际运行，run `39573057512` success |
 | P5-10 | 测试 Target | 已加入（2 个测试源文件），未运行 |
-| P5-11 | 实际 Xcode 编译 | GitHub Actions archive 成功（commit `8c69fc7`） |
+| P5-11 | 实际 Xcode 编译 | GitHub Actions archive 成功（commit `3ec0fde`） |
 | P5-12 | 实际运行 | 未验证（无模拟器/真机） |
-| P5-13 | 未签名 IPA | `LedgerBox-unsigned-0.2.1-MoneyBrain.ipa`（750,259 字节，无 PlugIns、无麦克风/语音权限，适合 lcsign）；run `39570507810` |
+| P5-13 | 未签名 IPA | `LedgerBox-unsigned-0.2.2-OnlineAI.ipa`（803,142 字节，无 PlugIns、无麦克风/语音/Siri 权限，适合 lcsign）；run `39573057512` |
 | P5-14 | 自签验证 | 未执行 |
 | P5-15 | 截图/视觉回归 | 缺失 |
 | P5-16 | 本地化 | 缺失（仅中文） |
 | P5-17 | Dynamic Type / 无障碍专项 | 部分 |
 | P5-18 | 数据迁移方案 | 缺失（v1 初始模型） |
-| P5-19 | 网络/隐私声明 | 文档具备；无网络代码 |
+| P5-19 | 网络/隐私声明 | 文档具备；`URLSession` 仅用于可选联网 AI，默认关闭 |
 | P5-20 | 不虚假宣称编译/签名 | 文档具备 |
 
 ---
@@ -170,7 +170,7 @@ NO BOM
 ### 6.1 必须先补的交付物
 
 1. `Assets.xcassets` 与 AppIcon 已随 archive 编译；仍需真机/视觉检查。
-2. GitHub Actions workflow 已实际触发，run `39570507810` 成功。
+2. GitHub Actions workflow 已实际触发，run `39573057512` 成功。
 3. `LedgerBoxTests` 已加入，但尚未在 Xcode 中运行。
 4. 已有远程 archive 记录；仍缺真机运行记录。
 5. 未签名 IPA 已生成并通过结构校验；签名与安装未验证。
@@ -241,7 +241,7 @@ NO BOM
 
 ### 8.1 已完成
 
-- 29 个 Swift 文件（25 个 App + 2 个 Widget + 2 个测试）。
+- 30 个 Swift 文件（26 个 App + 2 个 Widget + 2 个测试）。
 - Xcode 工程、共享 scheme、App target、`LedgerBoxTests` target。
 - Core Data 模型、持久化、主题、财务引擎、全部主页面。
 - 小 AI 文本记账：纯 Foundation 解析器、`QuickEntryAI` 本地解释、字段完整度、示例/分类/账户建议、5,643 参数金钱分类器。
@@ -288,7 +288,7 @@ NO BOM
 > **按“可编译、可测试、可安装”目标：未验证。**  
 > 本项目不声称已编译、已通过测试、已签名或已生成可安装 IPA。
 
-最终源码包：`LedgerBox-source-0.2.1-MoneyBrain.zip`。旧版源码包不含金钱小模型，不再作为最新交付；实际大小与 SHA-256 以交付文件为准。
+最终源码包：`LedgerBox-source-0.2.2-OnlineAI.zip`。旧版源码包不含联网 AI，不再作为最新交付；实际大小与 SHA-256 以交付文件为准。
 
 ---
 

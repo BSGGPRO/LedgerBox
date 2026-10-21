@@ -33,7 +33,7 @@ LedgerBoxWidgetBundle
 2. **场景规则可插拔**：日常、学生、买车模板只提供种子与规则，不污染 `FinanceEngine`。
 3. **写入边界单一**：所有余额变更经过 `LedgerService`。
 4. **视觉集中**：颜色、字体、圆角、间距集中在 `Theme`。
-5. **本地优先**：无网络、无登录、无云同步。
+5. **本地优先**：默认离线、无登录、无云同步；联网 AI 可选且默认关闭。
 
 ---
 
@@ -185,7 +185,7 @@ AddTransactionView
   → @FetchRequest 刷新首页/流水/统计/预算
 ```
 
-### 3.1.1 极速记账 / 快捷指令
+### 3.1.1 极速记账 / 联网问答
 
 ```text
 QuickEntryView
@@ -195,14 +195,10 @@ QuickEntryView
   → LedgerService.record(...)
   → 首页 @FetchRequest 刷新
 
-Shortcuts / Siri
-  → AddTransactionIntent（结构化参数）
-     或 QuickAddIntent（一段文本）
-  → MainActor.run + viewContext
-  → 读取分类/账户快照
-  → 歧义时抛错，不猜测
-  → LedgerService.record(...)
-  → @FetchRequest 直接刷新
+OnlineAIView
+  → OnlineAIClient.send(messages)
+  → HTTPS /chat/completions（用户配置）
+  → 只显示回答，不写账
 ```
 
 ### 3.2 批量分账
@@ -337,14 +333,13 @@ CSV 字段：
 | `MoneyBrainPrediction` | `MoneyBrain.swift` | 语义类别、置信度、建议收支类型 |
 | `OnlineAIMessage` | `OnlineAI.swift` | 联网问答消息 |
 | `OnlineAIClient` | `OnlineAI.swift` | OpenAI 兼容 HTTPS 请求与错误映射 |
-| `LedgerShortcuts` | `LedgerIntents.swift` | 快捷指令/Siri 暴露入口 |
 
 ---
 
 ## 5. 并发与生命周期
 
 - 普通 UI 写入使用主 `viewContext`：极速记账面板、模板安装、批量分账、删除交易。
-- App Intents 通过 `MainActor.run` 使用同一个 `viewContext`，与 UI 在主线程串行，复用 `LedgerService`。这样避免后台上下文与 UI 同时读改写账户余额而丢失更新，也避免冷启动时后台线程等待主线程 seed。
+- 已取消 App Intents；没有后台自动化写账路径，所有写入仍经过 `LedgerService`。
 - 金额落库前统一调用 `roundedToCents()`，只保留两位小数；不使用会默认取整的 `Decimal.rounded()`。
 - `PersistenceController` 同步加载 store。
 - 未使用 CloudKit、网络或第三方 SDK。
@@ -405,8 +400,8 @@ CSV 字段：
 - 测试 Target 已加入，但尚未实际运行。
 - AppIcon 与 Asset Catalog 已随 GitHub Actions archive 编译；未做真机视觉检查。
 - 已通过 GitHub Actions `macos-15` 归档；未在本地 Xcode 运行，也未做真机验证。
-- iOS 不能读取其他 App 的通知内容；快捷指令只能处理系统允许的分享文本、短信/邮件或个人自动化输入。
-- 小 AI 是本地规则，不是生成式模型；字段不全会要求手动补全。
+- iOS 不能读取其他 App 的通知内容；已取消快捷指令/Siri，没有系统自动化写账入口。
+- 本地小 AI 是规则 + 5,643 参数分类器；联网 AI 需用户自配接口，未做真实网络验证。
 
 ---
 
