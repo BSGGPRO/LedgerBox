@@ -57,11 +57,12 @@ jobs:
         run: |
           set -euo pipefail
           test -f build/LedgerBox-unsigned.ipa
-          if [ -d build/LedgerBox.xcarchive/Products/Applications/LedgerBox.app/PlugIns ]; then
-            echo "PlugIns still present, widget was embedded unexpectedly"
+          unzip -l build/LedgerBox-unsigned.ipa | grep -E 'Payload/LedgerBox.app/LedgerBox$'
+          unzip -l build/LedgerBox-unsigned.ipa | grep -E 'Payload/LedgerBox.app/FinanceMindWeights.bin$'
+          if unzip -l build/LedgerBox-unsigned.ipa | grep -q 'PlugIns/'; then
+            echo "Unexpected PlugIns in unsigned IPA" >&2
             exit 1
           fi
-          unzip -l build/LedgerBox-unsigned.ipa | grep -E 'Payload/LedgerBox.app/LedgerBox$'
           ls -lh build/LedgerBox-unsigned.ipa
 
       - name: Upload unsigned IPA

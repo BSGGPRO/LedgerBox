@@ -22,6 +22,26 @@ enum FinanceIntent: String, CaseIterable {
     case splitBill = "split_bill"
     case insurance = "insurance"
     case tax = "tax"
+    case cashflow = "cashflow"
+    case reconciliation = "reconciliation"
+    case invoice = "invoice"
+    case reimbursement = "reimbursement"
+    case payroll = "payroll"
+    case inventory = "inventory"
+    case depreciation = "depreciation"
+    case amortization = "amortization"
+    case vat = "vat"
+    case accrual = "accrual"
+    case pettyCash = "petty_cash"
+    case accountsReceivable = "accounts_receivable"
+    case accountsPayable = "accounts_payable"
+    case loan = "loan"
+    case mortgage = "mortgage"
+    case rent = "rent"
+    case utilities = "utilities"
+    case medical = "medical"
+    case education = "education"
+    case charity = "charity"
     case other
 
     var displayName: String {
@@ -45,6 +65,26 @@ enum FinanceIntent: String, CaseIterable {
         case .splitBill: return "分账"
         case .insurance: return "保险"
         case .tax: return "税务"
+        case .cashflow: return "现金流"
+        case .reconciliation: return "对账"
+        case .invoice: return "发票"
+        case .reimbursement: return "报销"
+        case .payroll: return "工资核算"
+        case .inventory: return "存货"
+        case .depreciation: return "折旧"
+        case .amortization: return "摊销"
+        case .vat: return "增值税"
+        case .accrual: return "权责发生"
+        case .pettyCash: return "备用金"
+        case .accountsReceivable: return "应收账款"
+        case .accountsPayable: return "应付账款"
+        case .loan: return "借款"
+        case .mortgage: return "房贷"
+        case .rent: return "房租"
+        case .utilities: return "水电"
+        case .medical: return "医疗"
+        case .education: return "教育"
+        case .charity: return "公益"
         case .other: return "其他"
         }
     }
@@ -63,26 +103,67 @@ struct FinanceIntentPrediction {
 
 /// A finance-only, hashed character n-gram intent classifier.
 ///
-/// 20 intents x 768 buckets + 20 biases = 15,380 parameters. It routes text to
-/// deterministic advice templates; it is not a compressed Qwen checkpoint and
-/// it does not generate free-form answers.
+/// 40 intents x 262,144 buckets + 40 biases = 10,485,800 parameters. The
+/// weights are Int8 in FinanceMindWeights.bin (about 10 MB), loaded locally.
+/// It routes text to deterministic advice templates; it is not a compressed
+/// Qwen checkpoint and it does not generate free-form answers.
 final class FinanceMind {
     static let shared = FinanceMind()
 
-    static let parameterCount =
-        (FinanceMindWeights.bucketCount * FinanceMindWeights.classCount)
-        + FinanceMindWeights.classCount
+    static let parameterCount = FinanceMindWeights.parameterCount
+    static let weightByteCount = FinanceMindWeights.weightByteCount
+    static let modelByteCount =
+        FinanceMindWeights.weightByteCount + FinanceMindWeights.biasByteCount
 
-    private let weights: [Float]
+    private let weightData: Data
     private let biases: [Float]
+    private(set) var isReady: Bool
 
     private init() {
-        let decoded = Self.decodeWeights()
-        weights = decoded.weights
-        biases = decoded.biases
+        var loadedData: Data?
+        for bundle in [Bundle.main, Bundle(for: FinanceMind.self)] {
+            guard let url = bundle.url(
+                forResource: "FinanceMindWeights",
+                withExtension: "bin"
+            ) else {
+                continue
+            }
+            loadedData = try? Data(contentsOf: url, options: .mappedIfSafe)
+            if loadedData != nil {
+                break
+            }
+        }
+
+        var decodedBiases = [Float](
+            repeating: 0,
+            count: FinanceMindWeights.classCount
+        )
+        var ready = false
+
+        if let data = loadedData,
+           data.count == Self.modelByteCount {
+            _ = decodedBiases.withUnsafeMutableBytes { buffer in
+                data.copyBytes(
+                    to: buffer,
+                    from: 0..<FinanceMindWeights.biasByteCount
+                )
+            }
+            ready = true
+            weightData = data
+        } else {
+            weightData = Data()
+        }
+
+        biases = decodedBiases
+        isReady = ready
     }
 
-    func predict(_ text: String) -> FinanceIntentPrediction? {
+    /// Full ranked probe for the visual brain page.
+    func probe(_ text: String, limit: Int = 8) -> FinanceBrainProbe? {
+        guard isReady else {
+            return nil
+        }
+
         let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard normalized.count >= 2 else {
             return nil
@@ -94,10 +175,19 @@ final class FinanceMind {
         }
 
         let classCount = FinanceMindWeights.classCount
+        let bucketCount = FinanceMindWeights.bucketCount
         var scores = biases
-        for (bucket, value) in features {
-            for classIndex in 0..<classCount {
-                scores[classIndex] += weights[classIndex * FinanceMindWeights.bucketCount + bucket] * value
+        let started = CFAbsoluteTimeGetCurrent()
+
+        weightData.withUnsafeBytes { rawBuffer in
+            guard let base = rawBuffer.bindMemory(to: Int8.self).baseAddress else {
+                return
+            }
+            for (bucket, value) in features {
+                for classIndex in 0..<classCount {
+                    let raw = base[classIndex * bucketCount + bucket]
+                    scores[classIndex] += Float(raw) / FinanceMindWeights.scale * value
+                }
             }
         }
 
@@ -111,44 +201,69 @@ final class FinanceMind {
             return nil
         }
 
-        var bestIndex = 0
-        var bestScore = scores[0]
-        for index in 1..<scores.count where scores[index] > bestScore {
-            bestIndex = index
-            bestScore = scores[index]
-        }
+        let ranked = scores.enumerated()
+            .sorted { $0.element > $1.element }
+            .prefix(limit)
+            .compactMap { index, value -> FinanceIntentPrediction? in
+                let label = FinanceMindWeights.labels[index]
+                guard let intent = FinanceIntent(rawValue: label) else {
+                    return nil
+                }
+                return FinanceIntentPrediction(
+                    intent: intent,
+                    confidence: value / sum
+                )
+            }
 
-        let confidence = bestScore / sum
-        guard confidence >= 0.35 else {
+        guard !ranked.isEmpty else {
             return nil
         }
 
-        let label = FinanceMindWeights.labels[bestIndex]
-        guard let intent = FinanceIntent(rawValue: label) else {
+        return FinanceBrainProbe(
+            predictions: Array(ranked),
+            latencyMilliseconds: (CFAbsoluteTimeGetCurrent() - started) * 1000,
+            featureCount: features.count,
+            bucketCount: bucketCount,
+            parameterCount: Self.parameterCount
+        )
+    }
+
+    func predict(_ text: String) -> FinanceIntentPrediction? {
+        guard let first = probe(text, limit: 1)?.predictions.first,
+              first.confidence >= 0.30 else {
             return nil
         }
-        return FinanceIntentPrediction(intent: intent, confidence: confidence)
+        return first
     }
 
     private static func featureBuckets(_ text: String) -> [Int: Float] {
+        let blocked = Set("，。！？、,.!?：:；;（）()【】[]《》“”\"'")
         let chars = text.lowercased().filter {
-            !$0.isNumber && !$0.isWhitespace && !"，。！？、,.!?：:；;（）()【】[]".contains($0)
+            !$0.isNumber && !$0.isWhitespace && !blocked.contains($0)
         }
         guard !chars.isEmpty else {
             return [:]
         }
 
         var buckets: [Int: Float] = [:]
-        for char in chars {
+        let array = Array(chars)
+        for char in array {
             let index = Int(fnv1a("u:\(char)") % UInt32(FinanceMindWeights.bucketCount))
             buckets[index, default: 0] += 1
         }
 
-        let array = Array(chars)
         for index in 0..<(array.count - 1) {
             let key = "b:\(array[index])\(array[index + 1])"
             let bucket = Int(fnv1a(key) % UInt32(FinanceMindWeights.bucketCount))
             buckets[bucket, default: 0] += 1
+        }
+
+        if array.count >= 3 {
+            for index in 0..<(array.count - 2) {
+                let key = "t:\(array[index])\(array[index + 1])\(array[index + 2])"
+                let bucket = Int(fnv1a(key) % UInt32(FinanceMindWeights.bucketCount))
+                buckets[bucket, default: 0] += 1
+            }
         }
         return buckets
     }
@@ -161,36 +276,14 @@ final class FinanceMind {
         }
         return hash
     }
+}
 
-    private static func decodeWeights() -> (weights: [Float], biases: [Float]) {
-        guard let data = Data(
-            base64Encoded: FinanceMindWeights.encoded,
-            options: .ignoreUnknownCharacters
-        ) else {
-            return (Array(repeating: 0, count: FinanceMindWeights.bucketCount * FinanceMindWeights.classCount),
-                    Array(repeating: 0, count: FinanceMindWeights.classCount))
-        }
-
-        let count = data.count / MemoryLayout<Int16>.size
-        var raw = [Int16](repeating: 0, count: count)
-        _ = raw.withUnsafeMutableBytes { buffer in
-            data.copyBytes(to: buffer)
-        }
-
-        let expected = FinanceMindWeights.bucketCount * FinanceMindWeights.classCount
-        guard raw.count >= expected + FinanceMindWeights.classCount else {
-            return (Array(repeating: 0, count: expected),
-                    Array(repeating: 0, count: FinanceMindWeights.classCount))
-        }
-
-        let weights = raw.prefix(expected).map {
-            Float(Int16(littleEndian: $0)) / FinanceMindWeights.scale
-        }
-        let biases = raw.suffix(FinanceMindWeights.classCount).map {
-            Float(Int16(littleEndian: $0)) / FinanceMindWeights.scale
-        }
-        return (weights, biases)
-    }
+struct FinanceBrainProbe {
+    let predictions: [FinanceIntentPrediction]
+    let latencyMilliseconds: Double
+    let featureCount: Int
+    let bucketCount: Int
+    let parameterCount: Int
 }
 
 // MARK: - Snapshot
@@ -348,10 +441,150 @@ enum FinanceAdvisor {
                 tag: tag
             )
 
+        case .cashflow:
+            return FinanceAdvice(
+                title: "现金流看进出节奏",
+                body: "把经营、投资、筹资现金流分开看：利润为正但现金流为负，可能是应收账款或存货占款。先保证下月必要支出有现金覆盖。",
+                tag: tag
+            )
+
+        case .reconciliation:
+            return FinanceAdvice(
+                title: "对账先找差异",
+                body: "用银行/支付平台流水和账本逐笔核对，先标出未达账项，再做余额调节表；不要直接用“调平”分录把差异藏掉。",
+                tag: tag
+            )
+
+        case .invoice:
+            return FinanceAdvice(
+                title: "发票要三流一致",
+                body: "合同、发票、资金流水尽量对应；普票和专票的抵扣规则不同，进项票要及时认证，退票/红冲要留痕。",
+                tag: tag
+            )
+
+        case .reimbursement:
+            return FinanceAdvice(
+                title: "报销不是收入",
+                body: "员工垫付后报销，本质是归垫：报销到账冲减原费用或挂其他应收，不要记成工资/收入，否则会虚增收入。",
+                tag: tag
+            )
+
+        case .payroll:
+            return FinanceAdvice(
+                title: "工资要拆应发与实发",
+                body: "应发工资包含基本工资、绩效、补贴；代扣个税、社保、公积金后才是实发。计提和发放分两个步骤，别只记银行付款。",
+                tag: tag
+            )
+
+        case .inventory:
+            return FinanceAdvice(
+                title: "存货要管数量和成本",
+                body: "入库、出库、结转成本要同步；先进先出/加权平均是核算方法，不是随便估价。期末盘点差异要查明原因再调整。",
+                tag: tag
+            )
+
+        case .depreciation:
+            return FinanceAdvice(
+                title: "折旧是分摊不是付现",
+                body: "固定资产按预计使用年限系统分摊，残值和折旧方法要一致；折旧不产生现金流出，但会影响利润和税。",
+                tag: tag
+            )
+
+        case .amortization:
+            return FinanceAdvice(
+                title: "摊销看受益期",
+                body: "长期待摊费用、无形资产按受益期限分摊；摊销年限要有依据，不能为了调利润随意拉长或缩短。",
+                tag: tag
+            )
+
+        case .vat:
+            return FinanceAdvice(
+                title: "增值税要价税分离",
+                body: "含税价先拆成不含税金额和税额；进项税能否抵扣取决于用途和凭证。小规模/一般纳税人规则不同，申报以税务口径为准。",
+                tag: tag
+            )
+
+        case .accrual:
+            return FinanceAdvice(
+                title: "权责发生制看归属期",
+                body: "费用/收入按实际发生期间确认，不看钱哪天到账；跨期部分用应付、预提、待摊处理，避免某个月利润大起大落。",
+                tag: tag
+            )
+
+        case .pettyCash:
+            return FinanceAdvice(
+                title: "备用金要定额管理",
+                body: "定额备用金先借出、报销后补足；现金盘点差异要查明原因，不能长期挂账。小额支出也要留凭证。",
+                tag: tag
+            )
+
+        case .accountsReceivable:
+            return FinanceAdvice(
+                title: "应收账款要盯回款",
+                body: "赊销确认收入同时挂应收；按账龄催收，评估坏账风险。收到钱时冲应收，不要重复记收入。",
+                tag: tag
+            )
+
+        case .accountsPayable:
+            return FinanceAdvice(
+                title: "应付账款要排付款计划",
+                body: "采购入库/收票后挂应付，付款时冲应付；先按到期日排优先级，别用短期借款硬撑长期欠款。",
+                tag: tag
+            )
+
+        case .loan:
+            return FinanceAdvice(
+                title: "借款要拆本金和利息",
+                body: "收到借款记负债，不是收入；还款时本金冲负债、利息记费用。等额本息前期利息高，提前还款要先看违约金。",
+                tag: tag
+            )
+
+        case .mortgage:
+            return FinanceAdvice(
+                title: "房贷看总成本",
+                body: "月供之外还要算首付、税费、保险和维修；提前还款是否划算，要比较剩余利息和手里的应急金，别把现金全压进去。",
+                tag: tag
+            )
+
+        case .rent:
+            return FinanceAdvice(
+                title: "房租要区分押金和租金",
+                body: "押金是资产，不是当月费用；租金按租期分摊。合租/转租要留合同和分摊规则，押金退还要冲回。",
+                tag: tag
+            )
+
+        case .utilities:
+            return FinanceAdvice(
+                title: "水电燃气按实际用量",
+                body: "自用记生活支出，公司/出租房要区分成本或代收代付；合租按账单或约定分摊，预存费用先挂预付。",
+                tag: tag
+            )
+
+        case .medical:
+            return FinanceAdvice(
+                title: "医疗支出留好票据",
+                body: "挂号、药费、住院分别归类；医保报销和商保理赔到账后冲减原支出，不要重复记收入。大额支出先看应急金。",
+                tag: tag
+            )
+
+        case .education:
+            return FinanceAdvice(
+                title: "教育支出看受益期",
+                body: "短期课程记当期费用，长期培训/学历教育按受益期分摊；书本、住宿、交通可以单列，方便做教育金预算。",
+                tag: tag
+            )
+
+        case .charity:
+            return FinanceAdvice(
+                title: "捐赠要留合规凭证",
+                body: "公益捐赠记支出并保留捐赠票据；税前扣除有比例和资格限制，具体以税务规定为准。捐物按公允价值留证。",
+                tag: tag
+            )
+
         case .other:
             return FinanceAdvice(
                 title: "我只懂财务这一块",
-                body: "可以问我支出、预算、储蓄、负债、退款、转账、保险和税务记账；太泛的问题我会承认不知道，不编答案。",
+                body: "可以问我支出、预算、储蓄、负债、退款、转账、保险、税务、发票、报销、存货、折旧、现金流等记账问题；太泛的问题我会承认不知道，不编答案。",
                 tag: tag
             )
         }

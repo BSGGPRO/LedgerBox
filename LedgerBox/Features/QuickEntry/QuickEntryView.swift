@@ -41,7 +41,6 @@ struct QuickEntryView: View {
     @State private var note = ""
     @State private var lastAutoRemark = ""
     @State private var alert: QuickEntryAlert?
-    @State private var showingOnlineAI = false
     @State private var showingFinanceAdvisor = false
     @FocusState private var inputFocused: Bool
 
@@ -99,11 +98,6 @@ struct QuickEntryView: View {
                 message: Text(item.message),
                 dismissButton: .default(Text("好"))
             )
-        }
-        .sheet(isPresented: $showingOnlineAI) {
-            NavigationStack {
-                OnlineAIView()
-            }
         }
         .sheet(isPresented: $showingFinanceAdvisor) {
             NavigationStack {
@@ -217,7 +211,7 @@ struct QuickEntryView: View {
                             .font(theme.bodyFont.weight(.semibold))
                             .foregroundStyle(theme.primaryText)
 
-                        Text("本地解析 · 可选联网")
+                        Text("本地解析 · 不上传")
                             .font(theme.badgeFont)
                             .foregroundStyle(theme.secondaryText)
                     }
@@ -227,19 +221,7 @@ struct QuickEntryView: View {
                     Button {
                         showingFinanceAdvisor = true
                     } label: {
-                        Image(systemName: "brain.head.profile")
-                            .font(theme.badgeFont)
-                            .foregroundStyle(theme.accent)
-                            .padding(7)
-                            .background(theme.accent.opacity(0.12), in: Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("财务大脑")
-
-                    Button {
-                        showingOnlineAI = true
-                    } label: {
-                        Label("联网", systemImage: "network")
+                        Label("大脑", systemImage: "brain.head.profile")
                             .font(theme.badgeFont)
                             .foregroundStyle(theme.accent)
                             .padding(.horizontal, 9)
@@ -247,7 +229,8 @@ struct QuickEntryView: View {
                             .background(theme.accent.opacity(0.12), in: Capsule())
                     }
                     .buttonStyle(.plain)
-                    .accessibilityHint("打开联网 AI 问答")
+                    .accessibilityHint("打开本地财务大脑可视化")
+
                 }
 
                 Text(insight.detail)

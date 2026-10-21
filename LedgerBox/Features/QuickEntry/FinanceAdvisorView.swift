@@ -7,7 +7,13 @@ struct FinanceExchange: Identifiable {
 }
 
 struct FinanceAdvisorView: View {
+    private enum Mode: String, CaseIterable {
+        case chat = "对话"
+        case brain = "大脑"
+    }
+
     @Environment(\.ledgerTheme) private var theme
+    @State private var mode: Mode = .chat
 
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \LedgerTransaction.date, ascending: false)]
@@ -47,16 +53,23 @@ struct FinanceAdvisorView: View {
             ScrollView {
                 LazyVStack(spacing: theme.spacing) {
                     heroCard
-                    snapshotGrid
+                    modePicker
 
-                    if exchanges.isEmpty {
-                        introCard
-                        promptChips
-                    } else {
-                        ForEach(exchanges) { exchange in
-                            exchangeCard(exchange)
-                                .id(exchange.id)
+                    if mode == .chat {
+                        snapshotGrid
+
+                        if exchanges.isEmpty {
+                            introCard
+                            promptChips
+                        } else {
+                            ForEach(exchanges) { exchange in
+                                exchangeCard(exchange)
+                                    .id(exchange.id)
+                            }
                         }
+                    } else {
+                        FinanceBrainMapView()
+                            .transition(.opacity.combined(with: .move(edge: .bottom)))
                     }
                 }
                 .padding(.horizontal, theme.pagePadding)
@@ -75,7 +88,9 @@ struct FinanceAdvisorView: View {
         .navigationTitle("财务大脑")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
-            composer
+            if mode == .chat {
+                composer
+            }
         }
         .alert(
             "财务大脑",
@@ -114,7 +129,7 @@ struct FinanceAdvisorView: View {
                         .font(theme.sectionTitleFont)
                         .foregroundStyle(theme.primaryText)
 
-                    Text("15,380 参数 · 本地 · 只理解财务")
+                    Text("10,485,800 参数 · 本地 · 40 类记账意图")
                         .font(theme.badgeFont)
                         .foregroundStyle(theme.secondaryText)
                 }
@@ -129,6 +144,15 @@ struct FinanceAdvisorView: View {
                     .background(theme.income.opacity(0.12), in: Capsule())
             }
         }
+    }
+
+    private var modePicker: some View {
+        Picker("视图", selection: $mode) {
+            ForEach(Mode.allCases, id: \.self) { item in
+                Text(item.rawValue).tag(item)
+            }
+        }
+        .pickerStyle(.segmented)
     }
 
     private var snapshotGrid: some View {
@@ -168,7 +192,7 @@ struct FinanceAdvisorView: View {
                     .font(theme.bodyFont.weight(.semibold))
                     .foregroundStyle(theme.primaryText)
 
-                Text("它会把问题分成 20 个财务意图，再用本机账本和固定规则回答。不会编数字，不会自动写账。")
+                Text("它会把问题分到 40 个记账/财务意图，再用本机账本和固定规则回答；切到“大脑”能看到 1048 万参数的本地激活图。不会编数字，不会自动写账。")
                     .font(theme.captionFont)
                     .foregroundStyle(theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)

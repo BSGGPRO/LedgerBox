@@ -14,6 +14,19 @@ struct ChangelogEntry: Identifiable {
 enum ChangelogCatalog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "0.4.0",
+            dateText: "2026.10.22",
+            title: "千万参数本地财务大脑",
+            changes: [
+                "彻底移除联网 AI、接口配置、API Key 和钥匙串依赖；App 不再包含任何网络请求代码。",
+                "财务大脑升级为 10,485,800 参数：40 类记账意图 × 262,144 个字符 n-gram 哈希桶，另加 40 个 bias。",
+                "新增现金流、对账、发票、报销、工资、存货、折旧、摊销、增值税、权责发生、备用金、应收应付、借款、房贷、房租、水电、医疗、教育、公益等意图。",
+                "财务大脑页新增“大脑”视图：意图激活图、模型体检、实时探针、延迟和前 6 个概率。",
+                "Int8 权重放在 FinanceMindWeights.bin，约 10 MB；推理仍在本机 CPU 完成，不上传账本。",
+                "合成语料训练，合成验证集仅用于回归自测，不代表真实世界准确率；真实语句仍需你自己考。"
+            ]
+        ),
+        ChangelogEntry(
             version: "0.3.1",
             dateText: "2026.10.21",
             title: "物品与金额识别",
@@ -38,10 +51,10 @@ enum ChangelogCatalog {
         ChangelogEntry(
             version: "0.2.2",
             dateText: "2026.10.21",
-            title: "联网 AI 可选，Siri 退场",
+            title: "联网 AI 实验（0.4.0 已移除）",
             changes: [
-                "新增可选的联网 AI：OpenAI 兼容接口，默认关闭，接口地址、模型和 API Key 都由你自己填。",
-                "API Key 只存本机钥匙串；只有你点发送时才联网，不会自动上传账本。",
+                "历史版本曾提供可选联网 AI；0.4.0 已彻底删除该功能及全部网络代码。",
+                "历史版本曾把 API Key 存在钥匙串；0.4.0 已移除钥匙串依赖，不再保存任何密钥。",
                 "取消 Siri、快捷指令和 App Intents，删除 NSSiriUsageDescription，不再暴露系统快捷指令入口。",
                 "AI 记账卡重做：渐变图标、联网入口、金钱小模型胶囊；新增联网问答页和聊天气泡。",
                 "设置新增 AI 分区：开关、接口、模型、密钥、连接测试和隐私边界说明。",
