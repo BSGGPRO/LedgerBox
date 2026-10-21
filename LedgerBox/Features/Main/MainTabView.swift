@@ -38,8 +38,8 @@ struct MainTabView: View {
     @StateObject private var router = LedgerRouter()
     @StateObject private var toastCenter = ImportToastCenter()
     @State private var selection: MainTab = .home
-    @State private var isActionMenuExpanded = false
     @State private var showingSettings = false
+    @State private var showingEntryOptions = false
     @State private var errorMessage: String?
 
     var body: some View {
@@ -96,6 +96,21 @@ struct MainTabView: View {
                     .environment(\.ledgerTheme, theme)
             }
         }
+        .confirmationDialog(
+            "选择记账方式",
+            isPresented: $showingEntryOptions,
+            titleVisibility: .hidden
+        ) {
+            Button("⚡ 极速记账") {
+                router.open(.image)
+            }
+
+            Button("📝 记一笔") {
+                router.open(.manual)
+            }
+
+            Button("取消", role: .cancel) {}
+        }
         .alert(
             "操作未完成",
             isPresented: Binding(
@@ -113,30 +128,34 @@ struct MainTabView: View {
 
     private var bottomBar: some View {
         HStack(spacing: 0) {
-            // Bottom-left identity: local avatar only, no third-party login.
-            ProfileBadge()
-                .frame(width: 38)
-
             tabButton(.home)
             tabButton(.transactions)
-
-            // The centered entry button overlays this gap, so no tab sits
-            // underneath its 62pt touch target.
-            Spacer(minLength: 58)
-
             tabButton(.statistics)
+
+            Button {
+                showingEntryOptions = true
+            } label: {
+                barItemContent(
+                    systemImage: "plus",
+                    title: "记账",
+                    isSelected: false
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("记账")
+            .accessibilityHint("选择极速记账或手动记一笔")
+
             tabButton(.budget)
             tabButton(.goals)
 
             Button {
-                isActionMenuExpanded = false
                 showingSettings = true
             } label: {
-                Image(systemName: "gearshape")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(Color.white.opacity(0.72))
-                    .frame(width: 32, height: 48)
-                    .contentShape(Rectangle())
+                barItemContent(
+                    systemImage: "gearshape",
+                    title: "设置",
+                    isSelected: false
+                )
             }
             .buttonStyle(.plain)
             .accessibilityLabel("设置")
@@ -169,44 +188,44 @@ struct MainTabView: View {
                 .fill(Color.white.opacity(0.10))
                 .frame(height: 0.5)
         }
-        .overlay {
-            FloatingActionMenu(
-                isExpanded: $isActionMenuExpanded,
-                onQuickEntry: { router.open(.image) },
-                onManualEntry: { router.open(.manual) }
-            )
-            .offset(y: -2)
-        }
     }
 
     private func tabButton(_ tab: MainTab) -> some View {
-        let isSelected = selection == tab
-
-        return Button {
-            isActionMenuExpanded = false
+        Button {
             withAnimation(.easeOut(duration: 0.18)) {
                 selection = tab
             }
         } label: {
-            VStack(spacing: 2) {
-                Image(systemName: tab.symbolName)
-                    .font(.system(size: 16, weight: isSelected ? .semibold : .regular))
-                    .frame(height: 20)
-
-                Text(tab.title)
-                    .font(.system(size: 9, weight: isSelected ? .semibold : .medium))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-            }
-            .foregroundStyle(
-                isSelected ? Color.white : Color.white.opacity(0.56)
+            barItemContent(
+                systemImage: tab.symbolName,
+                title: tab.title,
+                isSelected: selection == tab
             )
-            .frame(width: tab == .budget || tab == .goals ? 38 : 42, height: 48)
-            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(tab.title)
-        .accessibilityValue(isSelected ? "已选中" : "")
+        .accessibilityValue(selection == tab ? "已选中" : "")
+    }
+
+    private func barItemContent(
+        systemImage: String,
+        title: String,
+        isSelected: Bool
+    ) -> some View {
+        VStack(spacing: 2) {
+            Image(systemName: systemImage)
+                .font(.system(size: 16, weight: isSelected ? .semibold : .regular))
+                .frame(height: 20)
+
+            Text(title)
+                .font(.system(size: 9, weight: isSelected ? .semibold : .medium))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+        .foregroundStyle(isSelected ? Color.white : Color.white.opacity(0.56))
+        .frame(maxWidth: .infinity)
+        .frame(height: 48)
+        .contentShape(Rectangle())
     }
 
     private func undo(_ toast: ImportToast) {

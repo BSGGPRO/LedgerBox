@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// The single local-identity entry in the bottom dock. It opens the local profile
-/// menu; there is no third-party sign-in.
+/// The single local-identity entry in the Home header's trailing corner. It
+/// opens the local profile menu; there is no third-party sign-in.
 struct ProfileBadge: View {
     @ObservedObject private var store = LocalProfileStore.shared
     @State private var showingMenu = false

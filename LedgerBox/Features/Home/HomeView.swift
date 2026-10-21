@@ -52,7 +52,8 @@ struct HomeView: View {
         NavigationStack {
             GlassHeaderHost(
                 title: "LedgerBox",
-                subtitle: Date.now.formatted(.dateTime.year().month(.wide))
+                subtitle: Date.now.formatted(.dateTime.year().month(.wide)),
+                trailing: { ProfileBadge() }
             ) {
                 VStack(alignment: .leading, spacing: 0) {
                     VStack(alignment: .leading, spacing: theme.sectionSpacing) {

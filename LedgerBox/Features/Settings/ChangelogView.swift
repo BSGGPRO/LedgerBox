@@ -14,6 +14,17 @@ struct ChangelogEntry: Identifiable {
 enum ChangelogCatalog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "0.9.2",
+            dateText: "2026.10.21",
+            title: "底栏七等分，头像回右上",
+            changes: [
+                "本地头像回到首页右上角的玻璃顶栏，不再放在底部。",
+                "底栏改为七等分：首页、流水、统计、+、预算、目标、设置；加号在正中，设置在最右。",
+                "加号、设置与五个 Tab 使用相同尺寸、字号和高度，不再单独放大、凸出或缩小。",
+                "点按加号弹出系统记账方式选择：极速记账或手动记一笔，不再展开自绘大按钮。"
+            ]
+        ),
+        ChangelogEntry(
             version: "0.9.1",
             dateText: "2026.10.21",
             title: "加号回到 TabBar 中间",
