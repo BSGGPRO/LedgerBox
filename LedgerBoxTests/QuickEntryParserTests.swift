@@ -204,6 +204,8 @@ final class QuickEntryParserTests: XCTestCase {
             accounts: [wechat]
         )
 
+        print("BIKE_DEBUG amount=\(String(describing: result.amount)) type=\(String(describing: result.type)) category=\(result.category?.name ?? "nil") item=\(result.itemName ?? "nil") remark=\(result.remark) issues=\(result.issues)")
+
         XCTAssertEqual(result.amount, Decimal(string: "22000"))
         XCTAssertTrue(result.type == TransactionType.expense)
         XCTAssertEqual(result.category?.id, transport.id)
