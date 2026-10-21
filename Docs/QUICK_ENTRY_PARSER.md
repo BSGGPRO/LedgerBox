@@ -79,4 +79,4 @@
 - 数量不压过价格
 - 多金额、负金额、全角数字、超长输入、缺分类/账户
 
-2026-10-21 在 GitHub Actions 的 iPhone 16 / iOS 26.2 模拟器运行：29 passed / 0 failed（run `39590486710`）。
+2026-10-21 在 GitHub Actions 的 iPhone 16 / iOS 26.2 模拟器运行：33 passed / 0 failed（run `39590486710`）。

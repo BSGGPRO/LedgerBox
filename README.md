@@ -1,4 +1,4 @@
-# LedgerBox
+﻿# LedgerBox
 
 LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftUI + Core Data 构建。项目把“通用记账引擎”和“场景模板规则”分开：前者只负责收支、转账、退款、预算、统计和目标进度；后者只提供日常、学生、买车三套可选配置。
 
@@ -7,25 +7,26 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 开源地址：**[github.com/BSGGPRO/LedgerBox](https://github.com/BSGGPRO/LedgerBox)**
 
 > **当前状态**  
-> 0.4.0 源码已完成。GitHub Actions `macos-15` 已成功归档未签名 IPA（run `39591530559`，commit `b33319e`），产物约 **1.24 MB**，内含 **10,485,800 参数**本地财务大脑和 `FinanceMindWeights.bin`（原始权重 10,485,920 字节）。29 个 XCTest 已在 iPhone 16 / iOS 26.2 模拟器通过（run `39591706814`：29 passed / 0 failed / 0 skipped）。尚未做真机安装、截图级视觉验收或真实账本准确率测试；IPA 未签名，需要你用自己的证书自签。
+> 0.5.0 源码已完成。GitHub Actions `macos-15` 已成功归档未签名 IPA（run `39596549161`，commit `bf19dda`），产物约 **1.31 MB**，内含 **10,485,800 参数**本地财务大脑和 `FinanceMindWeights.bin`（原始权重 10,485,920 字节）。33 个 XCTest 已在 iPhone 16 / iOS 26.2 模拟器通过（run `39596723535`：33 passed / 0 failed / 0 skipped）。尚未做真机安装、截图级视觉验收或真实账本准确率测试；IPA 未签名，需要你用自己的证书自签。
 
 ---
 
 ## 功能
 
-- **首页**：总余额、本月收入/支出/结余、最近 5 笔流水、空状态、记一笔入口、设置入口。
+- **首页**：总余额、本月收入/支出/结余、今日本地提示、最近 5 笔流水、空状态、底部记一笔；右上角只保留一个用户图标，点进去就是设置。
 - **流水**：全部交易、收入/支出/转账/退款/全部筛选、按日分组、备注/分类/账户/类型搜索、滑动删除并回滚余额。
 - **新增交易**：收入、支出、转账、退款；金额、账户、转入账户、分类、日期、备注。
 - **统计**：近 6 个月收支柱状图、分类支出占比环图、本月累计结余折线/面积图、月份切换。
 - **预算**：总预算/分类预算、月/周周期、进度、超预算提示、新增/编辑/删除、启停用。
-- **目标**：储蓄目标、进度环、30 天平均净结余倒计时、达成/冻结状态、新增/编辑/删除。
-- **设置**：浅色/深色/跟随系统、五种强调色、模板应用、CSV 本地导出、隐私说明、更新日志。
+- **目标**：储蓄目标、进度环、近 30 天净结余倒计时、预计完成月份/日期、达成/冻结状态、新增/编辑/删除。
+- **设置**：浅色/深色/跟随系统、五种强调色、模板应用、CSV 本地导出、隐私说明、更新日志、GitHub 开源地址。
 - **小 AI 文本记账**：首页“极速”入口；输入“微信买奶茶 15 元”，本地拆出金额/收支/分类/账户/物品/备注；会跳过 `M5200`、`9号`、`2台` 等型号和数量，不把它们当金额。
 - **物品与价格识别**：“我买了一台电动车，9号M5200花费22000”提取物品“电动车”、金额 22000、支出；“这个物品是口红，但是口红价格是1000元”提取“口红”、1000、支出，并给出价格偏高软提醒。
 - **金钱小模型**：5,643 参数，字符 n-gram + 逻辑回归，给餐饮/交通/购物/工资/理财等语义排序；只做提示，不覆盖解析器结果。
 - **本地财务大脑**：**10,485,800 参数**，40 个财务/会计意图，262,144 个字符 1–3 gram 哈希桶；用本机账本快照回答支出、预算、结余、储蓄、负债、现金流、对账、发票、报销、工资、存货、折旧、摊销、增值税、应收应付、借款、房贷、房租、水电、医疗、教育、公益等问题。
-- **大脑可视化**：财务大脑页顶部“对话 / 大脑”切换；大脑页包含意图激活图、模型体检、实时探针、top 6 概率、特征数、推理延迟和 40 类覆盖。
-- **完全离线**：0.4.0 已删除联网 AI、API Key、Keychain 和全部网络请求；账本与输入文本都不离开设备。
+- **大脑可视化**：财务大脑页顶部“对话 / 大脑”切换；大脑页包含持续动画的意图激活图（呼吸核心、旋转节点、流动脉冲）、4.4 秒自动巡演、模型体检、实时探针、top 6 概率、特征数、推理延迟和 40 类覆盖。
+- **本地财务教练**：首页、目标、预算、统计、财务大脑共享本机账本快照，给出预算预警、支出超收入、目标临门一脚、分类集中和“今天先别急着下单”等提示；不编数字、不自动写账。
+- **完全离线**：0.4.0 起已删除联网 AI、API Key、Keychain 和全部网络请求；账本与输入文本都不离开设备。
 - **已取消 Siri**：删除 App Intents / 快捷指令入口和 `NSSiriUsageDescription`，不再暴露 Siri 记账。
 - **小组件源码**：保留 WidgetKit 小 / 中尺寸源码；当前默认不嵌入 App，避免 `PlugIns` 嵌套签名导致自签安装失败。需要时可在 Xcode 中重新加入 Embed 阶段。
 - **作者入口**：设置页可打开 Beausoleil 的 Bilibili 个人空间。
@@ -45,7 +46,7 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 | 小 AI | 本地规则 + `NaturalLanguage` + 5,643 参数金钱分类器 + 10,485,800 参数财务意图模型 |
 | 权重 | Int8 二进制资源，`Data` 映射读取；无 Core ML、无第三方运行时 |
 | 自动化 | 无 Siri、无 App Intents、无快捷指令 |
-| 网络 | 无（0.4.0 已删除联网 AI） |
+| 网络 | 无（0.4.0 起已删除联网 AI） |
 | 图标 | SF Symbols |
 | 依赖 | 无 CocoaPods、无第三方 SPM 包 |
 
@@ -62,7 +63,7 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 
 - Target：`LedgerBox`
 - Bundle ID：`com.example.ledgerbox`
-- Marketing Version：`0.4.0`
+- Marketing Version：`0.5.0`
 - Deployment Target：`17.0`
 - 设备族：iPhone + iPad
 - 无 `DEVELOPMENT_TEAM`、无证书、无描述文件
@@ -81,7 +82,7 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 
 首次启动没有交易，首页会显示空状态。点击“记一笔”记录第一笔收入或支出；点击“极速”进入小 AI 文本记账，输入一句话即可解析，不需要麦克风或语音权限。
 
-工程包含 `LedgerBoxTests` Target，可在 Mac 上通过 `Cmd+U` 或 `xcodebuild test` 运行。当前 29 个测试已在 GitHub Actions 的 iPhone 16 / iOS 26.2 模拟器通过（run `39591706814`）；真机仍需你本地验证。
+工程包含 `LedgerBoxTests` Target，可在 Mac 上通过 `Cmd+U` 或 `xcodebuild test` 运行。当前 33 个测试已在 GitHub Actions 的 iPhone 16 / iOS 26.2 模拟器通过（run `39596723535`）；真机仍需你本地验证。
 
 ---
 
@@ -160,7 +161,7 @@ CONTRIBUTING.md
 ### 本地优先
 
 - 无登录、无账号、无云同步、无广告、无内购；账本只在本机。
-- 0.4.0 不含联网 AI，不含 `URLSession` 请求，不上传账本或输入文本。
+- 0.4.0 起不含联网 AI，不含 `URLSession` 请求，不上传账本或输入文本。
 - 数据只写入本机 Core Data SQLite。
 - CSV 只通过系统文件导出器保存到用户选择的位置。
 
@@ -192,7 +193,7 @@ CONTRIBUTING.md
 
 ## 已知限制
 
-- GitHub Actions 已实际 archive，29 个 XCTest 已在模拟器通过；但未签名、未真机安装、未 TestFlight/App Store 验证。
+- GitHub Actions 已实际 archive，33 个 XCTest 已在模拟器通过；但未签名、未真机安装、未 TestFlight/App Store 验证。
 - 没有在真机或模拟器里做截图级视觉验收；“大脑”页面的动画、Canvas 和自适应布局只经过编译和静态检查。
 - 已有 `Assets.xcassets` 与 1024×1024 AppIcon 占位；未做上架截图/视觉审查。
 - 无账户管理 UI、无分类管理 UI；默认账户与分类由 Persistence 种子和模板创建。
@@ -202,11 +203,11 @@ CONTRIBUTING.md
 - 本月结余只允许结转一次；结转后又新增收入，不能再次结转。
 - `AppSettings.themeMode` / `accentColorHex` 字段存在，但当前主题实际由 `ThemeManager` + UserDefaults 驱动，两者未双向同步。
 - 无多币种换算；`currencyCode` 默认 CNY，v1 只按 CNY 展示。
-- 当前 29 个测试覆盖财务汇总、退款、预算进度、副业分账、结余优先级、金额分位存储、14 个极速记账解析用例和 6 个财务大脑模型用例；已在 iPhone 16 / iOS 26.2 模拟器全部通过。
+- 当前 33 个测试覆盖财务汇总、退款、预算进度、副业分账、结余优先级、金额分位存储、14 个极速记账解析用例、6 个财务大脑模型用例和 4 个本地教练用例；已在 iPhone 16 / iOS 26.2 模拟器全部通过。
 - 已取消 Siri、快捷指令和 App Intents，不能监听银行/微信通知，也没有系统自动化写账入口。
-- 小 AI 是本地规则 + `NaturalLanguage` + 5,643 参数金钱分类器 + 10,485,800 参数财务意图模型，不是生成式大模型；合成验证集 99.1% 不代表真实世界准确率，真实短句、方言和错别字仍需你自己考。
-- 新版未签名 IPA：`LedgerBox-unsigned-0.4.0-FinanceBrain.ipa`，1,240,946 字节，SHA-256 `9E00BC3F78141FF2DFB321D8B404C835BF9064B677C9F8A12EA4F3F3136E6010`；无 `PlugIns`、无麦克风/语音/Siri 权限，需自签后安装。
-- 权重文件 SHA-256：`FBAE921A209BAF880481E10B91ACADEEE3B324182063CDDDDA7CFE9FB4C7CF74`，10,485,920 字节。
+- 小 AI 是本地规则 + `NaturalLanguage` + 5,643 参数金钱分类器 + 10,485,800 参数财务意图模型，不是生成式大模型；合成验证集 98.3% 不代表真实世界准确率，真实短句、方言和错别字仍需你自己考。
+- 新版未签名 IPA：`LedgerBox-unsigned-0.5.0-BrainLive.ipa`，1,306,923 字节，SHA-256 `5B28A0DC8356BCA46468F7FDAF94F652D5F1B3D9E44809B926714764B5241B21`；无 `PlugIns`、无麦克风/语音/Siri 权限，需自签后安装。
+- 权重文件 SHA-256：`97A20728A3245A90AF5AB542DF6EB07254D26882579F6216F750415CC66A9934`，10,485,920 字节。
 - 源码包：`LedgerBox-source-0.4.0-FinanceBrain.zip`；大小与 SHA-256 见同目录 `LedgerBox-0.4.0-SHA256.txt`，源码包不包含自身哈希。
 - 当前默认是单 target：不嵌入 `PlugIns/LedgerBoxWidget.appex`，所以 `lcsign` 只需签主 App。Widget 源码仍在仓库中，但不会进入 IPA。
 - 如果要重新启用小组件，必须在 Xcode 中恢复 Embed 阶段，并同时签主 App 与 appex；否则会出现图标有、点不开的安装失败。
@@ -215,6 +216,7 @@ CONTRIBUTING.md
 
 ## 文档
 
+- [`Docs/DESIGN_REFERENCE.md`](Docs/DESIGN_REFERENCE.md)：UI 设计参考与落地（Revolut 式金融排版、卡片等高、动效边界）
 - [`Docs/COMPONENTS.md`](Docs/COMPONENTS.md)：架构、文件地图、数据流、扩展点
 - [`Docs/FINANCE_RULES.md`](Docs/FINANCE_RULES.md)：16 条边界、公式、模板规则
 - [`Docs/BUILD_STEPS.md`](Docs/BUILD_STEPS.md)：Xcode 构建、运行、常见错误
