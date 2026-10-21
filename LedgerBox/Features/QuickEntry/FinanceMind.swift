@@ -183,9 +183,10 @@ final class FinanceMind {
             guard let base = rawBuffer.bindMemory(to: Int8.self).baseAddress else {
                 return
             }
+            let weights = base.advanced(by: FinanceMindWeights.biasByteCount)
             for (bucket, value) in features {
                 for classIndex in 0..<classCount {
-                    let raw = base[classIndex * bucketCount + bucket]
+                    let raw = weights[classIndex * bucketCount + bucket]
                     scores[classIndex] += Float(raw) / FinanceMindWeights.scale * value
                 }
             }
