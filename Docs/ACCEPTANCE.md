@@ -35,7 +35,7 @@
 
 ```text
 SWIFT SYNTAX OK 27
-XML/PLIST/PBX OK 35 32
+XML/PLIST/PBX OK 35 31
 NO BOM
 ```
 
@@ -43,7 +43,7 @@ NO BOM
 
 - `SWIFT SYNTAX OK 27`：27 个 `.swift` 文件（23 个 App + 2 个 Widget + 2 个测试）均可被 tree-sitter-swift 解析，根节点无错误。
 - `35`：`PBXFileReference` 数量（23 个 App Swift + 2 个 Widget Swift + 2 个测试 Swift + 图标/框架/产品/Info.plist 等）。
-- `32`：`PBXBuildFile` 数量（App 源文件 + Widget 源文件 + 测试源文件 + 模型/资源/框架/嵌入扩展）。
+- `31`：`PBXBuildFile` 数量（App 源文件 + Widget 源文件 + 测试源文件 + 模型/资源/框架；Widget 不再嵌入，因此没有 appex 嵌入项）。
 - `NO BOM`：`project.pbxproj` 为 UTF-8 无 BOM。
 
 其他静态检查：
