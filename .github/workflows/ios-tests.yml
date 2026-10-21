@@ -31,5 +31,14 @@ jobs:
             -configuration Debug \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             -derivedDataPath build/DerivedData \
+            -resultBundlePath build/TestResults.xcresult \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
+
+      - name: Print test failures
+        if: always()
+        run: |
+          if [ -d build/TestResults.xcresult ]; then
+            xcrun xcresulttool get test-results summary --path build/TestResults.xcresult || true
+            xcrun xcresulttool get test-results tests --path build/TestResults.xcresult || true
+          fi

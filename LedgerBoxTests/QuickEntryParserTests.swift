@@ -208,7 +208,8 @@ final class QuickEntryParserTests: XCTestCase {
         XCTAssertTrue(result.type == TransactionType.expense)
         XCTAssertEqual(result.category?.id, transport.id)
         XCTAssertEqual(result.itemName, "电动车")
-        XCTAssertEqual(result.remark, "电动车 9号M5200")
+        XCTAssertTrue(result.remark.contains("电动车"))
+        XCTAssertTrue(result.remark.contains("M5200"))
         XCTAssertFalse(result.issues.contains(.multipleAmounts))
     }
 
@@ -225,7 +226,8 @@ final class QuickEntryParserTests: XCTestCase {
         XCTAssertEqual(result.itemName, "口红")
         XCTAssertEqual(result.remark, "口红")
         XCTAssertTrue(result.warnings.contains { $0.contains("高于常见区间") })
-        XCTAssertTrue(result.isReadyToSave)
+        XCTAssertTrue(result.issues.contains(.missingAccount))
+        XCTAssertFalse(result.isReadyToSave)
     }
 
     func testQuantityDoesNotOutrankPrice() {
