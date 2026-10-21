@@ -228,8 +228,15 @@ final class ImportHistoryStore {
             do {
                 try FileManager.default.moveItem(at: url, to: backup)
             } catch {
-                try? data.write(to: backup, options: [.atomic])
-                try? FileManager.default.removeItem(at: url)
+                // If move fails, keep the original until the forensic copy is
+                // safely written; never delete the only copy.
+                do {
+                    try data.write(to: backup, options: [.atomic])
+                    try? FileManager.default.removeItem(at: url)
+                } catch {
+                    // Leave the unreadable file in place. The next launch will
+                    // try again rather than silently overwrite it.
+                }
             }
             return []
         }
