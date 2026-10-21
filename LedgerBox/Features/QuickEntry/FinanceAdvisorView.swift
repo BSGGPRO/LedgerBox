@@ -22,7 +22,6 @@ private struct FinanceActionCardState {
 
 private enum FinanceAdvisorSheet: String, Identifiable {
     case image
-    case settings
 
     var id: String { rawValue }
 }
@@ -68,6 +67,10 @@ struct FinanceAdvisorView: View {
     @State private var csvText = ""
     @State private var exportFilename = "LedgerBox"
     @State private var exportExchangeID: UUID?
+    @State private var showingBackupExporter = false
+    @State private var backupData = Data()
+    @State private var backupFilename = "LedgerBox-backup"
+    @State private var backupExchangeID: UUID?
     @State private var imageFlowExchangeID: UUID?
     @FocusState private var inputFocused: Bool
 
@@ -151,9 +154,6 @@ struct FinanceAdvisorView: View {
                 }
                 .environment(\.managedObjectContext, viewContext)
                 .environment(\.ledgerTheme, theme)
-            case .settings:
-                SettingsView()
-                    .environment(\.managedObjectContext, viewContext)
             }
         }
         .fileExporter(
@@ -167,6 +167,19 @@ struct FinanceAdvisorView: View {
                 finishExport(error: nil)
             case .failure(let error):
                 finishExport(error: error)
+            }
+        }
+        .fileExporter(
+            isPresented: $showingBackupExporter,
+            document: JSONBackupDocument(data: backupData),
+            contentType: .json,
+            defaultFilename: backupFilename
+        ) { result in
+            switch result {
+            case .success:
+                finishBackupExport(error: nil)
+            case .failure(let error):
+                finishBackupExport(error: error)
             }
         }
     }
@@ -565,7 +578,7 @@ struct FinanceAdvisorView: View {
         case .backupJSON:
             advice = FinanceAdvice(
                 title: "这个动作需要你确认",
-                body: "全量 JSON 备份入口在设置里（设置 → 数据 → 导出 JSON 备份），这里只帮你跳过去，不重复实现第二套备份逻辑。",
+                body: "会读取本机全部账本并生成 JSON 备份。点下面的按钮后由系统文件面板选择保存位置；数据不会离开这台设备。",
                 tag: "待确认"
             )
         case .imageImport:
@@ -760,8 +773,8 @@ struct FinanceAdvisorView: View {
                         prepareExport(exchangeID: exchangeID)
                     }
                 case .backupJSON:
-                    actionButton(title: "打开设置里的备份", systemImage: "gearshape") {
-                        activeSheet = .settings
+                    actionButton(title: "导出 JSON 备份", systemImage: "archivebox") {
+                        prepareBackup(exchangeID: exchangeID)
                     }
                 case .imageImport:
                     actionButton(title: "打开图片记账", systemImage: "photo") {
@@ -786,7 +799,7 @@ struct FinanceAdvisorView: View {
         case .exportCSV:
             return "会读取本机账本并生成 CSV，然后由系统文件面板选择保存位置。"
         case .backupJSON:
-            return "JSON 备份由设置的「数据」区域提供；点下面的按钮打开设置，导出后由系统文件面板保存。"
+            return "会读取本机全部账本并生成 JSON 备份，然后由系统文件面板选择保存位置。"
         case .imageImport:
             return "选图或拍照后本地 OCR 识别，核对并确认才会入账。也可以从首页的「+」进入图片记账。"
         default:
@@ -903,6 +916,44 @@ struct FinanceAdvisorView: View {
         actionCards[exchangeID] = card
     }
 
+    private func prepareBackup(exchangeID: UUID) {
+        guard var card = actionCards[exchangeID] else { return }
+
+        do {
+            backupData = try LedgerBackupService.makeBackup(context: viewContext)
+            backupFilename = "LedgerBox-backup-\(exportTimestamp)"
+            card.confirmation.confirm()
+            card.failure = nil
+            card.notice = "已生成 JSON 备份，等待你选择保存位置。"
+            actionCards[exchangeID] = card
+            backupExchangeID = exchangeID
+            showingBackupExporter = true
+        } catch {
+            card.failure = "备份失败：\(error.localizedDescription)"
+            actionCards[exchangeID] = card
+        }
+    }
+
+    private func finishBackupExport(error: Error?) {
+        guard let exchangeID = backupExchangeID,
+              var card = actionCards[exchangeID] else {
+            backupExchangeID = nil
+            return
+        }
+
+        if let error, !isUserCancellation(error) {
+            card.failure = "备份失败：\(error.localizedDescription)"
+        } else if error != nil {
+            card.failure = nil
+            card.notice = "已取消备份，没有写入任何文件。"
+        } else {
+            card.failure = nil
+            card.notice = "JSON 备份已导出到你选择的位置。"
+        }
+        actionCards[exchangeID] = card
+        backupExchangeID = nil
+    }
+
     private func prepareExport(exchangeID: UUID) {
         guard var card = actionCards[exchangeID] else { return }
 
@@ -990,6 +1041,19 @@ struct FinanceAdvisorView: View {
             card.confirmation.revokeCompletion()
         }
         actionCards[exchangeID] = card
+    }
+
+    private var exportTimestamp: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyyMMdd-HHmm"
+        return formatter.string(from: Date())
+    }
+
+    private func isUserCancellation(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        return nsError.domain == NSCocoaErrorDomain
+            && nsError.code == CocoaError.userCancelled.rawValue
     }
 
     private var snapshot: FinanceSnapshot {
