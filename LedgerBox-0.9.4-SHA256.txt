@@ -1,0 +1,23 @@
+LedgerBox 0.9.4 — SHA-256
+Generated: 2026-10-21
+
+LedgerBox-unsigned-0.9.4-NoMore.ipa
+Size: 1,802,089 bytes
+SHA-256: C8DD06CCA941163C5D8F751AA841CEFCA898C1655DE2329CA626D2AEB680D895
+
+LedgerBox-source-0.9.4-NoMore.zip
+Size: 917,358 bytes
+SHA-256: E5C06EB9F72ABA68C911CD22C4299B24AB98B2245F9EBBE3C71FFE6388777A77
+
+Embedded FinanceMindWeights.bin
+Size: 41,943,200 bytes
+SHA-256: 6F5E92B17EC300D7A0C69AB79324903AE4407FB992393140BB2F783B7355F380
+
+Verification notes:
+- IPA built by GitHub Actions run 39629611349, commit 5d30d8a.
+- Tests: GitHub Actions run 39629624073, 57 passed / 0 failed / 0 skipped.
+- TabView has exactly five children; Settings is a separate page overlay. This removes the synthesized More list and back buttons from 目标/设置.
+- IPA is unsigned and requires your own certificate to install.
+- No physical-device install or screenshot-level visual acceptance was performed.
+- No 0.5B model is included in this build.
+- The repository is currently private; release links require a GitHub account with access.

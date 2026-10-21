@@ -3,6 +3,19 @@
 All user-visible changes to LedgerBox are recorded here and in the in-app
 **设置 → 更新日志** page.
 
+## 0.9.4 — 2026-10-21
+
+### Fixed
+
+- 不再把设置作为 TabView 的第六个页面，避免 iOS 自动生成 More 列表。
+- 目标页不再出现“返回 / More”导航按钮。
+- 设置改为独立页面覆盖层，进入后齿轮高亮，其它 Tab 不再同时高亮。
+
+### Notes
+
+- 设置仍是页面切换，不是 sheet 抽屉。
+- 0.9.3 的六 Tab 方案作废。
+
 ## 0.9.3 — 2026-10-21
 
 ### Changed
