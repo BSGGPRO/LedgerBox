@@ -2,7 +2,7 @@
 
 本文说明为什么 Windows 不能直接构建 LedgerBox，以及如何在**不接触证书**的前提下，用 macOS 或 GitHub Actions 产出未签名 IPA，最后由你自己完成签名。
 
-> GitHub Actions 已成功完成未签名 archive（run `39556149325`），但本仓库没有做真机安装或签名验证。不要把“archive 成功”说成“已签名”“可安装”。
+> GitHub Actions 已成功完成未签名 archive（run `39568513229`），但本仓库没有做真机安装或签名验证。不要把“archive 成功”说成“已签名”“可安装”。
 
 ---
 
@@ -112,7 +112,7 @@ xcodebuild \
 - 工作流不注入证书、描述文件、Team ID 或 App Store Connect 密钥。
 - `CODE_SIGNING_ALLOWED=NO` 只表示不签名，不代表已通过 App Store 校验。
 - `macos-15` 的可用镜像与 Xcode 版本会变化；如果 runner 没有 iOS 17 SDK，需要调整 runner 或安装指定 Xcode。
-- 该工作流已实际运行成功（run `39556149325`）；仍不能据此宣称“已签名”或“可安装”。
+- 该工作流已实际运行成功（run `39568513229`）；仍不能据此宣称“已签名”或“可安装”。
 - 具体 YAML 以仓库文件为准，本文不复制易过期的完整内容。
 
 ---
@@ -188,23 +188,23 @@ Widget：      com.example.ledgerbox.widget
 
 未签名构建可以保留 `com.example.ledgerbox`；签名前请修改。
 
-### 6.1 嵌在 PlugIns 里的 Widget 也要签
+### 6.1 默认不嵌入 Widget
 
-新版 IPA 内包含：
+0.2.0 当前 IPA 内**没有**：
 
 ```text
 Payload/LedgerBox.app/PlugIns/LedgerBoxWidget.appex
 ```
 
-如果 `lcsign` 只签主 App、不递归签 `PlugIns`，安装会失败。签名前先确认工具会处理 appex；否则需要分别给主 App 和 Widget 签名。
+工程仍保留 Widget target 源码，但已从 App 的 Embed 阶段移除，所以 `lcsign` 只需要处理主 App，和你之前能正常安装的单 target 流程一致。
 
-已经额外生成一个单 target 版本：
+如果以后在 Xcode 里重新加入 Embed 阶段，IPA 会重新出现 `PlugIns/LedgerBoxWidget.appex`。那时必须：
 
-```text
-LedgerBox-unsigned-0.1.0-NoWidget.ipa
-```
+1. 先签 `PlugIns/LedgerBoxWidget.appex`。
+2. 再签 `Payload/LedgerBox.app`。
+3. 确认两个 Bundle ID、描述文件和 App Group 配置匹配。
 
-它和 Widget 版的主 App 二进制字节完全相同，只移除了 `Payload/LedgerBox.app/PlugIns/`。因此它没有小组件，但 `lcsign` 只需要处理主 App，适合你之前能正常安装的单 target 流程。
+只签主 App 会安装失败，典型表现是图标出现但点不开。
 
 ---
 

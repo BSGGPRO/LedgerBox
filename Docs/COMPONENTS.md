@@ -141,22 +141,23 @@ protocol TransactionProviding {
 | `Features/Budget` | `BudgetView`、`BudgetEditorView` | 总/分类预算、月/周、启停用、空状态 |
 | `Features/Goals` | `GoalsView`、`GoalEditorView`、`BuyCarPlanView` | 目标进度/倒计时；买车场景 |
 | `Features/Settings` | `SettingsView`、`ChangelogView` | 主题、模板、CSV、隐私、更新日志、作者入口 |
-| `LedgerBoxWidget` | `LedgerBoxWidget`、`LedgerBoxWidgetBundle` | WidgetKit 小/中尺寸；静态 UI，未接 App Group |
+| `LedgerBoxWidget` | `LedgerBoxWidget`、`LedgerBoxWidgetBundle` | WidgetKit 源码保留；默认不嵌入 App，避免自签失败 |
 | `Features/Main` | `MainTabView` | 五 Tab 容器 |
-| `Features/QuickEntry` | `QuickEntryParser`、`QuickEntryView`、`LedgerIntents` | 一句话解析、本地语音输入、App Intents / App Shortcuts |
+| `Features/QuickEntry` | `QuickEntryParser`、`QuickEntryAI`、`QuickEntryView`、`LedgerIntents` | 一句话解析、本地文本小 AI、App Intents / App Shortcuts |
 
 ### 2.7 QuickEntry 层
 
 | 文件 | 职责 |
 |---|---|
 | `QuickEntryParser.swift` | 纯 Foundation + NaturalLanguage；把“微信买奶茶 15 元”解析为金额、收支、分类、账户、备注；不依赖 SwiftUI/Core Data |
-| `QuickEntryView.swift` | 极速记账面板；实时展示解析结果与缺口；`SFSpeechRecognizer` 强制 `requiresOnDeviceRecognition = true` |
+| `QuickEntryAI.swift` | 本地解释层；输出状态、字段完整度、缺失字段和示例；不调用模型/网络 |
+| `QuickEntryView.swift` | AI 记账面板；示例胶囊、小 AI 状态卡、识别结果、分类/账户建议；不请求麦克风 |
 | `LedgerIntents.swift` | `AddTransactionIntent` 结构化写入；`QuickAddIntent` 文本解析写入；`AppShortcutsProvider` 暴露到快捷指令/Siri |
 
 边界：
 
 - Parser 只接收 `CategoryOption` / `AccountOption` 快照，不直接持有 `NSManagedObject`。
-- 语音不支持本地中文识别时，不回退 Apple 服务器，提示改用键盘。
+- 小 AI 只做本地规则解释和字段完整度，不生成不存在的金额/分类。
 - 快捷指令只有在金额、收支、分类、账户都无歧义时才自动保存；否则返回需确认信息。
 - App Intents 通过 `MainActor.run` 使用 `viewContext` 写入，与 UI 共用主上下文，复用 `LedgerService`，不绕过余额/日期/Decimal 校验。
 
@@ -328,7 +329,7 @@ CSV 字段：
 | `TemplateInstaller` | `TemplateInstaller.swift` | 模板 upsert |
 | `CSVDocument` | `CSVExporter.swift` | 文件导出文档 |
 | `QuickEntryParser.ParsedEntry` | `QuickEntryParser.swift` | 一句话解析快照与问题列表 |
-| `QuickEntrySpeechRecognizer` | `QuickEntryView.swift` | 设备端中文语音识别包装 |
+| `QuickEntryAI.Insight` | `AIAssistant.swift` | 小 AI 状态、完整度、缺失字段 |
 | `AddTransactionIntent` | `LedgerIntents.swift` | 结构化 App Intent |
 | `QuickAddIntent` | `LedgerIntents.swift` | 一段文本的 App Intent |
 | `LedgerShortcuts` | `LedgerIntents.swift` | 快捷指令/Siri 暴露入口 |
@@ -400,7 +401,7 @@ CSV 字段：
 - AppIcon 与 Asset Catalog 已随 GitHub Actions archive 编译；未做真机视觉检查。
 - 已通过 GitHub Actions `macos-15` 归档；未在本地 Xcode 运行，也未做真机验证。
 - iOS 不能读取其他 App 的通知内容；快捷指令只能处理系统允许的分享文本、短信/邮件或个人自动化输入。
-- 本地中文语音识别取决于设备能力；不支持时不回退服务器。
+- 小 AI 是本地规则，不是生成式模型；字段不全会要求手动补全。
 
 ---
 
@@ -426,6 +427,10 @@ LedgerBox/
     Budget/BudgetView.swift
     Goals/GoalsView.swift
     Goals/BuyCarPlanView.swift
+    QuickEntry/AIAssistant.swift
+    QuickEntry/QuickEntryParser.swift
+    QuickEntry/QuickEntryView.swift
+    QuickEntry/LedgerIntents.swift
     Settings/SettingsView.swift
     Settings/ChangelogView.swift
     Main/MainTabView.swift

@@ -10,6 +10,7 @@ All user-visible changes to LedgerBox are recorded here and in the in-app
 - 本地文本小 AI：输入一句话，拆出金额、收支、分类和账户；不联网、不上传文本。
 - 字段完整度、示例胶囊、分类建议和常用账户建议。
 - AI 记账页重做：小 AI 状态卡、识别结果卡、补全信息卡分层展示。
+- UI 布局参考 GitHub 开源记账项目 Expenso、dimeApp、Inpenso 的卡片/胶囊思路，未复制其代码。
 
 ### Removed
 
@@ -18,7 +19,7 @@ All user-visible changes to LedgerBox are recorded here and in the in-app
 ### Kept
 
 - 快捷指令 / Siri。
-- 原生 WidgetKit 小组件。
+- WidgetKit 小组件源码；当前默认不嵌入 App，避免自签失败。
 - 设置页作者 Beausoleil 的 Bilibili 入口。
 
 ## 0.1.0 — 2026-10-21

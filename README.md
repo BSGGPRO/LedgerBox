@@ -5,7 +5,7 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 作者：**Beausoleil** · [Bilibili 个人空间](https://space.bilibili.com/1477283849)
 
 > **当前状态**  
-> 静态源码与文档已完成；GitHub Actions `macos-15` 已成功归档未签名 IPA（run `39556149325`，commit `5026749`），包含极速记账、更新日志、WidgetKit 小组件和作者入口。测试尚未运行，IPA 未签名，需要你用自己的证书自签；尚未做真机运行验证。
+> 静态源码与文档已完成；GitHub Actions `macos-15` 已成功归档未签名 IPA（run `39568513229`，commit `cea2371`），版本 `0.2.0`，包含小 AI 文本记账、更新日志和作者入口；已移除语音权限，默认不嵌入 Widget，方便自签。测试尚未运行，IPA 未签名，需要你用自己的证书自签；尚未做真机运行验证。
 
 ---
 
@@ -20,7 +20,7 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 - **设置**：浅色/深色/跟随系统、五种强调色、模板应用、CSV 本地导出、隐私说明、更新日志。
 - **小 AI 文本记账**：首页“极速”入口；输入“微信买奶茶 15 元”，本地拆出金额/收支/分类/账户/备注；显示字段完整度、示例胶囊、分类建议和常用账户建议；不联网、不上传文本。
 - **快捷指令 / Siri**：`AddTransactionIntent` 结构化记账；`QuickAddIntent` 接收分享文本、短信/邮件内容或个人自动化输入；只有字段无歧义时才自动保存，否则返回确认提示。iOS 不允许读取其他 App 的通知。
-- **原生小组件**：WidgetKit 小 / 中尺寸，展示 LedgerBox 入口与本地优先说明；当前不共享账本数据，避免 App Group 与自签描述文件不匹配。
+- **小组件源码**：保留 WidgetKit 小 / 中尺寸源码；当前默认不嵌入 App，避免 `PlugIns` 嵌套签名导致自签安装失败。需要时可在 Xcode 中重新加入 Embed 阶段。
 - **作者入口**：设置页可打开 Beausoleil 的 Bilibili 个人空间。
 - **买车场景**：修机 4,400 → 买车 25,000 优先级、打卡 100、固定工资 500、年度补贴、副业 70/30 分账、本月现金结余结转、奶茶 150/月与 2 杯/周告警、目标专户支出/转出提醒。
 
@@ -195,9 +195,9 @@ CONTRIBUTING.md
 - 已有 `LedgerBoxTests` Target，共 20 个测试，覆盖财务汇总、退款、预算进度、副业分账、结余优先级、金额分位存储与 11 个极速记账解析用例；尚未实际运行。
 - iOS 不允许读取其他 App 的通知内容；快捷指令只能处理分享文本、短信/邮件、个人自动化等系统允许的输入，不能监听银行/微信通知。
 - 小 AI 是本地规则 + 字段完整度，不是生成式大模型；没有云端推理，也不会“猜”不存在的账。
-- 新版未签名 IPA 已由 GitHub Actions 生成：`LedgerBox-unsigned-0.1.0-Widget.ipa`，741,459 字节，SHA-256 `C57A0C4ECF11A1C7FE058DB90EC54BFA282F028D976B128C4A57551B5A798922`；需自签后安装。旧版 `LedgerBox-unsigned-0.1.0-QuickEntry.ipa` 不含小组件，仅作历史产物。
-- 如果 `lcsign` 只签主 App、不递归签 `PlugIns/LedgerBoxWidget.appex`，请改用 `LedgerBox-unsigned-0.1.0-NoWidget.ipa`（722,423 字节，SHA-256 `897E2E1A391067C8CD5907F80786DCDA19CFA2985AAA192701141B58CE60AD9E`）。它和 Widget 版主 App 二进制完全相同，只是去掉了 `PlugIns`，因此没有小组件但更容易自签。
-- 小组件是原生 WidgetKit UI，但当前不读取账本数据，也没有 App Group；这样做是为了避免自签描述文件不匹配。要显示真实余额/预算，需要增加 App Group 并重新配置 provisioning。
+- 新版未签名 IPA 已由 GitHub Actions 生成：`LedgerBox-unsigned-0.2.0-AI.ipa`，728,303 字节，SHA-256 `880886E446300AD4393AF097527F85D9B1B394E7FD12C3D9B95AEB5981757199`；无 `PlugIns`、无麦克风/语音权限，需自签后安装。
+- 当前默认是单 target：不再嵌入 `PlugIns/LedgerBoxWidget.appex`，所以 `lcsign` 只需签主 App。Widget 源码仍在仓库中，但不会进入 IPA。
+- 如果要重新启用小组件，必须在 Xcode 中恢复 Embed 阶段，并同时签主 App 与 appex；否则会出现图标有、点不开的安装失败。
 
 ---
 

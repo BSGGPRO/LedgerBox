@@ -292,15 +292,14 @@ The model configuration used to open the store is incompatible with the one that
 
 它不能替代 Swift 类型检查、SwiftUI 宏展开、Core Data 代码生成和链接。以 Xcode 实际报错为准。
 
-### 7.11 麦克风/语音权限崩溃
+### 7.11 语音权限已移除
 
-极速记账使用 `Speech` 与 `AVAudioEngine`。工程通过生成的 Info.plist 注入：
+0.2.0 起不再使用 `Speech` / `AVAudioEngine`，也不再注入：
 
 - `NSMicrophoneUsageDescription`
 - `NSSpeechRecognitionUsageDescription`
-- `NSSiriUsageDescription`
 
-如果真机点麦克风立即崩溃，先检查生成的 `Info.plist` 是否包含以上键。语音识别强制设备端执行；设备不支持中文本地识别时会提示键盘输入，不会上传音频。
+只保留 `NSSiriUsageDescription` 给快捷指令 / Siri。如果真机仍然弹出麦克风权限，说明装的是旧 IPA，不是当前 `0.2.0` 构建。小 AI 只处理键盘文本，不访问麦克风。
 
 ### 7.12 快捷指令里看不到 LedgerBox
 
@@ -315,9 +314,10 @@ The model configuration used to open the store is incompatible with the one that
 
 - `Assets.xcassets` 与 AppIcon 已随 archive 编译；仍未做真机/视觉检查。
 - `LedgerBoxTests` 已加入，但尚未实际运行。
-- `.github/workflows/ios-unsigned.yml` 已实际运行：run `39556149325`，结论 success。
-- 新版未签名 IPA 已生成：`LedgerBox-unsigned-0.1.0-Widget.ipa`（741,459 字节，含极速记账、更新日志与 Widget Extension）；旧版 IPA 仅作历史产物。
-- Widget Extension 已嵌入 `Payload/LedgerBox.app/PlugIns/LedgerBoxWidget.appex`；未配置 App Group，因此不读取真实账本。
+- `.github/workflows/ios-unsigned.yml` 已实际运行：run `39568513229`，结论 success。
+- 新版未签名 IPA 已生成：`LedgerBox-unsigned-0.2.0-AI.ipa`（728,303 字节，含小 AI、更新日志，无语音权限，无 `PlugIns`）。
+- Widget Extension 源码保留，但当前**不嵌入** `Payload/LedgerBox.app/PlugIns/`；这是为了兼容只签主 App 的 `lcsign`。需要小组件时再恢复 Embed 阶段并签 appex。
+- Widget 未配置 App Group，因此即使重新嵌入也不读取真实账本。
 - 没有证书、描述文件、Team ID。
 - 已有远程 archive 记录；仍缺真机运行记录。
 
