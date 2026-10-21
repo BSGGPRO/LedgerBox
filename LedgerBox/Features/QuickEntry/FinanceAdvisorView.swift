@@ -4,6 +4,7 @@ struct FinanceExchange: Identifiable {
     let id = UUID()
     let question: String
     let advice: FinanceAdvice
+    var localNarration: String?
 }
 
 struct FinanceAdvisorView: View {
@@ -14,6 +15,7 @@ struct FinanceAdvisorView: View {
 
     @Environment(\.ledgerTheme) private var theme
     @State private var mode: Mode = .chat
+    @StateObject private var localModel = QwenLocalModel.shared
 
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \LedgerTransaction.date, ascending: false)]
@@ -93,6 +95,9 @@ struct FinanceAdvisorView: View {
         .background(theme.background.ignoresSafeArea())
         .navigationTitle("财务大脑")
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            localModel.prepare()
+        }
         .safeAreaInset(edge: .bottom) {
             if mode == .chat {
                 composer
@@ -138,6 +143,14 @@ struct FinanceAdvisorView: View {
                     Text("41,943,080 参数 · 本地 · 40 类记账意图")
                         .font(theme.badgeFont)
                         .foregroundStyle(theme.secondaryText)
+
+                    Text("解释层 · \(localModel.status.summary)")
+                        .font(theme.badgeFont)
+                        .foregroundStyle(
+                            localModel.isReady ? theme.income : theme.secondaryText
+                        )
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
 
                 Spacer(minLength: 4)
@@ -284,6 +297,25 @@ struct FinanceAdvisorView: View {
                         .foregroundStyle(theme.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
 
+                    if let narration = exchange.localNarration {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("0.5B 本地解释")
+                                .font(theme.badgeFont.weight(.semibold))
+                                .foregroundStyle(theme.accentText)
+
+                            Text(narration)
+                                .font(theme.captionFont)
+                                .foregroundStyle(theme.primaryText)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            theme.accent.opacity(0.08),
+                            in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        )
+                    }
+
                     if let calculation = exchange.advice.calculation {
                         Rectangle()
                             .fill(theme.separator)
@@ -361,7 +393,22 @@ struct FinanceAdvisorView: View {
         input = ""
         inputFocused = false
         let advice = FinanceAdvisor.answer(to: question, snapshot: snapshot)
-        exchanges.append(FinanceExchange(question: question, advice: advice))
+        let exchange = FinanceExchange(question: question, advice: advice)
+        exchanges.append(exchange)
+
+        guard localModel.isReady else { return }
+        Task {
+            guard let narration = await localModel.narrate(
+                question: question,
+                advice: advice
+            ) else {
+                return
+            }
+            guard let index = exchanges.firstIndex(where: { $0.id == exchange.id }) else {
+                return
+            }
+            exchanges[index].localNarration = narration
+        }
     }
 
     private var snapshot: FinanceSnapshot {

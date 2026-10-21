@@ -66,3 +66,8 @@ fastlane/test_output/
 *.orig
 *.rej
 LedgerBox-source-*.zip
+
+# Local Qwen weights (fetched by Tools/fetch_qwen_model.sh; bundled only in release builds)
+Models/*.gguf
+Models/*.bin
+

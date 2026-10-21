@@ -60,6 +60,8 @@
 		BB0000000000000000000022 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA000000000000000000003D /* SwiftUI.framework */; };
 		BB0000000000000000000023 /* LedgerBoxWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000020 /* LedgerBoxWidgetBundle.swift */; };
 		BB0000000000000000000024 /* LedgerBoxWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000021 /* LedgerBoxWidget.swift */; };
+		EE0000000000000000000011 /* LedgerLlamaShim.c in Sources */ = {isa = PBXBuildFile; fileRef = EE0000000000000000000001 /* LedgerLlamaShim.c */; };
+		EE0000000000000000000012 /* QwenLocalModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE0000000000000000000003 /* QwenLocalModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -120,6 +122,10 @@
 		CC0000000000000000000020 /* LedgerBoxWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LedgerBoxWidgetBundle.swift; sourceTree = "<group>"; };
 		CC0000000000000000000021 /* LedgerBoxWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LedgerBoxWidget.swift; sourceTree = "<group>"; };
 		CC0000000000000000000022 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		EE0000000000000000000001 /* LedgerLlamaShim.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = LedgerLlamaShim.c; sourceTree = "<group>"; };
+		EE0000000000000000000002 /* LedgerLlamaShim.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LedgerLlamaShim.h; sourceTree = "<group>"; };
+		EE0000000000000000000003 /* QwenLocalModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QwenLocalModel.swift; sourceTree = "<group>"; };
+		EE0000000000000000000004 /* LedgerBox-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "LedgerBox-Bridging-Header.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXContainerItemProxy section */
@@ -203,6 +209,7 @@
 			isa = PBXGroup;
 			children = (
 				CC0000000000000000000001 /* LedgerBoxApp.swift */,
+				EE0000000000000000000004 /* LedgerBox-Bridging-Header.h */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -251,6 +258,7 @@
 				AA000000000000000000000A /* Home */,
 				AA000000000000000000000B /* Transactions */,
 				AA0000000000000000000029 /* QuickEntry */,
+				AA00000000000000000000F0 /* LocalAI */,
 				AA0000000000000000000019 /* Main */,
 				AA000000000000000000001A /* Statistics */,
 				AA000000000000000000001B /* Budget */,
@@ -260,6 +268,16 @@
 				DD00000000000000000000E1 /* Profile */,
 			);
 			path = Features;
+			sourceTree = "<group>";
+		};
+		AA00000000000000000000F0 /* LocalAI */ = {
+			isa = PBXGroup;
+			children = (
+				EE0000000000000000000001 /* LedgerLlamaShim.c */,
+				EE0000000000000000000002 /* LedgerLlamaShim.h */,
+				EE0000000000000000000003 /* QwenLocalModel.swift */,
+			);
+			path = LocalAI;
 			sourceTree = "<group>";
 		};
 		AA0000000000000000000029 /* QuickEntry */ = {
@@ -419,6 +437,7 @@
 				AA0000000000000000000016 /* Frameworks */,
 				AA0000000000000000000017 /* Resources */,
 				AA0000000000000000000036 /* Embed Foundation Extensions */,
+				EE0000000000000000000020 /* Bundle Local Qwen */,
 			);
 			buildRules = (
 			);
@@ -533,12 +552,35 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		EE0000000000000000000020 /* Bundle Local Qwen */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Bundle Local Qwen";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\nMODEL=\"${SRCROOT}/Models/Qwen2.5-0.5B-Instruct-Q4_K_M.gguf\"\nif [ -f \"$MODEL\" ]; then\n  mkdir -p \"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}\"\n  cp \"$MODEL\" \"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/\"\nfi\nif [ \"${PLATFORM_NAME}\" = \"iphoneos\" ]; then\n  SRC=\"${SRCROOT}/Frameworks/llama.framework\"\n  DEST=\"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}\"\n  mkdir -p \"$DEST\"\n  rm -rf \"$DEST/llama.framework\"\n  cp -R \"$SRC\" \"$DEST/\"\n  if [ \"${CODE_SIGNING_ALLOWED}\" = \"YES\" ] && [ -n \"${EXPANDED_CODE_SIGN_IDENTITY}\" ]; then\n    codesign --force --sign \"${EXPANDED_CODE_SIGN_IDENTITY}\" --timestamp=none \"$DEST/llama.framework\"\n  fi\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		AA0000000000000000000015 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				BB0000000000000000000001 /* LedgerBoxApp.swift in Sources */,
+				EE0000000000000000000011 /* LedgerLlamaShim.c in Sources */,
+				EE0000000000000000000012 /* QwenLocalModel.swift in Sources */,
 				BB0000000000000000000002 /* PersistenceController.swift in Sources */,
 				BB0000000000000000000003 /* ManagedObjects.swift in Sources */,
 				BB0000000000000000000004 /* Theme.swift in Sources */,
@@ -728,6 +770,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/Frameworks/llama.framework/Headers";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/LedgerBox/LedgerBox-Bridging-Header.h";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 14;
 				ENABLE_PREVIEWS = YES;
@@ -761,6 +805,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/Frameworks/llama.framework/Headers";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/LedgerBox/LedgerBox-Bridging-Header.h";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 14;
 				ENABLE_PREVIEWS = YES;
