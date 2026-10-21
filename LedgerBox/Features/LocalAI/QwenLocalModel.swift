@@ -50,6 +50,12 @@ final class QwenLocalModel: ObservableObject {
     static let modelFileExtension = "gguf"
 
     @Published private(set) var status: Status = .idle
+    @Published private(set) var isGenerating = false
+    @Published private(set) var completedGenerations = 0
+    @Published private(set) var rejectedGenerations = 0
+    @Published private(set) var lastNarration: String?
+    @Published private(set) var lastFailure: String?
+    @Published private(set) var lastRunAt: Date?
 
     private let queue = DispatchQueue(
         label: "com.example.ledgerbox.qwen",
@@ -57,7 +63,6 @@ final class QwenLocalModel: ObservableObject {
     )
     private var handle: OpaquePointer?
     private var prepared = false
-    private var isGenerating = false
 
     private init() {}
 
@@ -97,6 +102,7 @@ final class QwenLocalModel: ObservableObject {
         }
 
         status = .loading
+        lastFailure = nil
         LedgerLog.shared.info("qwen_prepare")
         let frameworkPath = frameworkURL.path
         let modelPath = modelURL.path
@@ -124,7 +130,9 @@ final class QwenLocalModel: ObservableObject {
                     return String(cString: base)
                 }
                 DispatchQueue.main.async {
-                    self?.status = .failed(message.isEmpty ? "模型加载失败" : message)
+                    let detail = message.isEmpty ? "模型加载失败" : message
+                    self?.status = .failed(detail)
+                    self?.lastFailure = detail
                     LedgerLog.shared.error("qwen_load_failed")
                 }
                 return
@@ -134,6 +142,7 @@ final class QwenLocalModel: ObservableObject {
             DispatchQueue.main.async {
                 self?.handle = created
                 self?.status = .ready(parameters: parameters)
+                self?.lastFailure = nil
                 LedgerLog.shared.info("qwen_ready", detail: "params=\(parameters)")
             }
         }
@@ -146,17 +155,38 @@ final class QwenLocalModel: ObservableObject {
         self.handle = nil
         prepared = false
         status = .idle
+        isGenerating = false
+        lastFailure = nil
         queue.async {
             lb_llama_destroy(handle)
         }
+    }
+
+    /// A user-initiated retry after a missing model, missing framework, simulator,
+    /// or load failure. The destroy/create calls stay ordered on the serial queue.
+    func retryLoad() {
+        guard !isGenerating else { return }
+        if handle != nil {
+            unload()
+        }
+        prepared = false
+        status = .idle
+        lastFailure = nil
+        prepare()
     }
 
     /// Produces a short, number-preserving explanation of `advice`.
     /// Returns nil for unavailable models, failures, empty output, or output
     /// that introduces a number not present in the deterministic source.
     func narrate(question: String, advice: FinanceAdvice) async -> String? {
-        guard let handle, status.isReady, !isGenerating else { return nil }
+        guard let handle, status.isReady, !isGenerating else {
+            if !status.isReady {
+                lastFailure = status.summary
+            }
+            return nil
+        }
         isGenerating = true
+        lastFailure = nil
         defer { isGenerating = false }
 
         let source = [
@@ -193,6 +223,11 @@ final class QwenLocalModel: ObservableObject {
 
                 guard result == 0 else {
                     LedgerLog.shared.error("qwen_generate_failed")
+                    DispatchQueue.main.async {
+                        self?.rejectedGenerations += 1
+                        self?.lastFailure = "llama 生成失败"
+                        self?.lastRunAt = Date()
+                    }
                     continuation.resume(returning: nil)
                     return
                 }
@@ -205,10 +240,21 @@ final class QwenLocalModel: ObservableObject {
                 guard !cleaned.isEmpty,
                       Self.numbers(in: cleaned).isSubset(of: Self.numbers(in: source)) else {
                     LedgerLog.shared.warning("qwen_narration_rejected")
+                    DispatchQueue.main.async {
+                        self?.rejectedGenerations += 1
+                        self?.lastFailure = "解释没有通过数字校验，已回退"
+                        self?.lastRunAt = Date()
+                    }
                     continuation.resume(returning: nil)
                     return
                 }
                 LedgerLog.shared.info("qwen_narration_ok", detail: "chars=\(cleaned.count)")
+                DispatchQueue.main.async {
+                    self?.completedGenerations += 1
+                    self?.lastNarration = cleaned
+                    self?.lastFailure = nil
+                    self?.lastRunAt = Date()
+                }
                 continuation.resume(returning: cleaned)
             }
         }

@@ -174,13 +174,15 @@ struct MainTabView: View {
 
                 Rectangle()
                     .fill(
-                        Color(
-                            .sRGB,
-                            red: 20.0 / 255.0,
-                            green: 20.0 / 255.0,
-                            blue: 22.0 / 255.0,
-                            opacity: 0.88
-                        )
+                        theme.isDark
+                            ? Color(
+                                .sRGB,
+                                red: 20.0 / 255.0,
+                                green: 20.0 / 255.0,
+                                blue: 22.0 / 255.0,
+                                opacity: 0.88
+                            )
+                            : theme.surface.opacity(0.94)
                     )
             }
             .ignoresSafeArea(edges: .bottom)
@@ -195,7 +197,11 @@ struct MainTabView: View {
         }
         .overlay(alignment: .top) {
             Rectangle()
-                .fill(Color.white.opacity(0.10))
+                .fill(
+                    theme.isDark
+                        ? Color.white.opacity(0.10)
+                        : theme.separator
+                )
                 .frame(height: 0.5)
         }
     }
@@ -229,6 +235,36 @@ struct MainTabView: View {
         .animation(.spring(response: 0.26, dampingFraction: 0.82), value: entryMenuStep)
     }
 
+    private var entryBubbleFill: LinearGradient {
+        if theme.isDark {
+            return LinearGradient(
+                colors: [
+                    Color(
+                        .sRGB,
+                        red: 34.0 / 255.0,
+                        green: 34.0 / 255.0,
+                        blue: 38.0 / 255.0,
+                        opacity: 0.98
+                    ),
+                    Color(
+                        .sRGB,
+                        red: 18.0 / 255.0,
+                        green: 18.0 / 255.0,
+                        blue: 21.0 / 255.0,
+                        opacity: 0.98
+                    )
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        }
+        return LinearGradient(
+            colors: [theme.surface, theme.surfaceElevated],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+
     private func entryBubble(
         title: String,
         systemImage: String,
@@ -244,36 +280,22 @@ struct MainTabView: View {
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .lineLimit(1)
             }
-            .foregroundStyle(Color.white)
+            .foregroundStyle(theme.isDark ? Color.white : theme.primaryText)
             .padding(.horizontal, 12)
             .frame(height: 30)
             .padding(.bottom, 7)
             .background {
                 EntryBubbleShape()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(
-                                    .sRGB,
-                                    red: 34.0 / 255.0,
-                                    green: 34.0 / 255.0,
-                                    blue: 38.0 / 255.0,
-                                    opacity: 0.98
-                                ),
-                                Color(
-                                    .sRGB,
-                                    red: 18.0 / 255.0,
-                                    green: 18.0 / 255.0,
-                                    blue: 21.0 / 255.0,
-                                    opacity: 0.98
-                                )
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
+                    .fill(entryBubbleFill)
             }
-            .shadow(color: Color.black.opacity(0.30), radius: 7, x: 0, y: 4)
+            .shadow(
+                color: theme.isDark
+                    ? Color.black.opacity(0.30)
+                    : theme.borderStrong.opacity(0.20),
+                radius: 7,
+                x: 0,
+                y: 4
+            )
             .contentShape(EntryBubbleShape())
         }
         .buttonStyle(.plain)
@@ -376,14 +398,20 @@ struct MainTabView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
         }
-        .foregroundStyle(
-            isSelected
-                ? Color.white
-                : Color.white.opacity(isEmphasized ? 0.84 : 0.56)
-        )
+        .foregroundStyle(barItemColor(isSelected: isSelected, isEmphasized: isEmphasized))
         .frame(maxWidth: .infinity)
         .frame(height: 48)
         .contentShape(Rectangle())
+    }
+
+    private func barItemColor(isSelected: Bool, isEmphasized: Bool) -> Color {
+        if isSelected {
+            return theme.isDark ? Color.white : theme.accentText
+        }
+        if isEmphasized {
+            return theme.isDark ? Color.white.opacity(0.84) : theme.accentText
+        }
+        return theme.isDark ? Color.white.opacity(0.56) : theme.secondaryText
     }
 
     private func undo(_ toast: ImportToast) {

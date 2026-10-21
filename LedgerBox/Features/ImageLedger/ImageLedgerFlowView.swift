@@ -882,9 +882,13 @@ struct ImageLedgerFlowView: View {
         } label: {
             Image(systemName: "xmark")
                 .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(Color.white.opacity(0.88))
+                .foregroundStyle(theme.primaryText)
                 .frame(width: 36, height: 36)
-                .background(Color.white.opacity(0.10), in: Circle())
+                .background(theme.surfaceElevated, in: Circle())
+                .overlay {
+                    Circle()
+                        .strokeBorder(theme.borderStrong.opacity(0.55), lineWidth: 1)
+                }
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)

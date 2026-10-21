@@ -8,6 +8,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject private var themeManager: ThemeManager
+    @StateObject private var localModel = QwenLocalModel.shared
 
     private let showsDoneButton: Bool
 
@@ -622,6 +623,20 @@ struct SettingsView: View {
             }
             .buttonStyle(.plain)
             .accessibilityHint("打开离线的财务专用小模型")
+
+            LedgerCard {
+                SettingsRow(
+                    theme: theme,
+                    icon: "cpu",
+                    tint: localModel.status.isReady ? theme.income : theme.warning,
+                    title: "Qwen2.5-0.5B 本地解释",
+                    subtitle: "\(localModel.completedGenerations) 次真实生成 · \(localModel.rejectedGenerations) 次拒绝 · \(localModel.status.summary)",
+                    trailingText: localModel.status.isReady ? "已加载" : "未就绪",
+                    trailingTint: localModel.status.isReady ? theme.income : theme.warning,
+                    showsChevron: false
+                )
+            }
+            .accessibilityHint("在财务大脑页运行一次真实 0.5B 解释自检")
         }
     }
 

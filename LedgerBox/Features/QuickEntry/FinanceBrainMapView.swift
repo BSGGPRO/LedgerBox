@@ -16,6 +16,8 @@ struct FinanceBrainMapView: View {
     @State private var hasAppeared = false
     @State private var autoDemo = true
     @State private var demoIndex = 0
+    @State private var qwenSelfTestRunning = false
+    @StateObject private var localModel = QwenLocalModel.shared
     @FocusState private var queryFocused: Bool
 
     private let demoQueries = [
@@ -39,11 +41,13 @@ struct FinanceBrainMapView: View {
         VStack(spacing: theme.spacing) {
             brainOrb
             modelStats
+            qwenCard
             probeCard
             coverageCard
             disclaimer
         }
         .onAppear {
+            localModel.prepare()
             if reduceMotion {
                 autoDemo = false
             }
@@ -132,6 +136,8 @@ struct FinanceBrainMapView: View {
                 }
                 .frame(maxWidth: .infinity)
 
+                qwenOrbBadge
+
                 HStack(spacing: 8) {
                     Image(systemName: autoDemo ? "waveform.path.ecg" : "pause.circle")
                         .font(theme.badgeFont)
@@ -165,6 +171,210 @@ struct FinanceBrainMapView: View {
 
     private var millions: String {
         String(format: "%.2fM", Double(FinanceMind.parameterCount) / 1_000_000)
+    }
+
+    private var qwenOrbBadge: some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(qwenStatusColor)
+                .frame(width: 7, height: 7)
+                .opacity(localModel.isGenerating ? 0.35 : 1)
+                .animation(
+                    localModel.isGenerating
+                        ? .easeInOut(duration: 0.55).repeatForever(autoreverses: true)
+                        : .default,
+                    value: localModel.isGenerating
+                )
+
+            Text("Qwen 0.5B")
+                .font(theme.badgeFont.weight(.semibold))
+                .foregroundStyle(theme.primaryText)
+
+            Text(qwenOrbStatus)
+                .font(theme.badgeFont)
+                .foregroundStyle(theme.secondaryText)
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(theme.surfaceElevated, in: Capsule())
+        .overlay {
+            Capsule()
+                .strokeBorder(theme.borderStrong.opacity(0.45), lineWidth: 1)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Qwen 0.5B 本地解释层，\(qwenOrbStatus)")
+    }
+
+    private var qwenOrbStatus: String {
+        if localModel.isGenerating {
+            return "正在生成"
+        }
+        if localModel.status.isReady {
+            return "已接入"
+        }
+        return "未加载"
+    }
+
+    private var qwenStatusColor: Color {
+        if localModel.isGenerating {
+            return theme.accent
+        }
+        return localModel.status.isReady ? theme.income : theme.warning
+    }
+
+    // MARK: - Qwen layer
+
+    private var qwenCard: some View {
+        LedgerCard {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .top, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Qwen2.5-0.5B 本地解释层")
+                            .font(theme.sectionTitleFont)
+                            .foregroundStyle(theme.primaryText)
+
+                        Text("真实调用 · 不写账 · 不改金额")
+                            .font(theme.captionFont)
+                            .foregroundStyle(theme.secondaryText)
+                    }
+
+                    Spacer(minLength: 4)
+
+                    Label(
+                        localModel.status.isReady ? "已加载" : "未就绪",
+                        systemImage: localModel.status.isReady
+                            ? "checkmark.circle.fill"
+                            : "exclamationmark.circle"
+                    )
+                    .font(theme.badgeFont)
+                    .foregroundStyle(qwenStatusColor)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(qwenStatusColor.opacity(0.12), in: Capsule())
+                }
+
+                Text(localModel.status.summary)
+                    .font(theme.bodyFont)
+                    .foregroundStyle(theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(spacing: 8) {
+                    qwenMetric("完成", value: "\(localModel.completedGenerations)")
+                    qwenMetric("拒绝", value: "\(localModel.rejectedGenerations)")
+                    qwenMetric(
+                        "最近",
+                        value: localModel.lastRunAt?.formatted(
+                            date: .omitted,
+                            time: .shortened
+                        ) ?? "—"
+                    )
+                }
+
+                if localModel.isGenerating {
+                    HStack(spacing: 6) {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text("正在等待 llama.cpp 返回…")
+                            .font(theme.captionFont)
+                            .foregroundStyle(theme.accentText)
+                    }
+                } else if let narration = localModel.lastNarration {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("最近一次真实输出")
+                            .font(theme.badgeFont)
+                            .foregroundStyle(theme.income)
+                        Text(narration)
+                            .font(theme.bodyFont)
+                            .foregroundStyle(theme.primaryText)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(9)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(theme.incomeSoft, in: RoundedRectangle(
+                        cornerRadius: theme.controlRadius,
+                        style: .continuous
+                    ))
+                } else if let failure = localModel.lastFailure {
+                    Text(failure)
+                        .font(theme.captionFont)
+                        .foregroundStyle(theme.warning)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Button {
+                    runQwenSelfTest()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: localModel.status.isReady
+                            ? "play.circle.fill"
+                            : "arrow.clockwise")
+                        Text(localModel.status.isReady
+                            ? "运行一次真实解释"
+                            : "重新检查模型加载")
+                    }
+                    .font(theme.buttonLabelFont)
+                    .foregroundStyle(theme.onAccent)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 9)
+                    .background(theme.accent, in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .disabled(qwenSelfTestRunning || localModel.isGenerating)
+                .opacity(qwenSelfTestRunning || localModel.isGenerating ? 0.55 : 1)
+
+                Text("自检使用固定示例「支出 123.45，预算 200.00，剩余 76.55」；只有通过数字白名单校验才会显示输出。模拟器不会加载 0.5B。")
+                    .font(theme.badgeFont)
+                    .foregroundStyle(theme.tertiaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private func qwenMetric(_ title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(theme.badgeFont)
+                .foregroundStyle(theme.secondaryText)
+            Text(value)
+                .font(theme.badgeFont.weight(.semibold))
+                .foregroundStyle(theme.primaryText)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(8)
+        .background(theme.surfaceElevated, in: RoundedRectangle(
+            cornerRadius: theme.controlRadius,
+            style: .continuous
+        ))
+    }
+
+    private func runQwenSelfTest() {
+        guard !qwenSelfTestRunning, !localModel.isGenerating else {
+            return
+        }
+
+        if !localModel.status.isReady {
+            if case .loading = localModel.status {
+                return
+            }
+            localModel.retryLoad()
+            return
+        }
+
+        qwenSelfTestRunning = true
+        let advice = FinanceAdvice(
+            title: "本地解释自检",
+            body: "本月支出 123.45 元，预算 200.00 元，剩余 76.55 元。",
+            tag: "自检"
+        )
+        Task { @MainActor in
+            _ = await localModel.narrate(
+                question: "请用两句话解释这个结果。",
+                advice: advice
+            )
+            qwenSelfTestRunning = false
+        }
     }
 
     // MARK: - Stats

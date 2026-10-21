@@ -26,27 +26,40 @@ struct VisualEffectBlur: UIViewRepresentable {
 /// Dark glass capsule used behind the floating header. The fill sits above the
 /// blur so the capsule stays legible over bright, scrolled content.
 struct GlassCapsule: View {
+    @Environment(\.ledgerTheme) private var theme
+
     var body: some View {
         Capsule(style: .continuous)
-            .fill(
-                Color(
-                    .sRGB,
-                    red: 20.0 / 255.0,
-                    green: 20.0 / 255.0,
-                    blue: 22.0 / 255.0,
-                    opacity: 0.72
-                )
-            )
+            .fill(theme.isDark ? darkFill : theme.surface.opacity(0.94))
             .background {
-                VisualEffectBlur()
-                    .clipShape(Capsule(style: .continuous))
+                VisualEffectBlur(
+                    blurStyle: theme.isDark
+                        ? .systemUltraThinMaterialDark
+                        : .systemUltraThinMaterialLight
+                )
+                .clipShape(Capsule(style: .continuous))
             }
             .overlay {
                 Capsule(style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                    .strokeBorder(
+                        theme.isDark
+                            ? Color.white.opacity(0.08)
+                            : theme.borderStrong.opacity(0.55),
+                        lineWidth: 1
+                    )
             }
             .allowsHitTesting(false)
             .accessibilityHidden(true)
+    }
+
+    private var darkFill: Color {
+        Color(
+            .sRGB,
+            red: 20.0 / 255.0,
+            green: 20.0 / 255.0,
+            blue: 22.0 / 255.0,
+            opacity: 0.72
+        )
     }
 }
 
@@ -62,6 +75,15 @@ struct CollapsibleGlassHeader<Trailing: View>: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.ledgerTheme) private var theme
+
+    private var titleColor: Color {
+        theme.isDark ? .white : theme.primaryText
+    }
+
+    private var subtitleColor: Color {
+        theme.isDark ? Color.white.opacity(0.68) : theme.secondaryText
+    }
 
     init(
         title: String,
@@ -86,7 +108,7 @@ struct CollapsibleGlassHeader<Trailing: View>: View {
                             weight: .bold
                         )
                     )
-                    .foregroundStyle(Color.white)
+                    .foregroundStyle(titleColor)
                     .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
                     .minimumScaleFactor(dynamicTypeSize.isAccessibilitySize ? 1 : 0.8)
                     .accessibilityAddTraits(.isHeader)
@@ -94,7 +116,7 @@ struct CollapsibleGlassHeader<Trailing: View>: View {
                 if !compact, !subtitle.isEmpty {
                     Text(subtitle)
                         .font(.system(.callout, design: .rounded, weight: .bold))
-                        .foregroundStyle(Color.white.opacity(0.68))
+                        .foregroundStyle(subtitleColor)
                         .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
                         .minimumScaleFactor(dynamicTypeSize.isAccessibilitySize ? 1 : 0.8)
                 }
