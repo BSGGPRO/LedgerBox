@@ -18,11 +18,21 @@ jobs:
   archive:
     name: Build unsigned IPA
     runs-on: macos-15
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Fetch Qwen2.5-0.5B-Instruct GGUF
+        run: |
+          set -euo pipefail
+          mkdir -p Models
+          curl -L --fail --retry 3 --retry-delay 2 \
+            -o Models/Qwen2.5-0.5B-Instruct-Q4_K_M.gguf \
+            https://hf-mirror.com/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf
+          echo "74A4DA8C9FDBCD15BD1F6D01D621410D31C6FC00986F5EB687824E7B93D7A9DB  Models/Qwen2.5-0.5B-Instruct-Q4_K_M.gguf" | shasum -a 256 -c -
+          ls -lh Models/Qwen2.5-0.5B-Instruct-Q4_K_M.gguf
 
       - name: Show Xcode
         run: |
@@ -59,6 +69,8 @@ jobs:
           test -f build/LedgerBox-unsigned.ipa
           unzip -l build/LedgerBox-unsigned.ipa | grep -E 'Payload/LedgerBox.app/LedgerBox$'
           unzip -l build/LedgerBox-unsigned.ipa | grep -E 'Payload/LedgerBox.app/FinanceMindWeights.bin$'
+          unzip -l build/LedgerBox-unsigned.ipa | grep -E 'Payload/LedgerBox.app/Qwen2.5-0.5B-Instruct-Q4_K_M.gguf$'
+          unzip -l build/LedgerBox-unsigned.ipa | grep -E 'Payload/LedgerBox.app/Frameworks/llama.framework/llama$'
           if unzip -l build/LedgerBox-unsigned.ipa | grep -q 'PlugIns/'; then
             echo "Unexpected PlugIns in unsigned IPA" >&2
             exit 1

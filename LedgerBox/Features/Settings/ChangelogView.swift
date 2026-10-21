@@ -14,6 +14,18 @@ struct ChangelogEntry: Identifiable {
 enum ChangelogCatalog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "0.10.0",
+            dateText: "2026.10.21",
+            title: "内置 Qwen2.5-0.5B 本地解释层",
+            changes: [
+                "安装包内置 Qwen2.5-0.5B-Instruct Q4_K_M，约 491 MB，离线可加载。",
+                "内置 llama.cpp b11796 iOS 运行时；模拟器不加载，真机从 Frameworks 动态加载。",
+                "财务大脑新增“0.5B 本地解释”：只改写已算好的 Decimal 结果，不参与金额、比例、日期计算。",
+                "解释文本中的数字必须出现在原结果中，否则整段丢弃并回退到确定性文案。",
+                "模型加载失败、内存不足或运行时缺失时，所有旧功能继续可用。"
+            ]
+        ),
+        ChangelogEntry(
             version: "0.9.4",
             dateText: "2026.10.21",
             title: "去掉设置和目标的返回按钮",
