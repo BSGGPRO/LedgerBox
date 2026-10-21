@@ -1,0 +1,22 @@
+LedgerBox 0.9.2 — SHA-256
+Generated: 2026-10-21
+
+LedgerBox-unsigned-0.9.2-UnifiedBar.ipa
+Size: 1,790,306 bytes
+SHA-256: 282C18997C053FC0808A1441B0F5ADB9509E74FFCF2C276EB76F2FF3F07E750D
+
+LedgerBox-source-0.9.2-UnifiedBar.zip
+Size: 915,335 bytes
+SHA-256: 645BBFB173B7948C3E9B228A6ABFC7FA5C4B098BF4F814C4E7018CD28ED2C642
+
+Embedded FinanceMindWeights.bin
+Size: 41,943,200 bytes
+SHA-256: 6F5E92B17EC300D7A0C69AB79324903AE4407FB992393140BB2F783B7355F380
+
+Verification notes:
+- IPA built by GitHub Actions run 39623020804, commit 2f9b11c.
+- Tests: GitHub Actions run 39623029691, 57 passed / 0 failed / 0 skipped.
+- IPA is unsigned, has no PlugIns directory, and requires your own certificate to install.
+- No physical-device install, screenshot-level visual acceptance, or real receipt accuracy test was performed.
+- The bottom bar is a source-level seven-slot layout; SE / Pro Max / Dynamic Type / landscape still needs real-device checking.
+- The repository is currently private; release links require a GitHub account with access.

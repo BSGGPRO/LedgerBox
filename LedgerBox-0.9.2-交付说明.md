@@ -64,17 +64,17 @@
 
 | 项目 | 结果 |
 |---|---|
-| GitHub Actions 未签名归档 | run `39620989778`，success |
-| 模拟器 XCTest | run `39621002225`，**57 passed / 0 failed / 0 skipped** |
-| IPA 版本 | `0.9.1 (11)` |
+| GitHub Actions 未签名归档 | run `39623020804`，success |
+| 模拟器 XCTest | run `39623029691`，**57 passed / 0 failed / 0 skipped** |
+| IPA 版本 | `0.9.2 (12)` |
 | IPA 内权重 | `FinanceMindWeights.bin` 41,943,200 字节 |
 | IPA `PlugIns` | 不存在 |
 | 相机/相册权限 | 已写入 Info.plist，英文 ASCII 用途说明 |
 
 产物：
 
-- `LedgerBox-unsigned-0.9.1-TabBar.ipa`：**1,801,589 字节**，SHA-256 `F70AF27A9B739997ADC5249482D247CEDD3CFF239C13128DCFCEB5BAD257BC82`。
-- `LedgerBox-source-0.9.1-TabBar.zip`：大小与 SHA-256 见 `LedgerBox-0.9.1-SHA256.txt`。
+- `LedgerBox-unsigned-0.9.2-UnifiedBar.ipa`：**1,790,306 字节**，SHA-256 `282C18997C053FC0808A1441B0F5ADB9509E74FFCF2C276EB76F2FF3F07E750D`。
+- `LedgerBox-source-0.9.2-UnifiedBar.zip`：大小与 SHA-256 见 `LedgerBox-0.9.2-SHA256.txt`。
 - `FinanceMindWeights.bin`：41,943,200 字节，SHA-256 `6F5E92B17EC300D7A0C69AB79324903AE4407FB992393140BB2F783B7355F380`。
 
 ## 3. P0 / P1 检查
