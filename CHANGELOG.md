@@ -3,6 +3,26 @@
 All user-visible changes to LedgerBox are recorded here and in the in-app
 **设置 → 更新日志** page.
 
+## 0.12.1 — 2026-10-22
+
+### Changed
+
+- “财务大脑”改为单页闭环：设置页直接进入 `FinanceAdvisorView`，删除中间页 `FinanceBrainSettingsView`，核心路由和 Qwen 状态不再通过 `NavigationLink` 跳转。
+- 核心路由卡片改为内联组件；右侧“对话”按钮只设置 `inputFocused = true`，不跳页，并移除 `chevron.right`。
+- 本地解释引擎改为纯展示状态卡片，显示“已加载/未就绪”徽标，不可点击。
+- 对话记录、快捷提问和固定输入栏保留在同一页；快捷气泡点击后只填充输入框并聚焦，不直接发送。
+- 发送按钮改为 `paperplane.fill`；新消息追加后自动滚动到 `finance-chat-end`，输入栏通过 `safeAreaInset` 处理键盘避让。
+
+### Verification
+
+- 70 个 XCTest 在 GitHub Actions 的 iPhone 16 / iOS 26.2 模拟器通过。
+- 未做真机键盘动画、实际聚焦和截图级视觉验收。
+
+### Known limits
+
+- 未签名 IPA 需要你自己的证书和描述文件；自签工具必须重签嵌套的 `Frameworks/llama.framework`。
+- 本地 Qwen 只改写已算好的结果，不参与金额、比例、日期计算。
+
 ## 0.12.0 — 2026-10-22
 
 ### Added

@@ -14,6 +14,18 @@ struct ChangelogEntry: Identifiable {
 enum ChangelogCatalog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "0.12.1",
+            dateText: "2026.10.22",
+            title: "财务大脑单页对话",
+            changes: [
+                "“财务大脑”改为单页闭环：设置入口直接进入对话页，不再经过核心路由/Qwen 的二级跳转页。",
+                "核心路由卡片改为内联展示；右侧“对话”按钮只聚焦底部输入框，不跳页、不显示箭头。",
+                "本地解释引擎改为纯状态卡片，显示“已加载/未就绪”徽标，不可点击。",
+                "对话记录、快捷提问和固定输入栏保留在同一页；快捷气泡只填充输入框并自动聚焦，发送按钮改为 paperplane.fill。",
+                "新消息追加后自动滚动到对话底部，键盘弹起时输入栏随安全区上移。"
+            ]
+        ),
+        ChangelogEntry(
             version: "0.12.0",
             dateText: "2026.10.22",
             title: "原生导航、聊天输入与 AI 日志诊断",
