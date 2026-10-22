@@ -25,24 +25,7 @@ jobs:
         id: simulator
         run: |
           set -euo pipefail
-          UDID=$(xcrun simctl list devices available --json | /usr/bin/python3 -c '
-import json, sys
-
-devices = json.load(sys.stdin)["devices"]
-candidates = [
-    device
-    for runtime_devices in devices.values()
-    for device in runtime_devices
-    if device.get("isAvailable") and device.get("name", "").startswith("iPhone")
-]
-if not candidates:
-    raise SystemExit("No available iPhone simulator")
-preferred = next(
-    (device for device in candidates if device["name"] == "iPhone 16"),
-    candidates[0],
-)
-print(preferred["udid"])
-')
+          UDID=$(xcrun simctl list devices available --json | /usr/bin/python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; c=[x for v in d.values() for x in v if x.get("isAvailable") and x.get("name", "").startswith("iPhone")]; assert c, "No available iPhone simulator"; p=next((x for x in c if x["name"] == "iPhone 16"), c[0]); print(p["udid"])')
           echo "Using simulator $UDID"
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
 
