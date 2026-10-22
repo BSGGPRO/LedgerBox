@@ -14,6 +14,15 @@ struct ChangelogEntry: Identifiable {
 enum ChangelogCatalog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "0.12.3",
+            dateText: "2026.10.22",
+            title: "修复聊天输入栏被底栏遮挡",
+            changes: [
+                "设置页向“财务大脑”注入自定义底部导航栏高度；聊天输入栏在键盘未弹起时主动预留 56pt，不再被“设置/预算/目标”这一行底栏盖住。",
+                "键盘弹起时取消这段预留，输入栏仍紧贴键盘；在极速记账等没有自定义底栏的入口不会多出空白。"
+            ]
+        ),
+        ChangelogEntry(
             version: "0.12.2",
             dateText: "2026.10.22",
             title: "修复日志诊断闪退与输入栏消失",

@@ -57,6 +57,7 @@ struct FinanceAdvisorView: View {
     ) private var goals: FetchedResults<SavingsGoal>
 
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.ledgerCustomBottomBarHeight) private var customBottomBarHeight
 
     @State private var input = ""
     @State private var exchanges: [FinanceExchange] = []
@@ -132,6 +133,8 @@ struct FinanceAdvisorView: View {
 
             if mode == .chat {
                 composer
+                    .padding(.bottom, inputFocused ? 0 : customBottomBarHeight)
+                    .animation(.easeOut(duration: 0.18), value: inputFocused)
             }
         }
         .background(theme.background.ignoresSafeArea())

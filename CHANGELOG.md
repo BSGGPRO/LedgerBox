@@ -3,6 +3,18 @@
 All user-visible changes to LedgerBox are recorded here and in the in-app
 **设置 → 更新日志** page.
 
+## 0.12.3 — 2026-10-22
+
+### Fixed
+
+- 修复“财务大脑”聊天输入栏被自定义底部导航栏遮挡。设置页现在向聊天页注入底栏高度，输入栏在键盘未弹起时预留 56pt，位于“设置/预算/目标”底栏上方。
+- 键盘弹起时取消预留，输入栏紧贴键盘；从极速记账等没有自定义底栏的入口进入时不会产生多余空白。
+
+### Verification
+
+- 70 个 XCTest 在 GitHub Actions 的 iPhone 16 / iOS 26.2 模拟器通过。
+- 未做真机截图级视觉验收。
+
 ## 0.12.2 — 2026-10-22
 
 ### Fixed

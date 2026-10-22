@@ -1,5 +1,20 @@
 import SwiftUI
 
+/// Height of the app's custom bottom bar, injected where a fixed bottom
+/// composer must stay above it. `safeAreaInset` does not reach the Settings
+/// overlay's NavigationStack on every iOS version, so the chat page uses this
+/// explicit value instead of guessing whether it is covered.
+struct LedgerCustomBottomBarHeightKey: EnvironmentKey {
+    static let defaultValue: CGFloat = 0
+}
+
+extension EnvironmentValues {
+    var ledgerCustomBottomBarHeight: CGFloat {
+        get { self[LedgerCustomBottomBarHeightKey.self] }
+        set { self[LedgerCustomBottomBarHeightKey.self] = newValue }
+    }
+}
+
 enum MainTab: Hashable, CaseIterable {
     case home
     case transactions
@@ -63,6 +78,7 @@ struct MainTabView: View {
                 SettingsView(showsDoneButton: false)
                     .environment(\.managedObjectContext, viewContext)
                     .environmentObject(themeManager)
+                    .environment(\.ledgerCustomBottomBarHeight, 56)
                     .transition(.opacity)
                     .zIndex(1)
             }
