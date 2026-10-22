@@ -21,6 +21,31 @@ jobs:
           xcodebuild -version
           xcodebuild -project LedgerBox.xcodeproj -scheme LedgerBox -showdestinations
 
+      - name: Select available iPhone simulator
+        id: simulator
+        run: |
+          set -euo pipefail
+          UDID=$(xcrun simctl list devices available --json | /usr/bin/python3 -c '
+import json, sys
+
+devices = json.load(sys.stdin)["devices"]
+candidates = [
+    device
+    for runtime_devices in devices.values()
+    for device in runtime_devices
+    if device.get("isAvailable") and device.get("name", "").startswith("iPhone")
+]
+if not candidates:
+    raise SystemExit("No available iPhone simulator")
+preferred = next(
+    (device for device in candidates if device["name"] == "iPhone 16"),
+    candidates[0],
+)
+print(preferred["udid"])
+')
+          echo "Using simulator $UDID"
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
       - name: Run tests
         run: |
           set -euo pipefail
@@ -29,7 +54,7 @@ jobs:
             -project LedgerBox.xcodeproj \
             -scheme LedgerBox \
             -configuration Debug \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -destination "id=${{ steps.simulator.outputs.udid }}" \
             -derivedDataPath build/DerivedData \
             -resultBundlePath build/TestResults.xcresult \
             CODE_SIGNING_ALLOWED=NO \
