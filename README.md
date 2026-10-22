@@ -7,7 +7,7 @@ LedgerBox 是一个面向 iOS 17+ 的本地优先通用记账本，使用 SwiftU
 开源地址：**[github.com/BSGGPRO/LedgerBox](https://github.com/BSGGPRO/LedgerBox)**
 
 > **当前状态**  
-> 0.12.2 修复“AI 财务日志诊断”重复 UUID 闪退，并修复“财务大脑”快捷提问下方输入栏不可见；70 个模拟器测试通过。未签名 IPA 为 **482,577,023 字节**，SHA-256 `1af42f5c3b8d8f114d2ed4958d72454cefc0afec39e046e615573624e6a08dee`，[下载 v0.12.2](https://github.com/BSGGPRO/LedgerBox/releases/tag/v0.12.2)。**尚未做真机安装、真机 0.5B 生成、内存峰值或截图级验收**。IPA 需要你自己的证书自签，且自签工具必须重签嵌套的 `Frameworks/llama.framework`。
+> 0.12.4 完成上架前稳定性收尾：全应用重复 UUID 加固、44pt 触控目标、隐私清单和中文权限说明；70 个模拟器测试通过。未签名 IPA 为 **482,577,899 字节**，SHA-256 `935cd9927a22a8a781355eee44dfd1a0f40d6da17e3b3c769b7e32946ac76375`，[下载 v0.12.4](https://github.com/BSGGPRO/LedgerBox/releases/tag/v0.12.4)。**尚未做真机安装、真机 0.5B 生成、内存峰值或截图级验收**。IPA 需要你自己的证书自签，且自签工具必须重签嵌套的 `Frameworks/llama.framework`。
 
 ---
 
@@ -117,7 +117,7 @@ echo "74A4DA8C9FDBCD15BD1F6D01D621410D31C6FC00986F5EB687824E7B93D7A9DB  Models/Q
 
 首次启动没有交易，首页会显示空状态。点击底栏中间的 `+`，会依次弹出“极速记账”和“记一笔”两个小气泡；选择后进入对应流程。手动极速文本输入仍在小 AI 入口，不需要麦克风或语音权限。
 
-工程包含 `LedgerBoxTests` Target，可在 Mac 上通过 `Cmd+U` 或 `xcodebuild test` 运行。当前 70 个测试已在 GitHub Actions 的 iPhone 16 / iOS 26.2 模拟器通过（0.12.2）；模拟器不加载 0.5B，真机仍需你本地验证。
+工程包含 `LedgerBoxTests` Target，可在 Mac 上通过 `Cmd+U` 或 `xcodebuild test` 运行。当前 70 个测试已在 GitHub Actions 的 iPhone 模拟器通过（0.12.4）；模拟器不加载 0.5B，真机仍需你本地验证。
 
 ---
 
