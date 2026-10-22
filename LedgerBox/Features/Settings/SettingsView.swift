@@ -606,7 +606,7 @@ struct SettingsView: View {
     private var aiSection: some View {
         section("AI") {
             NavigationLink {
-                FinanceBrainSettingsView()
+                FinanceAdvisorView()
             } label: {
                 LedgerCard {
                     SettingsRow(
@@ -614,14 +614,14 @@ struct SettingsView: View {
                         icon: "brain.head.profile",
                         tint: theme.accentText,
                         title: "财务大脑",
-                        subtitle: "核心路由 · 本地解释引擎 · Qwen2.5-0.5B",
+                        subtitle: "对话 · 核心路由 · Qwen 本地解释引擎",
                         trailingText: "本地",
                         trailingTint: theme.income
                     )
                 }
             }
             .buttonStyle(.plain)
-            .accessibilityHint("查看核心路由和本地 Qwen 解释引擎")
+            .accessibilityHint("进入财务大脑，在同一个页面完成对话和查看核心路由")
 
             NavigationLink {
                 AIFinanceLogDiagnosisView()
@@ -1069,117 +1069,6 @@ private func previewThemeManager(name: String, mode: ThemeMode) -> ThemeManager 
         .environment(\.colorScheme, .dark)
 }
 
-
-// MARK: - Merged finance brain settings
-
-struct FinanceBrainSettingsView: View {
-    @Environment(\.ledgerTheme) private var theme
-    @StateObject private var localModel = QwenLocalModel.shared
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: theme.sectionSpacing) {
-                summaryCard
-
-                sectionHeader("核心路由")
-                NavigationLink {
-                    FinanceAdvisorView()
-                } label: {
-                    LedgerCard {
-                        SettingsRow(
-                            theme: theme,
-                            icon: "point.3.connected.trianglepath.dotted",
-                            tint: theme.accentText,
-                            title: "40 个财务/会计意图",
-                            subtitle: "41,943,080 参数 · 哈希分类器 · Decimal 精算；只选公式，不生成数字",
-                            trailingText: "对话",
-                            trailingTint: theme.accentText
-                        )
-                    }
-                }
-                .buttonStyle(.plain)
-                .accessibilityHint("打开财务大脑对话与精算回答")
-
-                sectionHeader("本地解释引擎")
-                NavigationLink {
-                    FinanceAdvisorView(startsInBrain: true)
-                } label: {
-                    LedgerCard {
-                        SettingsRow(
-                            theme: theme,
-                            icon: "cpu",
-                            tint: localModel.status.isReady ? theme.income : theme.warning,
-                            title: "Qwen2.5-0.5B-Instruct",
-                            subtitle: "\(localModel.status.summary) · \(localModel.completedGenerations) 次真实生成 · \(localModel.rejectedGenerations) 次拒绝",
-                            trailingText: localModel.status.isReady ? "已加载" : "未就绪",
-                            trailingTint: localModel.status.isReady ? theme.income : theme.warning
-                        )
-                    }
-                }
-                .buttonStyle(.plain)
-                .accessibilityHint("打开大脑视图，运行一次真实 0.5B 解释自检")
-
-                LedgerCard {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("解释层边界")
-                            .font(theme.bodyFont.weight(.semibold))
-                            .foregroundStyle(theme.primaryText)
-
-                        Text("0.5B 只改写已经用 Decimal 算好的结果，不参与金额、比例、日期计算，也不写账。加载失败时，核心路由和所有记账功能继续可用。")
-                            .font(theme.captionFont)
-                            .foregroundStyle(theme.secondaryText)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-            }
-            .padding(.horizontal, theme.pagePadding)
-            .padding(.vertical, theme.spacing)
-        }
-        .scrollIndicators(.hidden)
-        .background(theme.background.ignoresSafeArea())
-        .navigationTitle("财务大脑")
-        .navigationBarTitleDisplayMode(.inline)
-        .task {
-            localModel.prepare()
-        }
-    }
-
-    private var summaryCard: some View {
-        LedgerCard {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 8) {
-                    Image(systemName: "brain.head.profile")
-                        .font(theme.rowIconFont)
-                        .foregroundStyle(theme.accentText)
-
-                    Text("本地 AI 总览")
-                        .font(theme.sectionTitleFont)
-                        .foregroundStyle(theme.primaryText)
-                }
-
-                Text("核心路由负责把问题送到确定性公式；Qwen 0.5B 只负责把结果改写成人话。两条链路都在本机运行，不联网。")
-                    .font(theme.bodyFont)
-                    .foregroundStyle(theme.secondaryText)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                HStack(spacing: 6) {
-                    Label("41.9M 参数", systemImage: "function")
-                    Label("491 MB 模型", systemImage: "internaldrive")
-                }
-                .font(theme.badgeFont)
-                .foregroundStyle(theme.income)
-            }
-        }
-    }
-
-    private func sectionHeader(_ title: String) -> some View {
-        Text(title)
-            .font(theme.overlineFont)
-            .tracking(0.8)
-            .foregroundStyle(theme.secondaryText)
-            .padding(.horizontal, 2)
-    }
-}
 
 // MARK: - AI finance log diagnosis
 

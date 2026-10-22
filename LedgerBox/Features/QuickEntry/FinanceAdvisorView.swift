@@ -36,10 +36,6 @@ struct FinanceAdvisorView: View {
     @State private var mode: Mode = .chat
     @StateObject private var localModel = QwenLocalModel.shared
 
-    init(startsInBrain: Bool = false) {
-        _mode = State(initialValue: startsInBrain ? .brain : .chat)
-    }
-
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \LedgerTransaction.date, ascending: false)]
     ) private var transactions: FetchedResults<LedgerTransaction>
@@ -96,16 +92,21 @@ struct FinanceAdvisorView: View {
                     if mode == .chat {
                         snapshotGrid
                         coachCard
+                        coreRouteCard
+                        engineStatusCard
+                        introCard
 
-                        if exchanges.isEmpty {
-                            introCard
-                            promptChips
-                        } else {
+                        if !exchanges.isEmpty {
+                            chatTranscriptHeader
+
                             ForEach(exchanges) { exchange in
                                 exchangeCard(exchange)
                                     .id(exchange.id)
                             }
                         }
+
+                        promptChips
+                            .id("finance-chat-end")
                     } else {
                         FinanceBrainMapView()
                             .transition(.opacity.combined(with: .move(edge: .bottom)))
@@ -121,10 +122,9 @@ struct FinanceAdvisorView: View {
             // would show two "完成" buttons.
             .keyboardDoneBar(isEnabled: mode == .chat) { inputFocused = false }
             .onChange(of: exchanges.count) { _, _ in
-                if let last = exchanges.last {
-                    withAnimation(.snappy) {
-                        proxy.scrollTo(last.id, anchor: .bottom)
-                    }
+                guard !exchanges.isEmpty else { return }
+                withAnimation(.snappy) {
+                    proxy.scrollTo("finance-chat-end", anchor: .bottom)
                 }
             }
         }
@@ -302,6 +302,104 @@ struct FinanceAdvisorView: View {
         )
     }
 
+    private var coreRouteCard: some View {
+        LedgerCard {
+            HStack(alignment: .center, spacing: 12) {
+                LedgerIconBadge(
+                    systemName: "point.3.connected.trianglepath.dotted",
+                    tint: theme.accentText,
+                    size: 36
+                )
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("核心路由")
+                        .font(theme.bodyFont.weight(.semibold))
+                        .foregroundStyle(theme.primaryText)
+
+                    Text("40 个财务/会计意图 · 41,943,080 参数 · Decimal 精算")
+                        .font(theme.badgeFont)
+                        .foregroundStyle(theme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 4)
+
+                Button {
+                    mode = .chat
+                    inputFocused = true
+                } label: {
+                    Text("对话")
+                        .font(theme.badgeFont.weight(.semibold))
+                        .foregroundStyle(theme.accentText)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(theme.accent.opacity(0.12), in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("打开下方对话输入框")
+            }
+        }
+    }
+
+    private var engineStatusCard: some View {
+        LedgerCard {
+            HStack(alignment: .center, spacing: 12) {
+                LedgerIconBadge(
+                    systemName: "cpu",
+                    tint: localModel.status.isReady ? theme.income : theme.warning,
+                    size: 36
+                )
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("本地解释引擎")
+                        .font(theme.bodyFont.weight(.semibold))
+                        .foregroundStyle(theme.primaryText)
+
+                    Text("Qwen2.5-0.5B-Instruct · \(localModel.status.summary)")
+                        .font(theme.badgeFont)
+                        .foregroundStyle(theme.secondaryText)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 4)
+
+                Text(localModel.status.isReady ? "已加载" : "未就绪")
+                    .font(theme.badgeFont.weight(.semibold))
+                    .foregroundStyle(
+                        localModel.status.isReady ? theme.income : theme.warning
+                    )
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 5)
+                    .background(
+                        (localModel.status.isReady ? theme.income : theme.warning)
+                            .opacity(0.12),
+                        in: Capsule()
+                    )
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            "本地解释引擎，Qwen2.5-0.5B-Instruct，\(localModel.status.summary)"
+        )
+    }
+
+    private var chatTranscriptHeader: some View {
+        HStack {
+            Text("对话记录")
+                .font(theme.overlineFont)
+                .tracking(0.8)
+                .foregroundStyle(theme.secondaryText)
+
+            Spacer(minLength: 4)
+
+            Text("\(exchanges.count) 轮")
+                .font(theme.badgeFont)
+                .foregroundStyle(theme.tertiaryText)
+        }
+        .padding(.horizontal, 2)
+    }
+
     private var introCard: some View {
         LedgerCard {
             VStack(alignment: .leading, spacing: 8) {
@@ -318,25 +416,41 @@ struct FinanceAdvisorView: View {
     }
 
     private var promptChips: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: 8) {
-                ForEach(prompts, id: \.self) { prompt in
-                    Button {
-                        input = prompt
-                        inputFocused = true
-                    } label: {
-                        Text(prompt)
-                            .font(theme.captionFont)
-                            .foregroundStyle(theme.secondaryText)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 7)
-                            .background(theme.surface, in: Capsule())
+        VStack(alignment: .leading, spacing: 7) {
+            Text("快捷提问")
+                .font(theme.overlineFont)
+                .tracking(0.8)
+                .foregroundStyle(theme.secondaryText)
+                .padding(.horizontal, 2)
+
+            ScrollView(.horizontal) {
+                HStack(spacing: 8) {
+                    ForEach(prompts, id: \.self) { prompt in
+                        Button {
+                            input = prompt
+                            inputFocused = true
+                        } label: {
+                            Text(prompt)
+                                .font(theme.captionFont)
+                                .foregroundStyle(theme.secondaryText)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 7)
+                                .background(theme.surface, in: Capsule())
+                                .overlay {
+                                    Capsule()
+                                        .strokeBorder(
+                                            theme.separator,
+                                            lineWidth: theme.hairline
+                                        )
+                                }
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityHint("填入下方输入框")
                     }
-                    .buttonStyle(.plain)
                 }
             }
+            .scrollIndicators(.hidden)
         }
-        .scrollIndicators(.hidden)
     }
 
     private func exchangeCard(_ exchange: FinanceExchange) -> some View {
@@ -467,7 +581,7 @@ struct FinanceAdvisorView: View {
             Button {
                 ask(input)
             } label: {
-                Image(systemName: "arrow.up")
+                Image(systemName: "paperplane.fill")
                     .font(theme.headerActionFont)
                     .foregroundStyle(theme.onAccent)
                     .frame(width: 44, height: 44)
