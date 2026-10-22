@@ -85,8 +85,8 @@ jobs:
           HASH=$(shasum -a 256 "$IPA" | awk '{print $1}')
           unzip -l "$IPA" > build/ipa-listing.txt
           cat > build/artifact-info.txt <<EOF
-          version=0.12.1
-          build=19
+          version=0.12.2
+          build=20
           size=$SIZE
           sha256=$HASH
           run=${{ github.run_id }}
@@ -98,12 +98,12 @@ jobs:
       - name: Upload artifact metadata
         uses: actions/upload-artifact@v4
         with:
-          name: LedgerBox-0.12.1-metadata
+          name: LedgerBox-0.12.2-metadata
           path: build/artifact-info.txt
           if-no-files-found: error
           retention-days: 30
 
-      - name: Publish 0.12.1 release
+      - name: Publish 0.12.2 release
         if: github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -113,14 +113,11 @@ jobs:
           SIZE=$(stat -f%z "$IPA")
           HASH=$(shasum -a 256 "$IPA" | awk '{print $1}')
           BODY=$(cat <<EOF
-          ## LedgerBox 0.12.1
+          ## LedgerBox 0.12.2
 
-          ### Changed
-          - “财务大脑”改为单页闭环：设置页直接进入对话页，删除中间页；核心路由和 Qwen 状态不再通过 NavigationLink 跳转。
-          - 核心路由卡片改为内联展示；右侧“对话”按钮只聚焦底部输入框，不跳页、不显示箭头。
-          - 本地解释引擎改为纯状态卡片，显示“已加载/未就绪”徽标，不可点击。
-          - 对话记录、快捷提问和固定输入栏保留在同一页；快捷气泡只填充输入框并自动聚焦。
-          - 发送按钮改为 paperplane.fill；新消息追加后自动滚动到对话底部。
+          ### Fixed
+          - 修复“AI 财务日志诊断”点击开始分析闪退：重复 UUID 不再触发 Dictionary 运行时断言。
+          - 修复“财务大脑”快捷提问下方输入栏不可见：输入栏改为页面 VStack 固定底栏。
 
           ### Bundled
           - Qwen2.5-0.5B-Instruct Q4_K_M, 491,400,032 bytes
@@ -133,24 +130,23 @@ jobs:
           - IPA SHA-256: $HASH.
           - Embedded model and llama.framework verified by unzip listing.
           - 70 simulator XCTest cases pass in the iOS Tests workflow.
-          - Not verified: physical-device install, on-device 0.5B generation, memory peak, thermal behavior, Metal, keyboard animation, or screenshots.
+          - Not verified: physical-device crash reproduction, keyboard animation, on-device 0.5B generation, or screenshots.
 
           ### Limits
           - The app is unsigned and needs your own certificate/profile.
           - The 0.5B model is a language rewriter, not a calculator.
-          - AI diagnosis is read-only and does not move money or modify the ledger.
           EOF
           )
-          if gh release view v0.12.1 >/dev/null 2>&1; then
-            gh release edit v0.12.1 --notes "$BODY"
-            gh release upload v0.12.1 "$IPA" --clobber
+          if gh release view v0.12.2 >/dev/null 2>&1; then
+            gh release edit v0.12.2 --notes "$BODY"
+            gh release upload v0.12.2 "$IPA" --clobber
           else
-            gh release create v0.12.1 "$IPA" \
-              --title "LedgerBox 0.12.1 — 财务大脑单页对话" \
+            gh release create v0.12.2 "$IPA" \
+              --title "LedgerBox 0.12.2 — 修复日志诊断闪退与输入栏" \
               --notes "$BODY" \
               --prerelease
           fi
-          gh release view v0.12.1 --json url,assets
+          gh release view v0.12.2 --json url,assets
 
       - name: Upload unsigned IPA
         if: github.event_name == 'workflow_dispatch'

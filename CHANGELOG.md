@@ -3,6 +3,23 @@
 All user-visible changes to LedgerBox are recorded here and in the in-app
 **设置 → 更新日志** page.
 
+## 0.12.2 — 2026-10-22
+
+### Fixed
+
+- 修复“AI 财务日志诊断”点击“开始分析近期账单”闪退。账户或分类存在重复 UUID 时，`Dictionary(uniqueKeysWithValues:)` 会触发运行时断言；现改为 `uniquingKeysWith:` 安全合并，保留第一条名称。
+- 修复“财务大脑”快捷提问下方聊天输入栏不可见。输入栏从 `safeAreaInset` 改为页面 `VStack` 的固定底栏，始终位于滚动内容下方；在自定义底部栏存在时也不会被遮住。
+
+### Verification
+
+- 70 个 XCTest 在 GitHub Actions 的 iPhone 16 / iOS 26.2 模拟器通过。
+- 未做真机闪退复现、键盘动画和截图级视觉验收。
+
+### Known limits
+
+- 修复针对的是可按 Swift 运行时断言的重复 UUID 路径；如果仍有闪退，需要设备控制台或崩溃报告中的异常类型/调用栈来继续定位。
+- 未签名 IPA 需要你自己的证书和描述文件；自签工具必须重签嵌套的 `Frameworks/llama.framework`。
+
 ## 0.12.1 — 2026-10-22
 
 ### Changed

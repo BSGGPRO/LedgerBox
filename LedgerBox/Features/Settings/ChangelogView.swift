@@ -14,6 +14,16 @@ struct ChangelogEntry: Identifiable {
 enum ChangelogCatalog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "0.12.2",
+            dateText: "2026.10.22",
+            title: "修复日志诊断闪退与输入栏消失",
+            changes: [
+                "修复“AI 财务日志诊断”点击开始分析闪退：账户/分类 UUID 重复时不再使用会触发运行时断言的 Dictionary(uniqueKeysWithValues:)，改为保留首个值的安全合并。",
+                "修复“财务大脑”快捷提问下方输入栏不可见：把输入栏从 safeAreaInset 改为页面 VStack 固定底栏，确保位于滚动内容下方、底部栏之上。",
+                "诊断页和财务大脑仍保持只读；Qwen 不可用时显示原因，不伪装成功。"
+            ]
+        ),
+        ChangelogEntry(
             version: "0.12.1",
             dateText: "2026.10.22",
             title: "财务大脑单页对话",

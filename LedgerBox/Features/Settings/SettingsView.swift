@@ -1204,11 +1204,16 @@ enum AIFinanceLogDigestBuilder {
         let transactions = try context.fetch(request)
         let accounts = try context.fetch(Account.fetchRequest())
         let categories = try context.fetch(Category.fetchRequest())
+        // A restored backup can legitimately contain duplicate UUIDs. Never use
+        // `Dictionary(uniqueKeysWithValues:)` here: duplicate keys trap at
+        // runtime instead of throwing.
         let accountNames = Dictionary(
-            uniqueKeysWithValues: accounts.map { ($0.id, $0.name) }
+            accounts.map { ($0.id, $0.name) },
+            uniquingKeysWith: { first, _ in first }
         )
         let categoryNames = Dictionary(
-            uniqueKeysWithValues: categories.map { ($0.id, $0.name) }
+            categories.map { ($0.id, $0.name) },
+            uniquingKeysWith: { first, _ in first }
         )
 
         guard !transactions.isEmpty else {

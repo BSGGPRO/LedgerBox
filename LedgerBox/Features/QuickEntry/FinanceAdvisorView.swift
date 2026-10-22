@@ -83,49 +83,55 @@ struct FinanceAdvisorView: View {
     ]
 
     var body: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                LazyVStack(spacing: theme.spacing) {
-                    heroCard
-                    modePicker
+        VStack(spacing: 0) {
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(spacing: theme.spacing) {
+                        heroCard
+                        modePicker
 
-                    if mode == .chat {
-                        snapshotGrid
-                        coachCard
-                        coreRouteCard
-                        engineStatusCard
-                        introCard
+                        if mode == .chat {
+                            snapshotGrid
+                            coachCard
+                            coreRouteCard
+                            engineStatusCard
+                            introCard
 
-                        if !exchanges.isEmpty {
-                            chatTranscriptHeader
+                            if !exchanges.isEmpty {
+                                chatTranscriptHeader
 
-                            ForEach(exchanges) { exchange in
-                                exchangeCard(exchange)
-                                    .id(exchange.id)
+                                ForEach(exchanges) { exchange in
+                                    exchangeCard(exchange)
+                                        .id(exchange.id)
+                                }
                             }
-                        }
 
-                        promptChips
-                            .id("finance-chat-end")
-                    } else {
-                        FinanceBrainMapView()
-                            .transition(.opacity.combined(with: .move(edge: .bottom)))
+                            promptChips
+                                .id("finance-chat-end")
+                        } else {
+                            FinanceBrainMapView()
+                                .transition(.opacity.combined(with: .move(edge: .bottom)))
+                        }
+                    }
+                    .padding(.horizontal, theme.pagePadding)
+                    .padding(.vertical, theme.spacing)
+                    .keyboardDismissOnBlankTap { inputFocused = false }
+                }
+                .scrollDismissesKeyboard(.interactively)
+                // Only the chat composer owns this bar; in "大脑" mode
+                // FinanceBrainMapView contributes its own, and two accessory bars
+                // would show two "完成" buttons.
+                .keyboardDoneBar(isEnabled: mode == .chat) { inputFocused = false }
+                .onChange(of: exchanges.count) { _, _ in
+                    guard !exchanges.isEmpty else { return }
+                    withAnimation(.snappy) {
+                        proxy.scrollTo("finance-chat-end", anchor: .bottom)
                     }
                 }
-                .padding(.horizontal, theme.pagePadding)
-                .padding(.vertical, theme.spacing)
-                .keyboardDismissOnBlankTap { inputFocused = false }
             }
-            .scrollDismissesKeyboard(.interactively)
-            // Only the chat composer owns this bar; in "大脑" mode
-            // FinanceBrainMapView contributes its own, and two accessory bars
-            // would show two "完成" buttons.
-            .keyboardDoneBar(isEnabled: mode == .chat) { inputFocused = false }
-            .onChange(of: exchanges.count) { _, _ in
-                guard !exchanges.isEmpty else { return }
-                withAnimation(.snappy) {
-                    proxy.scrollTo("finance-chat-end", anchor: .bottom)
-                }
+
+            if mode == .chat {
+                composer
             }
         }
         .background(theme.background.ignoresSafeArea())
@@ -133,11 +139,6 @@ struct FinanceAdvisorView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task {
             localModel.prepare()
-        }
-        .safeAreaInset(edge: .bottom) {
-            if mode == .chat {
-                composer
-            }
         }
         .alert(
             "财务大脑",
