@@ -3,6 +3,32 @@
 All user-visible changes to LedgerBox are recorded here and in the in-app
 **设置 → 更新日志** page.
 
+## 0.12.0 — 2026-10-22
+
+### Added
+
+- 新增“AI 财务日志诊断”：从 Core Data 读取最近 30 天流水，生成分类、金额、时间的结构化纯文本，交给本机 Qwen2.5-0.5B，输出“财务健康度体检”“消费漏洞诊断”“财务教练的 3 个建议”三个 Markdown 段落。分析只读，不写账、不转账、不改预算。
+- 财务大脑新增固定底部输入栏：左侧加号打开图片记账，中间圆角输入框，右侧发送按钮；点击预设建议气泡会把文本填入输入框并自动聚焦。
+- 设置 AI 区合并为“财务大脑”单一入口，详情页用列表分别展示 40 个核心路由意图和 Qwen 本地解释引擎的加载状态与真实调用计数。
+
+### Changed
+
+- 首页移除胶囊顶栏，改用原生大标题 `NavigationStack`；`October 2026` 作为标题下方副标题，头像移入右上角 toolbar。
+- 图片记账弹窗移除胶囊顶栏，改用标准 Modal 导航栏，右上角使用系统 `xmark` 关闭。
+- 新增 `QwenLocalModel.diagnose(prompt:maxTokens:)` 只读长文本生成路径；日志诊断使用 384 输出 token、0.20 温度，流水摘要限制在 1,000 字符以适配 2048 token 上下文。
+
+### Verification
+
+- 70 个 XCTest 在 GitHub Actions 的 iPhone 16 / iOS 26.2 模拟器通过。
+- 新增 Prompt 组装测试：流水占位符替换、ChatML 结构、三个 Markdown 标题、角色与语气约束。
+- 模拟器不加载 0.5B；真机加载、生成和视觉验收仍未验证。
+
+### Known limits
+
+- 未做真机安装、真机 0.5B 生成、内存峰值、发热和截图级视觉验收。
+- 未签名 IPA 需要你自己的证书和描述文件；自签工具必须重签嵌套的 `Frameworks/llama.framework`。
+- 本地 Qwen 只改写已整理好的流水摘要，不是财务计算器；诊断结论只作参考。
+
 ## 0.11.1 — 2026-10-22
 
 ### Fixed

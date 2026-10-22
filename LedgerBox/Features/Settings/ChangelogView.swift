@@ -14,6 +14,18 @@ struct ChangelogEntry: Identifiable {
 enum ChangelogCatalog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "0.12.0",
+            dateText: "2026.10.22",
+            title: "原生导航、聊天输入与 AI 日志诊断",
+            changes: [
+                "首页移除胶囊顶栏，改用原生大标题 NavigationStack；月份副标题位于标题下方，头像移入右上角 toolbar。",
+                "图片记账弹窗移除胶囊顶栏，改用标准 Modal 导航栏和右上角系统 xmark。",
+                "财务大脑新增固定底部输入栏：加号上传图片、圆角输入框、发送按钮；建议气泡改为填充输入框并自动聚焦。",
+                "设置 AI 区合并为“财务大脑”单一入口，详情页分别展示 40 个核心路由意图和 Qwen 本地解释引擎状态。",
+                "新增“AI 财务日志诊断”：提取最近 30 天流水，生成结构化文本，由本机 Qwen 输出三个 Markdown 诊断段落；只读，不写账。"
+            ]
+        ),
+        ChangelogEntry(
             version: "0.11.1",
             dateText: "2026.10.22",
             title: "浅色主题收口与 0.5B 真实自检",

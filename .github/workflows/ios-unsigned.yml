@@ -85,8 +85,8 @@ jobs:
           HASH=$(shasum -a 256 "$IPA" | awk '{print $1}')
           unzip -l "$IPA" > build/ipa-listing.txt
           cat > build/artifact-info.txt <<EOF
-          version=0.11.1
-          build=17
+          version=0.12.0
+          build=18
           size=$SIZE
           sha256=$HASH
           run=${{ github.run_id }}
@@ -98,12 +98,12 @@ jobs:
       - name: Upload artifact metadata
         uses: actions/upload-artifact@v4
         with:
-          name: LedgerBox-0.11.1-metadata
+          name: LedgerBox-0.12.0-metadata
           path: build/artifact-info.txt
           if-no-files-found: error
           retention-days: 30
 
-      - name: Publish 0.11.1 release
+      - name: Publish 0.12.0 release
         if: github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -113,16 +113,16 @@ jobs:
           SIZE=$(stat -f%z "$IPA")
           HASH=$(shasum -a 256 "$IPA" | awk '{print $1}')
           BODY=$(cat <<EOF
-          ## LedgerBox 0.11.1
-
-          ### Fixed
-          - 浅色/白色主题的浮动标题、底栏、记账气泡、账户页和图片页关闭按钮改用主题表面色，不再出现固定深色块。
-          - 浅色底栏选中态使用对比度校正后的强调色，未选中态使用次级文字色。
+          ## LedgerBox 0.12.0
 
           ### Added
-          - 财务大脑“Qwen2.5-0.5B 本地解释层”显示真实加载状态、完成/拒绝计数和最近一次真实输出。
-          - “运行一次真实解释”自检：固定示例调用 llama.cpp，只有通过数字白名单校验才显示输出；模拟器明确提示不加载。
-          - 设置 AI 区显示 0.5B 状态与真实调用计数，可进入财务大脑运行自检。
+          - 新增“AI 财务日志诊断”：读取最近 30 天流水，生成分类、金额、时间结构化文本，由本机 Qwen 输出财务健康度体检、消费漏洞诊断和 3 条教练建议。
+          - 财务大脑新增固定底部输入栏：加号上传图片、圆角输入框、发送按钮；建议气泡改为填充输入框并自动聚焦。
+          - 设置 AI 区合并为“财务大脑”单一入口，详情页分别展示 40 个核心路由意图和 Qwen 本地解释引擎状态。
+
+          ### Changed
+          - 首页移除胶囊顶栏，改用原生大标题导航栏；月份副标题位于标题下方，头像移入右上角 toolbar。
+          - 图片记账弹窗移除胶囊顶栏，改用标准 Modal 导航栏和右上角系统 xmark。
 
           ### Bundled
           - Qwen2.5-0.5B-Instruct Q4_K_M, 491,400,032 bytes
@@ -134,25 +134,25 @@ jobs:
           - IPA: $SIZE bytes.
           - IPA SHA-256: $HASH.
           - Embedded model and llama.framework verified by unzip listing.
-          - 68 simulator XCTest cases pass in the iOS Tests workflow.
+          - 70 simulator XCTest cases pass in the iOS Tests workflow.
           - Not verified: physical-device install, on-device 0.5B generation, memory peak, thermal behavior, Metal, or screenshots.
 
           ### Limits
           - The app is unsigned and needs your own certificate/profile.
           - The 0.5B model is a language rewriter, not a calculator.
-          - The app is not a medical, tax, or investment advisor.
+          - AI diagnosis is read-only and does not move money or modify the ledger.
           EOF
           )
-          if gh release view v0.11.1 >/dev/null 2>&1; then
-            gh release edit v0.11.1 --notes "$BODY"
-            gh release upload v0.11.1 "$IPA" --clobber
+          if gh release view v0.12.0 >/dev/null 2>&1; then
+            gh release edit v0.12.0 --notes "$BODY"
+            gh release upload v0.12.0 "$IPA" --clobber
           else
-            gh release create v0.11.1 "$IPA" \
-              --title "LedgerBox 0.11.1 — 浅色主题收口与 0.5B 自检" \
+            gh release create v0.12.0 "$IPA" \
+              --title "LedgerBox 0.12.0 — 原生导航、聊天输入与 AI 日志诊断" \
               --notes "$BODY" \
               --prerelease
           fi
-          gh release view v0.11.1 --json url,assets
+          gh release view v0.12.0 --json url,assets
 
       - name: Upload unsigned IPA
         if: github.event_name == 'workflow_dispatch'
