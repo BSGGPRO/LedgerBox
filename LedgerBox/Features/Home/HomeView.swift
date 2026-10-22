@@ -50,23 +50,33 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack {
-            GlassHeaderHost(
-                title: "LedgerBox",
-                subtitle: Date.now.formatted(.dateTime.year().month(.wide)),
-                trailing: { ProfileBadge() }
-            ) {
-                VStack(alignment: .leading, spacing: 0) {
-                    VStack(alignment: .leading, spacing: theme.sectionSpacing) {
-                        balanceCard
-                        monthStatsSection
-                        coachCard
-                        recentSection
-                    }
-                    .padding(.top, theme.sectionSpacing)
+            ScrollView {
+                VStack(alignment: .leading, spacing: theme.sectionSpacing) {
+                    Text(Date.now.formatted(.dateTime.year().month(.wide)))
+                        .font(theme.captionFont)
+                        .foregroundStyle(theme.secondaryText)
+                        .accessibilityLabel("当前月份")
+
+                    balanceCard
+                    monthStatsSection
+                    coachCard
+                    recentSection
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, theme.pagePadding)
+                .padding(.top, theme.smallSpacing)
                 .padding(.bottom, 24)
+            }
+            .scrollIndicators(.hidden)
+            .background(theme.background.ignoresSafeArea())
+            .navigationTitle("LedgerBox")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbarBackground(theme.background, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    ProfileBadge()
+                }
             }
         }
         .sheet(item: $activeSheet) { sheet in
@@ -84,43 +94,6 @@ struct HomeView: View {
                     .environment(\.managedObjectContext, viewContext)
                     .environmentObject(themeManager)
             }
-        }
-    }
-
-    // MARK: - Header
-
-    private var header: some View {
-        HStack(alignment: .center, spacing: theme.spacing) {
-            VStack(alignment: .leading, spacing: theme.tinySpacing) {
-                Text("LedgerBox")
-                    .font(theme.screenTitleFont)
-                    .tracking(-0.6)
-                    .foregroundStyle(theme.primaryText)
-                    .accessibilityAddTraits(.isHeader)
-
-                Text(Date.now.formatted(.dateTime.year().month(.wide)))
-                    .font(theme.captionFont)
-                    .foregroundStyle(theme.secondaryText)
-            }
-
-            Spacer(minLength: theme.smallSpacing)
-
-            Button {
-                activeSheet = .settings
-            } label: {
-                Image(systemName: "person.crop.circle")
-                    .font(.system(size: 22, weight: .regular))
-                    .foregroundStyle(theme.accentText)
-                    .frame(width: theme.minTapTarget, height: theme.minTapTarget)
-                    .background(theme.surface, in: Circle())
-                    .overlay(
-                        Circle()
-                            .strokeBorder(theme.separator, lineWidth: theme.hairline)
-                    )
-                    .contentShape(Circle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("用户与设置")
         }
     }
 

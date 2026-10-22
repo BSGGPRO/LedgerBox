@@ -84,25 +84,34 @@ struct ImageLedgerFlowView: View {
     @FocusState private var amountFocused: Bool
 
     var body: some View {
-        GlassHeaderHost(
-            title: "图片记账",
-            subtitle: "本地 OCR · 不联网",
-            trailing: { closeButton }
-        ) {
-            VStack(alignment: .leading, spacing: theme.sectionSpacing) {
-                if isProcessing {
-                    processingCard
-                } else if !multiBills.isEmpty {
-                    multiReviewContent
-                } else if let draft {
-                    reviewContent(draft)
-                } else {
-                    pickerContent
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: theme.sectionSpacing) {
+                    if isProcessing {
+                        processingCard
+                    } else if !multiBills.isEmpty {
+                        multiReviewContent
+                    } else if let draft {
+                        reviewContent(draft)
+                    } else {
+                        pickerContent
+                    }
+                }
+                .padding(.horizontal, theme.pagePadding)
+                .padding(.top, theme.cardSpacing)
+                .padding(.bottom, 40)
+            }
+            .scrollIndicators(.hidden)
+            .background(theme.background.ignoresSafeArea())
+            .navigationTitle("图片记账")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(theme.background, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    closeButton
                 }
             }
-            .padding(.horizontal, theme.pagePadding)
-            .padding(.top, theme.cardSpacing)
-            .padding(.bottom, 40)
         }
         .tint(theme.accentText)
         .keyboardDoneBar { amountFocused = false }
@@ -881,15 +890,8 @@ struct ImageLedgerFlowView: View {
             dismiss()
         } label: {
             Image(systemName: "xmark")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(theme.primaryText)
-                .frame(width: 36, height: 36)
-                .background(theme.surfaceElevated, in: Circle())
-                .overlay {
-                    Circle()
-                        .strokeBorder(theme.borderStrong.opacity(0.55), lineWidth: 1)
-                }
-                .contentShape(Circle())
+                .font(.system(size: 13, weight: .semibold))
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("关闭图片记账")

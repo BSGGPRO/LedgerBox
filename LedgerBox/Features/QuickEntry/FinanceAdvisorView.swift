@@ -36,6 +36,10 @@ struct FinanceAdvisorView: View {
     @State private var mode: Mode = .chat
     @StateObject private var localModel = QwenLocalModel.shared
 
+    init(startsInBrain: Bool = false) {
+        _mode = State(initialValue: startsInBrain ? .brain : .chat)
+    }
+
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \LedgerTransaction.date, ascending: false)]
     ) private var transactions: FetchedResults<LedgerTransaction>
@@ -318,7 +322,8 @@ struct FinanceAdvisorView: View {
             HStack(spacing: 8) {
                 ForEach(prompts, id: \.self) { prompt in
                     Button {
-                        ask(prompt)
+                        input = prompt
+                        inputFocused = true
                     } label: {
                         Text(prompt)
                             .font(theme.captionFont)
@@ -427,7 +432,24 @@ struct FinanceAdvisorView: View {
 
     private var composer: some View {
         HStack(alignment: .bottom, spacing: 8) {
-            TextField("问支出、预算、储蓄、负债…", text: $input, axis: .vertical)
+            Button {
+                activeSheet = .image
+            } label: {
+                Image(systemName: "plus")
+                    .font(theme.headerActionFont)
+                    .foregroundStyle(theme.accentText)
+                    .frame(width: 40, height: 40)
+                    .background(theme.surfaceElevated, in: Circle())
+                    .overlay {
+                        Circle()
+                            .strokeBorder(theme.borderStrong.opacity(0.45), lineWidth: 1)
+                    }
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("上传图片记账")
+
+            TextField("问点什么财务问题…", text: $input, axis: .vertical)
                 .focused($inputFocused)
                 .font(theme.bodyFont)
                 .lineLimit(1...4)
@@ -437,6 +459,10 @@ struct FinanceAdvisorView: View {
                     theme.surface,
                     in: RoundedRectangle(cornerRadius: theme.controlRadius, style: .continuous)
                 )
+                .overlay {
+                    RoundedRectangle(cornerRadius: theme.controlRadius, style: .continuous)
+                        .strokeBorder(theme.separator, lineWidth: theme.hairline)
+                }
 
             Button {
                 ask(input)
@@ -449,11 +475,16 @@ struct FinanceAdvisorView: View {
             }
             .buttonStyle(.plain)
             .disabled(input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            .accessibilityLabel("提问")
+            .accessibilityLabel("发送问题")
         }
         .padding(.horizontal, theme.pagePadding)
         .padding(.vertical, 10)
-        .background(.ultraThinMaterial)
+        .background(theme.surface.opacity(0.98))
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(theme.separator)
+                .frame(height: 0.5)
+        }
     }
 
     private func ask(_ text: String) {

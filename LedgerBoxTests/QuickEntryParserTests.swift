@@ -292,9 +292,9 @@ final class AIFinanceLogPromptTests: XCTestCase {
         XCTAssertTrue(prompt.contains("资深个人财务规划师"))
         XCTAssertTrue(prompt.contains("拿铁因子"))
         XCTAssertTrue(prompt.contains("异常消费"))
-        XCTAssertTrue(prompt.contains("## 财务健康度体检"))
-        XCTAssertTrue(prompt.contains("## 消费漏洞诊断"))
-        XCTAssertTrue(prompt.contains("## 财务教练的 3 个建议"))
+        XCTAssertTrue(prompt.contains("## 【财务健康度体检】"))
+        XCTAssertTrue(prompt.contains("## 【消费漏洞诊断】"))
+        XCTAssertTrue(prompt.contains("## 【财务教练的 3 个建议】"))
         XCTAssertTrue(prompt.contains("不评判"))
     }
 }
