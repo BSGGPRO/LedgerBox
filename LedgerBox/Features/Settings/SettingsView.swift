@@ -625,6 +625,24 @@ struct SettingsView: View {
             .accessibilityHint("打开离线的财务专用小模型")
 
             NavigationLink {
+                AIFinanceLogDiagnosisView()
+            } label: {
+                LedgerCard {
+                    SettingsRow(
+                        theme: theme,
+                        icon: "doc.text.magnifyingglass",
+                        tint: theme.accentText,
+                        title: "AI 财务日志诊断",
+                        subtitle: "最近 30 天流水 · 拿铁因子与异常消费 · 本机 Qwen",
+                        trailingText: "30 天",
+                        trailingTint: theme.income
+                    )
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("用本地模型分析最近 30 天的账单")
+
+            NavigationLink {
                 FinanceAdvisorView()
             } label: {
                 LedgerCard {
@@ -1068,4 +1086,744 @@ private func previewThemeManager(name: String, mode: ThemeMode) -> ThemeManager 
         )
         .environmentObject(previewThemeManager(name: "LedgerBoxSettingsPreviewDark", mode: .dark))
         .environment(\.colorScheme, .dark)
+}
+
+// MARK: - AI finance log diagnosis
+
+/// Prompt constants for the local financial-log diagnosis.
+///
+/// The model is read-only: it receives a compact digest of the last 30 days and
+/// returns Markdown advice. It never receives a Core Data context and cannot
+/// write a transaction, account, budget, or goal.
+enum AIFinanceLogPrompt {
+    static let ledgerPlaceholder = "{{LEDGER_DATA}}"
+
+    static let systemPrompt = """
+    你是一位资深个人财务规划师。你的工作是帮助用户理解自己的消费习惯，而不是批评用户。
+
+    任务：
+    1. 阅读用户最近 30 天的记账流水，找出“拿铁因子”：高频、小额、容易被忽视的重复支出。
+    2. 找出异常消费：明显偏离用户日常水平的大额支出、疑似重复扣款，或与分类不一致的消费。
+    3. 只基于用户流水中的信息分析，不编造未出现的商户、金额、日期、分类或账户。
+
+    输出要求：
+    - 只输出 Markdown，不要输出代码块，不要输出前言或结尾寒暄。
+    - 必须包含以下三个二级标题，顺序不能变：
+      ## 财务健康度体检
+      ## 消费漏洞诊断
+      ## 财务教练的 3 个建议
+    - “财务健康度体检”用 2 到 4 句话概括收支、结余和消费结构；可以引用流水中的金额或比例，没有数据时就明确说没有数据。
+    - “消费漏洞诊断”分别说明拿铁因子和异常消费；每条尽量给出金额、频次、分类或日期作为依据。没有发现时也要明确说没有发现。
+    - “财务教练的 3 个建议”必须恰好给出 3 条可执行建议，按优先级排序；建议要温和、具体、可执行。
+    - 语气专业、温和、不评判。不要使用“败家”“浪费”“不自律”等羞辱性表达。
+    - 不承诺收益，不构成投资、税务或法律建议。
+    - 只分析数据，不写账、不修改账本、不替用户做自动扣款或转账决定。
+    """
+
+    static let userPromptTemplate = """
+    请分析下面的【用户流水数据】。数据来自用户本机最近 30 天的账本，已经整理成结构化纯文本。
+
+    【用户流水数据】
+    \(ledgerPlaceholder)
+
+    【分析任务】
+    请按照系统提示中的三个 Markdown 标题输出。优先关注高频小额支出中的重复模式，以及明显偏离日常水平的大额或异常消费。引用金额时只使用上面出现过的数字；数据不足时直接说明，不要猜测。
+    """
+
+    /// Inserts the user's structured ledger digest into the prompt template.
+    static func makeUserPrompt(ledgerText: String) -> String {
+        userPromptTemplate.replacingOccurrences(
+            of: ledgerPlaceholder,
+            with: ledgerText
+        )
+    }
+
+    /// Complete Qwen ChatML prompt, including the read-only system instruction.
+    static func makePrompt(ledgerText: String) -> String {
+        """
+        <|im_start|>system
+        \(systemPrompt)
+        <|im_end|>
+        <|im_start|>user
+        \(makeUserPrompt(ledgerText: ledgerText))
+        <|im_end|>
+        <|im_start|>assistant
+        """
+    }
+}
+
+struct AIFinanceLogDigest {
+    let text: String
+    let transactionCount: Int
+    let listedCount: Int
+    let startDate: Date
+    let endDate: Date
+    let totalExpense: Decimal
+    let totalIncome: Decimal
+    let totalRefund: Decimal
+    let truncated: Bool
+
+    var net: Decimal {
+        totalIncome + totalRefund - totalExpense
+    }
+}
+
+/// Builds a compact, deterministic text digest from Core Data.
+///
+/// All totals are calculated with `Decimal`. Only display percentages use
+/// `Double`, and the per-transaction section is intentionally sampled so the
+/// final prompt stays inside the local model's 2048-token context.
+enum AIFinanceLogDigestBuilder {
+    static let defaultDays = 30
+    static let recentLineLimit = 10
+    static let maxDigestCharacters = 1_000
+
+    private struct CategoryAggregate {
+        let name: String
+        var amount: Decimal
+        var count: Int
+    }
+
+    private static let dayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
+
+    private static let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "HH:mm"
+        return formatter
+    }()
+
+    static func build(
+        context: NSManagedObjectContext,
+        now: Date = Date(),
+        days: Int = AIFinanceLogDigestBuilder.defaultDays
+    ) throws -> AIFinanceLogDigest {
+        let startDate = Calendar.current.date(
+            byAdding: .day,
+            value: -max(1, days),
+            to: now
+        ) ?? now.addingTimeInterval(-30 * 86_400)
+
+        let request = LedgerTransaction.fetchRequest()
+        request.predicate = NSPredicate(
+            format: "date >= %@ AND date <= %@",
+            startDate as NSDate,
+            now as NSDate
+        )
+        request.sortDescriptors = [
+            NSSortDescriptor(keyPath: \LedgerTransaction.date, ascending: false)
+        ]
+
+        let transactions = try context.fetch(request)
+        let accounts = try context.fetch(Account.fetchRequest())
+        let categories = try context.fetch(Category.fetchRequest())
+        let accountNames = Dictionary(
+            uniqueKeysWithValues: accounts.map { ($0.id, $0.name) }
+        )
+        let categoryNames = Dictionary(
+            uniqueKeysWithValues: categories.map { ($0.id, $0.name) }
+        )
+
+        guard !transactions.isEmpty else {
+            let emptyText = """
+            【分析窗口】\(dayFormatter.string(from: startDate)) 至 \(dayFormatter.string(from: now))
+            【汇总】0 笔；最近 \(days) 天没有可用于分析的流水。
+            """
+            return AIFinanceLogDigest(
+                text: emptyText,
+                transactionCount: 0,
+                listedCount: 0,
+                startDate: startDate,
+                endDate: now,
+                totalExpense: 0,
+                totalIncome: 0,
+                totalRefund: 0,
+                truncated: false
+            )
+        }
+
+        var totalExpense: Decimal = 0
+        var totalIncome: Decimal = 0
+        var totalRefund: Decimal = 0
+        var categoryTotals: [String: CategoryAggregate] = [:]
+        var smallTotals: [String: (count: Int, amount: Decimal)] = [:]
+        var expenseCount = 0
+
+        for transaction in transactions {
+            let amount = transaction.amount.decimalValue
+            guard let type = TransactionType(rawValue: transaction.type) else {
+                continue
+            }
+            let category = transaction.categoryId
+                .flatMap { categoryNames[$0] } ?? "未分类"
+            let note = normalizedNote(transaction.note) ?? category
+
+            switch type {
+            case .expense:
+                totalExpense += amount
+                expenseCount += 1
+                var aggregate = categoryTotals[category]
+                    ?? CategoryAggregate(name: category, amount: 0, count: 0)
+                aggregate.amount += amount
+                aggregate.count += 1
+                categoryTotals[category] = aggregate
+
+                if amount > 0, amount <= 50 {
+                    var small = smallTotals[note] ?? (count: 0, amount: 0)
+                    small.count += 1
+                    small.amount += amount
+                    smallTotals[note] = small
+                }
+            case .income:
+                totalIncome += amount
+            case .refund:
+                totalRefund += amount
+            case .transfer:
+                break
+            }
+        }
+
+        let topCategories = categoryTotals.values
+            .sorted { $0.amount > $1.amount }
+            .prefix(5)
+            .map { item -> String in
+                let share = totalExpense > 0
+                    ? NSDecimalNumber(decimal: item.amount)
+                        .doubleValue / NSDecimalNumber(decimal: totalExpense).doubleValue * 100
+                    : 0
+                return "\(item.name) \(money(item.amount))（\(item.count) 笔，\(String(format: "%.1f", share))%）"
+            }
+
+        let smallLines = smallTotals
+            .filter { $0.value.count >= 2 }
+            .sorted {
+                if $0.value.count == $1.value.count {
+                    return $0.value.amount > $1.value.amount
+                }
+                return $0.value.count > $1.value.count
+            }
+            .prefix(5)
+            .map { item in
+                let key = item.key
+                let value = item.value
+                return "\(key) \(money(value.amount)) × \(value.count) 次"
+            }
+
+        let averageExpense = expenseCount > 0
+            ? totalExpense / Decimal(expenseCount)
+            : 0
+        let largeThreshold = max(
+            averageExpense * (Decimal(string: "2.5") ?? 2),
+            Decimal(200)
+        )
+        let largeLines = transactions
+            .filter {
+                $0.type == TransactionType.expense.rawValue
+                    && $0.amount.decimalValue >= largeThreshold
+            }
+            .sorted { $0.amount.decimalValue > $1.amount.decimalValue }
+            .prefix(3)
+            .map { transaction in
+                let category = transaction.categoryId
+                    .flatMap { categoryNames[$0] } ?? "未分类"
+                return "\(dayFormatter.string(from: transaction.date)) \(category) \(money(transaction.amount.decimalValue))"
+            }
+
+        let listed = Array(transactions.prefix(recentLineLimit))
+        var lines: [String] = []
+        lines.append(
+            "【分析窗口】\(dayFormatter.string(from: startDate)) 至 \(dayFormatter.string(from: now))"
+        )
+        lines.append(
+            "【汇总】共 \(transactions.count) 笔；支出 \(money(totalExpense))；收入 \(money(totalIncome))；退款 \(money(totalRefund))；净结余 \(money(totalIncome + totalRefund - totalExpense))"
+        )
+
+        if !topCategories.isEmpty {
+            lines.append("【分类支出】" + topCategories.joined(separator: "；"))
+        }
+        if !smallLines.isEmpty {
+            lines.append("【高频小额候选】" + smallLines.joined(separator: "；"))
+        }
+        if !largeLines.isEmpty {
+            lines.append("【大额/异常候选】" + largeLines.joined(separator: "；"))
+        }
+
+        lines.append(
+            "【逐笔明细·最近 \(listed.count) 条，汇总覆盖全部 \(transactions.count) 笔】"
+        )
+        for transaction in listed {
+            let category = transaction.categoryId
+                .flatMap { categoryNames[$0] } ?? "未分类"
+            let account = accountNames[transaction.accountId] ?? "未知账户"
+            let type = TransactionType(rawValue: transaction.type)?.displayName
+                ?? transaction.type
+            let note = normalizedNote(transaction.note) ?? "-"
+            lines.append(
+                "\(dayFormatter.string(from: transaction.date)) \(timeFormatter.string(from: transaction.date)) | \(type) | \(category) | \(money(transaction.amount.decimalValue)) | \(account) | \(note)"
+            )
+        }
+
+        var text = lines.joined(separator: "\n")
+        var truncated = transactions.count > listed.count
+        if text.count > maxDigestCharacters {
+            text = String(text.prefix(maxDigestCharacters))
+                + "\n（数据已按长度截断；汇总和分类仍覆盖全部流水）"
+            truncated = true
+        }
+
+        return AIFinanceLogDigest(
+            text: text,
+            transactionCount: transactions.count,
+            listedCount: listed.count,
+            startDate: startDate,
+            endDate: now,
+            totalExpense: totalExpense,
+            totalIncome: totalIncome,
+            totalRefund: totalRefund,
+            truncated: truncated
+        )
+    }
+
+    private static func normalizedNote(_ note: String?) -> String? {
+        let value = (note ?? "")
+            .replacingOccurrences(of: "\n", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else { return nil }
+        return String(value.prefix(14))
+    }
+
+    private static func money(_ value: Decimal) -> String {
+        "¥" + NSDecimalNumber(decimal: value).stringValue
+    }
+}
+
+// MARK: - AI finance log diagnosis page
+
+struct AIFinanceLogDiagnosisView: View {
+    private enum Phase: Equatable {
+        case idle
+        case building
+        case generating
+        case finished
+        case failed
+    }
+
+    @Environment(\.ledgerTheme) private var theme
+    @Environment(\.managedObjectContext) private var viewContext
+    @StateObject private var localModel = QwenLocalModel.shared
+
+    @State private var phase: Phase = .idle
+    @State private var digest: AIFinanceLogDigest?
+    @State private var prompt = ""
+    @State private var report: String?
+    @State private var errorMessage: String?
+
+    private var isBusy: Bool {
+        phase == .building || phase == .generating
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: theme.sectionSpacing) {
+                introCard
+                statusCard
+                analyzeButton
+
+                if let errorMessage {
+                    errorCard(errorMessage)
+                }
+
+                if let report {
+                    reportCard(report)
+                }
+
+                if let digest {
+                    disclosureCard(
+                        title: "查看用于分析的结构化流水",
+                        text: digest.text
+                    )
+                }
+
+                if !prompt.isEmpty {
+                    promptCard
+                }
+
+                disclaimerCard
+            }
+            .padding(.horizontal, theme.pagePadding)
+            .padding(.vertical, theme.spacing)
+        }
+        .scrollIndicators(.hidden)
+        .background(theme.background.ignoresSafeArea())
+        .navigationTitle("AI 财务日志诊断")
+        .navigationBarTitleDisplayMode(.inline)
+        .task {
+            localModel.prepare()
+        }
+    }
+
+    private var introCard: some View {
+        LedgerCard {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 8) {
+                    Image(systemName: "doc.text.magnifyingglass")
+                        .font(theme.rowIconFont)
+                        .foregroundStyle(theme.accentText)
+
+                    Text("最近 30 天 · 本地只读分析")
+                        .font(theme.sectionTitleFont)
+                        .foregroundStyle(theme.primaryText)
+                }
+
+                Text("从本机提取最近 30 天的分类、金额、时间和账户，拼成结构化纯文本，再交给内置 Qwen2.5-0.5B。分析结果只用于参考，不会写账或修改任何流水。")
+                    .font(theme.bodyFont)
+                    .foregroundStyle(theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(spacing: 6) {
+                    Label("不上传", systemImage: "lock.fill")
+                    Label("不写账", systemImage: "pencil.slash")
+                }
+                .font(theme.badgeFont)
+                .foregroundStyle(theme.income)
+            }
+        }
+    }
+
+    private var statusCard: some View {
+        LedgerCard {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("分析状态")
+                        .font(theme.sectionTitleFont)
+                        .foregroundStyle(theme.primaryText)
+
+                    Spacer()
+
+                    Text(localModel.status.summary)
+                        .font(theme.badgeFont)
+                        .foregroundStyle(
+                            localModel.status.isReady ? theme.income : theme.warning
+                        )
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                }
+
+                if let digest {
+                    HStack(spacing: 10) {
+                        statusMetric("流水", value: "\(digest.transactionCount) 笔")
+                        statusMetric("明细", value: "\(digest.listedCount) 条")
+                        statusMetric("净结余", value: MoneyFormat.currency(digest.net))
+                    }
+                } else {
+                    Text("点击下方按钮后才会读取本机流水。模拟器不会加载 0.5B，真机才会尝试加载。")
+                        .font(theme.captionFont)
+                        .foregroundStyle(theme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
+
+    private func statusMetric(_ title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(theme.badgeFont)
+                .foregroundStyle(theme.secondaryText)
+            Text(value)
+                .font(theme.badgeFont.weight(.semibold))
+                .foregroundStyle(theme.primaryText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(8)
+        .background(theme.surfaceElevated, in: RoundedRectangle(
+            cornerRadius: theme.controlRadius,
+            style: .continuous
+        ))
+    }
+
+    private var analyzeButton: some View {
+        Button {
+            Task { @MainActor in
+                await analyze()
+            }
+        } label: {
+            HStack(spacing: 8) {
+                if isBusy {
+                    ProgressView()
+                        .controlSize(.small)
+                        .tint(theme.onAccent)
+                } else {
+                    Image(systemName: "sparkles")
+                }
+
+                Text(buttonTitle)
+                    .font(theme.buttonLabelFont)
+            }
+            .foregroundStyle(theme.onAccent)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(theme.accent, in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .disabled(isBusy)
+        .opacity(isBusy ? 0.72 : 1)
+        .accessibilityHint("提取最近 30 天流水并调用本地模型")
+    }
+
+    private var buttonTitle: String {
+        switch phase {
+        case .building:
+            return "正在提取最近 30 天流水…"
+        case .generating:
+            return "0.5B 正在分析…"
+        default:
+            return "开始分析近期账单"
+        }
+    }
+
+    private func errorCard(_ message: String) -> some View {
+        LedgerCard {
+            HStack(alignment: .top, spacing: 8) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(theme.warning)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("这次没有生成分析")
+                        .font(theme.bodyFont.weight(.semibold))
+                        .foregroundStyle(theme.primaryText)
+
+                    Text(message)
+                        .font(theme.captionFont)
+                        .foregroundStyle(theme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Text("流水摘要和完整 Prompt 已保留在下方，方便排查或复制到其它模型。")
+                        .font(theme.badgeFont)
+                        .foregroundStyle(theme.tertiaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
+
+    private func reportCard(_ report: String) -> some View {
+        LedgerCard {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("分析报告")
+                        .font(theme.sectionTitleFont)
+                        .foregroundStyle(theme.primaryText)
+
+                    Spacer()
+
+                    ShareLink(item: report) {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(theme.controlIconFont)
+                            .foregroundStyle(theme.accentText)
+                    }
+                    .accessibilityLabel("分享分析报告")
+                }
+
+                AIFinanceLogMarkdownView(markdown: report)
+            }
+        }
+    }
+
+    private func disclosureCard(title: String, text: String) -> some View {
+        LedgerCard {
+            DisclosureGroup {
+                Text(text)
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundStyle(theme.secondaryText)
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 6)
+            } label: {
+                Text(title)
+                    .font(theme.bodyFont.weight(.medium))
+                    .foregroundStyle(theme.primaryText)
+            }
+            .tint(theme.accentText)
+        }
+    }
+
+    private var promptCard: some View {
+        LedgerCard {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("发送给模型的 Prompt")
+                        .font(theme.sectionTitleFont)
+                        .foregroundStyle(theme.primaryText)
+
+                    Spacer()
+
+                    ShareLink(item: prompt) {
+                        Label("复制", systemImage: "square.on.square")
+                            .font(theme.badgeFont)
+                            .foregroundStyle(theme.accentText)
+                    }
+                    .accessibilityLabel("复制或分享完整 Prompt")
+                }
+
+                DisclosureGroup("查看完整 Prompt") {
+                    Text(prompt)
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundStyle(theme.secondaryText)
+                        .textSelection(.enabled)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 6)
+                }
+                .tint(theme.accentText)
+            }
+        }
+    }
+
+    private var disclaimerCard: some View {
+        Text("AI 分析只作参考，不构成投资、税务或法律建议；不会自动写账、转账或修改预算。")
+            .font(theme.badgeFont)
+            .foregroundStyle(theme.tertiaryText)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 4)
+    }
+
+    @MainActor
+    private func analyze() async {
+        guard !isBusy else { return }
+
+        phase = .building
+        report = nil
+        errorMessage = nil
+
+        do {
+            let snapshot = try AIFinanceLogDigestBuilder.build(
+                context: viewContext,
+                days: AIFinanceLogDigestBuilder.defaultDays
+            )
+            digest = snapshot
+
+            guard snapshot.transactionCount > 0 else {
+                errorMessage = "最近 30 天没有流水，先记几笔再分析。"
+                phase = .failed
+                return
+            }
+
+            prompt = AIFinanceLogPrompt.makePrompt(ledgerText: snapshot.text)
+            phase = .generating
+
+            guard await waitForModel() else {
+                errorMessage = "本地 0.5B 不可用：\(localModel.status.summary)。真机安装并重签 Frameworks/llama.framework 后再试。"
+                phase = .failed
+                return
+            }
+
+            guard let output = await localModel.diagnose(prompt: prompt) else {
+                errorMessage = "本地 0.5B 没有返回内容：\(localModel.lastFailure ?? localModel.status.summary)"
+                phase = .failed
+                return
+            }
+
+            report = output
+            phase = .finished
+        } catch {
+            errorMessage = "读取本地流水失败：\(error.localizedDescription)"
+            phase = .failed
+        }
+    }
+
+    @MainActor
+    private func waitForModel() async -> Bool {
+        localModel.prepare()
+
+        if localModel.status.isReady {
+            return true
+        }
+        if case .unavailable = localModel.status {
+            return false
+        }
+        if case .failed = localModel.status {
+            return false
+        }
+
+        // A 491 MB GGUF can take a while on first load. Leave the button in the
+        // generating state instead of declaring failure after one runloop tick.
+        for _ in 0..<150 {
+            try? await Task<Never, Never>.sleep(nanoseconds: 200_000_000)
+            if localModel.status.isReady {
+                return true
+            }
+            if case .unavailable = localModel.status {
+                return false
+            }
+            if case .failed = localModel.status {
+                return false
+            }
+        }
+        return localModel.status.isReady
+    }
+}
+
+private struct AIFinanceLogMarkdownView: View {
+    let markdown: String
+    @Environment(\.ledgerTheme) private var theme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            ForEach(
+                Array(markdown.components(separatedBy: "\n").enumerated()),
+                id: \.offset
+            ) { _, rawLine in
+                let line = rawLine.trimmingCharacters(in: .whitespaces)
+                if line.isEmpty {
+                    Color.clear.frame(height: 2)
+                } else if line.hasPrefix("### ") {
+                    Text(verbatim: String(line.dropFirst(4)))
+                        .font(theme.bodyFont.weight(.semibold))
+                        .foregroundStyle(theme.accentText)
+                        .padding(.top, 2)
+                } else if line.hasPrefix("## ") {
+                    Text(verbatim: String(line.dropFirst(3)))
+                        .font(theme.sectionTitleFont)
+                        .foregroundStyle(theme.primaryText)
+                        .padding(.top, 4)
+                } else if line.hasPrefix("# ") {
+                    Text(verbatim: String(line.dropFirst(2)))
+                        .font(theme.screenTitleFont)
+                        .foregroundStyle(theme.primaryText)
+                        .padding(.top, 4)
+                } else if line.hasPrefix("- ") || line.hasPrefix("* ") {
+                    HStack(alignment: .top, spacing: 6) {
+                        Text(verbatim: "•")
+                            .foregroundStyle(theme.accentText)
+                        Text(verbatim: String(line.dropFirst(2)))
+                            .font(theme.bodyFont)
+                            .foregroundStyle(theme.primaryText)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                } else if let dot = line.firstIndex(of: "."),
+                          line[line.startIndex..<dot].allSatisfy({ $0.isNumber }) {
+                    HStack(alignment: .top, spacing: 6) {
+                        Text(verbatim: String(line[line.startIndex...dot]))
+                            .foregroundStyle(theme.accentText)
+                        Text(verbatim: String(line[line.index(after: dot)...]))
+                            .font(theme.bodyFont)
+                            .foregroundStyle(theme.primaryText)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                } else {
+                    Text(verbatim: line)
+                        .font(theme.bodyFont)
+                        .foregroundStyle(theme.primaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
 }

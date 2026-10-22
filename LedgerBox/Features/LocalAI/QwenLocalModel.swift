@@ -260,6 +260,92 @@ final class QwenLocalModel: ObservableObject {
         }
     }
 
+    /// Read-only long-form analysis used by the financial-log diagnosis page.
+    ///
+    /// Unlike `narrate`, this path accepts a complete ChatML prompt that already
+    /// contains the user's ledger digest, and it does not apply the short
+    /// explanation number whitelist. The caller must treat the result as
+    /// advisory text and must never write it back to the ledger.
+    func diagnose(prompt: String, maxTokens: Int32 = 384) async -> String? {
+        guard let handle, status.isReady, !isGenerating else {
+            if !status.isReady {
+                lastFailure = status.summary
+            }
+            return nil
+        }
+        isGenerating = true
+        lastFailure = nil
+        defer { isGenerating = false }
+
+        return await withCheckedContinuation { continuation in
+            queue.async {
+                var output = [CChar](repeating: 0, count: 8192)
+                var error = [CChar](repeating: 0, count: 512)
+
+                let result = prompt.withCString { promptPointer in
+                    output.withUnsafeMutableBufferPointer { outputBuffer in
+                        error.withUnsafeMutableBufferPointer { errorBuffer in
+                            lb_llama_generate(
+                                handle,
+                                promptPointer,
+                                maxTokens,
+                                0.20,
+                                outputBuffer.baseAddress,
+                                outputBuffer.count,
+                                errorBuffer.baseAddress,
+                                errorBuffer.count
+                            )
+                        }
+                    }
+                }
+
+                guard result == 0 else {
+                    let message = error.withUnsafeBufferPointer { buffer in
+                        guard let base = buffer.baseAddress else {
+                            return "llama 诊断生成失败"
+                        }
+                        return String(cString: base)
+                    }
+                    LedgerLog.shared.error("qwen_diagnosis_failed")
+                    DispatchQueue.main.async {
+                        self.rejectedGenerations += 1
+                        self.lastFailure = message.isEmpty ? "llama 诊断生成失败" : message
+                        self.lastRunAt = Date()
+                    }
+                    continuation.resume(returning: nil)
+                    return
+                }
+
+                let raw = output.withUnsafeBufferPointer { buffer in
+                    guard let base = buffer.baseAddress else { return "" }
+                    return String(cString: base)
+                }
+                let cleaned = Self.sanitize(raw, maxCharacters: 2200)
+                guard !cleaned.isEmpty else {
+                    LedgerLog.shared.warning("qwen_diagnosis_empty")
+                    DispatchQueue.main.async {
+                        self.rejectedGenerations += 1
+                        self.lastFailure = "模型返回了空内容"
+                        self.lastRunAt = Date()
+                    }
+                    continuation.resume(returning: nil)
+                    return
+                }
+                LedgerLog.shared.info(
+                    "qwen_diagnosis_ok",
+                    detail: "chars=\(cleaned.count)"
+                )
+                DispatchQueue.main.async {
+                    self.completedGenerations += 1
+                    self.lastNarration = cleaned
+                    self.lastFailure = nil
+                    self.lastRunAt = Date()
+                }
+                continuation.resume(returning: cleaned)
+            }
+        }
+    }
+
     private static func prompt(question: String, advice: FinanceAdvice) -> String {
         let formula = advice.calculation?.formula ?? "无"
         return """
@@ -282,7 +368,7 @@ final class QwenLocalModel: ObservableObject {
         """
     }
 
-    private static func sanitize(_ value: String) -> String {
+    private static func sanitize(_ value: String, maxCharacters: Int = 500) -> String {
         var text = value.trimmingCharacters(in: .whitespacesAndNewlines)
         if text.hasPrefix("```") {
             text = text.replacingOccurrences(of: "```", with: "")
@@ -291,8 +377,8 @@ final class QwenLocalModel: ObservableObject {
         if let range = text.range(of: "<|im_end|>") {
             text = String(text[..<range.lowerBound])
         }
-        if text.count > 500 {
-            text = String(text.prefix(500))
+        if text.count > maxCharacters {
+            text = String(text.prefix(maxCharacters))
         }
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }

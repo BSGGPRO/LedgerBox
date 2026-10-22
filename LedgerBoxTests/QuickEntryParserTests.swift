@@ -273,3 +273,28 @@ final class AIActionRouterTests: XCTestCase {
         XCTAssertNotNil(action.recordText)
     }
 }
+
+final class AIFinanceLogPromptTests: XCTestCase {
+    func testPromptInsertsLedgerTextAndKeepsChatTemplate() {
+        let prompt = AIFinanceLogPrompt.makePrompt(
+            ledgerText: "【汇总】共 3 笔；支出 ¥45.00"
+        )
+
+        XCTAssertTrue(prompt.contains("【汇总】共 3 笔；支出 ¥45.00"))
+        XCTAssertFalse(prompt.contains(AIFinanceLogPrompt.ledgerPlaceholder))
+        XCTAssertTrue(prompt.hasPrefix("<|im_start|>system"))
+        XCTAssertTrue(prompt.hasSuffix("<|im_start|>assistant"))
+    }
+
+    func testSystemPromptRequiresThreeMarkdownSections() {
+        let prompt = AIFinanceLogPrompt.systemPrompt
+
+        XCTAssertTrue(prompt.contains("资深个人财务规划师"))
+        XCTAssertTrue(prompt.contains("拿铁因子"))
+        XCTAssertTrue(prompt.contains("异常消费"))
+        XCTAssertTrue(prompt.contains("## 财务健康度体检"))
+        XCTAssertTrue(prompt.contains("## 消费漏洞诊断"))
+        XCTAssertTrue(prompt.contains("## 财务教练的 3 个建议"))
+        XCTAssertTrue(prompt.contains("不评判"))
+    }
+}
