@@ -556,7 +556,7 @@ struct FinanceAdvisorView: View {
                 Image(systemName: "plus")
                     .font(theme.headerActionFont)
                     .foregroundStyle(theme.accentText)
-                    .frame(width: 40, height: 40)
+                    .frame(width: 44, height: 44)
                     .background(theme.surfaceElevated, in: Circle())
                     .overlay {
                         Circle()
@@ -1209,7 +1209,10 @@ struct FinanceAdvisorView: View {
         let interval = FinanceEngine.interval(for: .monthly, containing: Date())
         let summary = FinanceEngine.summary(transactions: Array(transactions), in: interval)
 
-        let categoryNames = Dictionary(uniqueKeysWithValues: categories.map { ($0.id, $0.name) })
+        let categoryNames = Dictionary(
+            categories.map { ($0.id, $0.name) },
+            uniquingKeysWith: { first, _ in first }
+        )
         var spending: [String: Decimal] = [:]
         for transaction in transactions where interval.contains(transaction.date) {
             guard let categoryID = transaction.categoryId,

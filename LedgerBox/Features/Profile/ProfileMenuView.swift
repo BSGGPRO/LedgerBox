@@ -73,7 +73,7 @@ struct ProfileMenuView: View {
             Image(systemName: "xmark")
                 .font(.system(size: 13, weight: .bold))
                 .foregroundStyle(theme.primaryText)
-                .frame(width: 36, height: 36)
+                .frame(width: 44, height: 44)
                 .background(theme.surfaceElevated, in: Circle())
                 .overlay {
                     Circle()

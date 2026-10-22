@@ -33,10 +33,12 @@ enum CSVExporter {
         categories: [Category]
     ) -> String {
         let accountsByID = Dictionary(
-            uniqueKeysWithValues: accounts.map { ($0.id, $0) }
+            accounts.map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
         )
         let categoriesByID = Dictionary(
-            uniqueKeysWithValues: categories.map { ($0.id, $0) }
+            categories.map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
         )
 
         let dateFormatter = DateFormatter()

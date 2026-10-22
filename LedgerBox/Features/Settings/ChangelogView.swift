@@ -14,6 +14,17 @@ struct ChangelogEntry: Identifiable {
 enum ChangelogCatalog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "0.12.4",
+            dateText: "2026.10.22",
+            title: "上架前稳定性与无障碍收尾",
+            changes: [
+                "全应用加固重复 UUID 处理：首页教练、财务大脑、流水、统计和 CSV 导出不再使用会触发断言的 Dictionary(uniqueKeysWithValues:)。",
+                "头像、个人资料关闭按钮和聊天加号按钮的点击区域补到 44pt，符合 iOS 触控目标。",
+                "新增 PrivacyInfo.xcprivacy（仅声明 UserDefaults，CA92.1），相机/相册用途说明改为中文，并声明无豁免加密。",
+                "聊天输入栏继续在自定义底栏上方预留 56pt，键盘弹起后取消预留。"
+            ]
+        ),
+        ChangelogEntry(
             version: "0.12.3",
             dateText: "2026.10.22",
             title: "修复聊天输入栏被底栏遮挡",

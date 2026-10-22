@@ -85,8 +85,8 @@ jobs:
           HASH=$(shasum -a 256 "$IPA" | awk '{print $1}')
           unzip -l "$IPA" > build/ipa-listing.txt
           cat > build/artifact-info.txt <<EOF
-          version=0.12.3
-          build=21
+          version=0.12.4
+          build=22
           size=$SIZE
           sha256=$HASH
           run=${{ github.run_id }}
@@ -98,12 +98,12 @@ jobs:
       - name: Upload artifact metadata
         uses: actions/upload-artifact@v4
         with:
-          name: LedgerBox-0.12.3-metadata
+          name: LedgerBox-0.12.4-metadata
           path: build/artifact-info.txt
           if-no-files-found: error
           retention-days: 30
 
-      - name: Publish 0.12.3 release
+      - name: Publish 0.12.4 release
         if: github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -113,11 +113,14 @@ jobs:
           SIZE=$(stat -f%z "$IPA")
           HASH=$(shasum -a 256 "$IPA" | awk '{print $1}')
           BODY=$(cat <<EOF
-          ## LedgerBox 0.12.3
+          ## LedgerBox 0.12.4
 
-          ### Fixed
-          - “财务大脑”聊天输入栏不再被“设置/预算/目标”自定义底栏遮挡；键盘未弹起时预留 56pt。
-          - 0.12.2 的日志诊断重复 UUID 闪退修复继续包含在本版。
+          ### Changed
+          - 全应用加固重复 UUID 处理，避免恢复备份后的字典运行时断言。
+          - 44pt 触控目标：头像、资料关闭按钮、聊天加号按钮。
+          - 新增隐私清单 PrivacyInfo.xcprivacy（UserDefaults, CA92.1）。
+          - 中文相机/相册用途说明；声明无豁免加密。
+          - 聊天输入栏在自定义底栏上方预留 56pt。
 
           ### Bundled
           - Qwen2.5-0.5B-Instruct Q4_K_M, 491,400,032 bytes
@@ -129,23 +132,23 @@ jobs:
           - IPA: $SIZE bytes.
           - IPA SHA-256: $HASH.
           - 70 simulator XCTest cases pass in the iOS Tests workflow.
-          - Not verified: physical-device visual layout, keyboard animation, or on-device 0.5B generation.
+          - Not verified: physical-device layout, touch hit testing, App Store upload.
 
           ### Limits
           - The app is unsigned and needs your own certificate/profile.
           - The 0.5B model is a language rewriter, not a calculator.
           EOF
           )
-          if gh release view v0.12.3 >/dev/null 2>&1; then
-            gh release edit v0.12.3 --notes "$BODY"
-            gh release upload v0.12.3 "$IPA" --clobber
+          if gh release view v0.12.4 >/dev/null 2>&1; then
+            gh release edit v0.12.4 --notes "$BODY"
+            gh release upload v0.12.4 "$IPA" --clobber
           else
-            gh release create v0.12.3 "$IPA" \
-              --title "LedgerBox 0.12.3 — 修复聊天输入栏遮挡" \
+            gh release create v0.12.4 "$IPA" \
+              --title "LedgerBox 0.12.4 — 上架前稳定性收尾" \
               --notes "$BODY" \
               --prerelease
           fi
-          gh release view v0.12.3 --json url,assets
+          gh release view v0.12.4 --json url,assets
 
       - name: Upload unsigned IPA
         if: github.event_name == 'workflow_dispatch'

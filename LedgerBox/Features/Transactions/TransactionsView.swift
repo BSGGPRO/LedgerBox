@@ -234,11 +234,17 @@ struct TransactionsView: View {
     }
 
     private var categoriesByID: [UUID: Category] {
-        Dictionary(uniqueKeysWithValues: categories.map { ($0.id, $0) })
+        Dictionary(
+            categories.map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
     }
 
     private var accountsByID: [UUID: Account] {
-        Dictionary(uniqueKeysWithValues: accounts.map { ($0.id, $0) })
+        Dictionary(
+            accounts.map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
     }
 
     private var deleteConfirmationBinding: Binding<Bool> {

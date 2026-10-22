@@ -62,6 +62,7 @@
 		BB0000000000000000000024 /* LedgerBoxWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000021 /* LedgerBoxWidget.swift */; };
 		EE0000000000000000000011 /* LedgerLlamaShim.c in Sources */ = {isa = PBXBuildFile; fileRef = EE0000000000000000000001 /* LedgerLlamaShim.c */; };
 		EE0000000000000000000012 /* QwenLocalModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE0000000000000000000003 /* QwenLocalModel.swift */; };
+		BB0000000000000000000099 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000099 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -126,6 +127,7 @@
 		EE0000000000000000000002 /* LedgerLlamaShim.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LedgerLlamaShim.h; sourceTree = "<group>"; };
 		EE0000000000000000000003 /* QwenLocalModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QwenLocalModel.swift; sourceTree = "<group>"; };
 		EE0000000000000000000004 /* LedgerBox-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "LedgerBox-Bridging-Header.h"; sourceTree = "<group>"; };
+		CC0000000000000000000099 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXContainerItemProxy section */
@@ -364,6 +366,7 @@
 				DD0000000000000000000001 /* LedgerBox.xcdatamodeld */,
 				CC0000000000000000000014 /* Assets.xcassets */,
 				CC000000000000000000002B /* FinanceMindWeights.bin */,
+				CC0000000000000000000099 /* PrivacyInfo.xcprivacy */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -533,6 +536,7 @@
 			files = (
 				BB0000000000000000000014 /* Assets.xcassets in Resources */,
 				BB000000000000000000002D /* FinanceMindWeights.bin in Resources */,
+				BB0000000000000000000099 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -774,13 +778,14 @@
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/Frameworks/llama.framework/Headers";
 				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/LedgerBox/LedgerBox-Bridging-Header.h";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 21;
+				CURRENT_PROJECT_VERSION = 22;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = LedgerBox;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Take receipt photos for on-device text recognition.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Choose receipt screenshots for on-device text recognition.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "用于拍摄小票并在本机识别文字，图片不会上传。";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "用于选择小票截图并在本机识别文字，图片不会上传。";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -791,7 +796,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.12.3;
+				MARKETING_VERSION = 0.12.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -810,13 +815,14 @@
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/Frameworks/llama.framework/Headers";
 				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/LedgerBox/LedgerBox-Bridging-Header.h";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 21;
+				CURRENT_PROJECT_VERSION = 22;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = LedgerBox;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Take receipt photos for on-device text recognition.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Choose receipt screenshots for on-device text recognition.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "用于拍摄小票并在本机识别文字，图片不会上传。";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "用于选择小票截图并在本机识别文字，图片不会上传。";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -827,7 +833,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.12.3;
+				MARKETING_VERSION = 0.12.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -843,7 +849,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 21;
+				CURRENT_PROJECT_VERSION = 22;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -851,7 +857,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.12.3;
+				MARKETING_VERSION = 0.12.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -867,7 +873,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 21;
+				CURRENT_PROJECT_VERSION = 22;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -875,7 +881,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.12.3;
+				MARKETING_VERSION = 0.12.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -891,7 +897,7 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 21;
+				CURRENT_PROJECT_VERSION = 22;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = LedgerBoxWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -900,7 +906,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.12.3;
+				MARKETING_VERSION = 0.12.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -916,7 +922,7 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 21;
+				CURRENT_PROJECT_VERSION = 22;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = LedgerBoxWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -925,7 +931,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.12.3;
+				MARKETING_VERSION = 0.12.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ledgerbox.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

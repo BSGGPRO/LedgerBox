@@ -3,6 +3,21 @@
 All user-visible changes to LedgerBox are recorded here and in the in-app
 **设置 → 更新日志** page.
 
+## 0.12.4 — 2026-10-22
+
+### Changed
+
+- 全应用加固重复 UUID 处理：首页教练上下文、财务大脑、流水、统计和 CSV 导出的字典合并改为 `uniquingKeysWith:`，避免恢复备份后触发 `Dictionary(uniqueKeysWithValues:)` 的运行时断言。
+- 头像按钮、个人资料关闭按钮、聊天加号按钮的点击区域补到 44pt。
+- 新增 `PrivacyInfo.xcprivacy`，声明仅使用 UserDefaults（CA92.1），不跟踪、不收集数据。
+- 相机/相册权限说明改为中文；声明 `ITSAppUsesNonExemptEncryption = NO`。
+- 聊天输入栏在自定义底部导航栏上方预留 56pt；键盘弹起时取消预留。
+
+### Verification
+
+- 70 个 XCTest 在 GitHub Actions 的 iPhone 16 / iOS 26.2 模拟器通过。
+- 未做真机截图、触控命中、键盘动画和 App Store 上传验证。
+
 ## 0.12.3 — 2026-10-22
 
 ### Fixed

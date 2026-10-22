@@ -343,7 +343,10 @@ struct HomeView: View {
     }
 
     private var coachContext: FinanceCoachContext {
-        let names = Dictionary(uniqueKeysWithValues: categories.map { ($0.id, $0.name) })
+        let names = Dictionary(
+            categories.map { ($0.id, $0.name) },
+            uniquingKeysWith: { first, _ in first }
+        )
         var spending: [String: Decimal] = [:]
 
         for transaction in transactions where currentMonthInterval.contains(transaction.date) {

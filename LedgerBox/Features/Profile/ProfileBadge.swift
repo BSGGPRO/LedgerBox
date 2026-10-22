@@ -11,7 +11,7 @@ struct ProfileBadge: View {
             showingMenu = true
         } label: {
             AvatarView(profile: store.profile, size: 38)
-                .frame(width: 40, height: 40)
+                .frame(width: 44, height: 44)
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
